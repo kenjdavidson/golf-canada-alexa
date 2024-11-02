@@ -1,4 +1,4 @@
-package kjd.golfcanada.alexa
+package kjd.golfcanada.alexa.handler
 
 import com.amazon.ask.dispatcher.request.handler.HandlerInput
 import com.amazon.ask.dispatcher.request.handler.RequestHandler
@@ -9,7 +9,7 @@ import java.util.*
 /**
  * Provides information on what is currently available for the application.
  */
-class HelpRequestHandler: RequestHandler {
+class HelpRequestHandler : RequestHandler {
     override fun canHandle(input: HandlerInput): Boolean {
         return input.matches(intentName("AMAZON.HelpIntent"))
     }
