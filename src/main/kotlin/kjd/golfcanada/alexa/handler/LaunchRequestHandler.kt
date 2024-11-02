@@ -1,4 +1,4 @@
-package kjd.golfcanada.alexa
+package kjd.golfcanada.alexa.handler
 
 import com.amazon.ask.dispatcher.request.handler.HandlerInput
 import com.amazon.ask.model.LaunchRequest
@@ -14,7 +14,7 @@ import java.util.*
  * - hi golf canada
  * - etc
  */
-class LaunchRequestHandler: com.amazon.ask.dispatcher.request.handler.impl.LaunchRequestHandler {
+class LaunchRequestHandler : com.amazon.ask.dispatcher.request.handler.impl.LaunchRequestHandler {
     override fun canHandle(input: HandlerInput?, request: LaunchRequest?): Boolean = true
 
     override fun handle(input: HandlerInput?, request: LaunchRequest?): Optional<Response> {

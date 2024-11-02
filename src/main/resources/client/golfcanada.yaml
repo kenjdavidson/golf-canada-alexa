@@ -1,0 +1,116 @@
+openapi: 3.0.3
+info:
+  title: Golf Canada Client
+  description: |
+    Unofficial Golf Canada HTTP Client.
+  version: 1.0.0
+  contact:
+    name: Ken Davidson
+    url: https://github.com/kenjdavidson/golf-canada-alexa
+    email: ken.j.davidson@live.ca
+servers:
+  - url: 'https://scg.golfcanada.ca'
+paths:
+  /connect/token:
+    post:
+      summary: Retrieve authentication token
+      tags: ["Auth"]
+      operationId: getAuthToken
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/AuthRequest"
+      responses:
+        200:
+          description: Login Successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthToken"
+        401:
+          description: Not Authorized
+        400:
+          description: Invalid Request
+
+components:
+  schemas:
+    AuthRequest:
+      type: object
+      properties:
+        grant_type:
+          type: string
+        username:
+          type: string
+        password:
+          type: string
+        scope:
+          type: string
+
+    AuthToken:
+      type: object
+      properties:
+          accessToken:
+            type: string
+          refreshToken:
+            type: string
+          expireDate:
+            type: string
+            format: date
+          expiresIn:
+            type: integer
+          tokenType:
+            type: string
+          user:
+            $ref: "#/components/schemas/User"
+
+    User:
+      type: object
+      properties:
+        allowedScorePosting:
+          type: boolean
+        authUserId:
+          type: number
+          format: long
+        clubManagementGroup:
+          type: integer
+        email:
+          type: string
+        expirationDate:
+          type: string
+          format: date
+        firstName:
+          type: string
+        fullName:
+          type: string
+        golfCanadaCardId:
+          type: string
+        handicap:
+          type: string
+        id:
+          type: number
+          format: long
+        lastName:
+          type: string
+        membershipLevel:
+          type: string
+        networkId:
+          type: string
+        termsAndConditionsDate:
+          type: string
+          format: date
+        username:
+          type: string
+        scoreDefaults:
+          $ref: "#/components/schemas/ScoreDefaults"
+
+    ScoreDefaults:
+      type: object
+      properties:
+        facilityName:
+          type: string
+        nationalAssociation:
+          type: string
+
+
