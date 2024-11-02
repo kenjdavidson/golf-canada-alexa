@@ -25,7 +25,7 @@ dependencies {
     implementation("com.amazonaws:aws-lambda-java-core:1.2.3")
     implementation("com.amazonaws:aws-lambda-java-events:3.14.0")
 
-    implementation("org.apache.logging.log4j:log4j-core:2.24.1")
+    implementation("org.apache.logging.log4j:log4j-core:2.8.1")
     implementation("org.apache.commons:commons-lang3:3.3.2")
     implementation("org.slf4j:slf4j-api:1.7.10")
 
