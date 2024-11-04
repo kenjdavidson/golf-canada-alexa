@@ -57,7 +57,7 @@ components:
             type: string
           expireDate:
             type: string
-            format: date
+            format: date-time
           expiresIn:
             type: integer
           tokenType:
@@ -71,15 +71,14 @@ components:
         allowedScorePosting:
           type: boolean
         authUserId:
-          type: number
-          format: long
+          type: identifier
         clubManagementGroup:
           type: integer
         email:
           type: string
         expirationDate:
           type: string
-          format: date
+          format: date-time
         firstName:
           type: string
         fullName:
@@ -89,8 +88,7 @@ components:
         handicap:
           type: string
         id:
-          type: number
-          format: long
+          type: identifier
         lastName:
           type: string
         membershipLevel:
@@ -99,7 +97,7 @@ components:
           type: string
         termsAndConditionsDate:
           type: string
-          format: date
+          format: date-time
         username:
           type: string
         scoreDefaults:

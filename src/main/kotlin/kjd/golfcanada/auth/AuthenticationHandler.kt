@@ -4,7 +4,6 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent
 import kjd.golfcanada.client.api.AuthApi
 import kjd.golfcanada.client.model.AuthToken
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -31,18 +30,26 @@ import java.util.concurrent.ConcurrentHashMap
  * - https://docs.aws.amazon.com/lambda/latest/dg/urls-invocation.html
  */
 class AuthenticationHandler internal constructor(
-    val authApi: AuthApi
+    private val authApi: AuthApi,
+    private val clientId: String,
+    private val clientSecret: String,
+    private val tokenRepository: Map<AuthTokenKey, AuthToken> = ConcurrentHashMap()
 ) {
-    constructor() : this(AuthApi())
+    private val loginPage = getLoginPageTemplate()
+
+    /**
+     * Default constructor used during creation
+     */
+    @SuppressWarnings("unused")
+    constructor() : this(
+        AuthApi(),
+        System.getenv("CLIENT_ID"),
+        System.getenv("CLIENT_SECRET"),
+    )
 
     fun handleRequest(event: APIGatewayV2HTTPEvent): APIGatewayProxyResponseEvent {
-        event.queryStringParameters.getOrDefault("client_id", "").let {
-            if (it !== CLIENT_ID) {
-                return invalidClientIdResponse(it)
-            }
-        }
-
         return when(event.rawPath) {
+            "/login" -> handleLoginRequest(event)
             "/code" -> handleCodeRequest(event)
             "/authToken" -> handleAuthTokenRequest(event)
             else -> APIGatewayProxyResponseEvent().apply {
@@ -70,7 +77,53 @@ class AuthenticationHandler internal constructor(
      * @param event the API Gateway event from Lambda URL
      * @return the API Gateway proxy response redirecting to the redirect_uri with the state and code parameters
      */
+    private fun handleLoginRequest(event: APIGatewayV2HTTPEvent): APIGatewayProxyResponseEvent {
+        event.queryStringParameters.getOrDefault("client_id", "").let {
+            if (it !== clientId) {
+                return invalidClientIdResponse(it)
+            }
+        }
+
+        return APIGatewayProxyResponseEvent().apply {
+            statusCode = 200
+            body = buildLoginPage(event)
+        }
+    }
+
+    private fun buildLoginPage(event: APIGatewayV2HTTPEvent): String {
+        val parameters = mapOf(
+            "client_id" to event.queryStringParameters?.getOrDefault("client_id", ""),
+            "redirect_uri" to event.queryStringParameters?.getOrDefault("redirect_uri", ""),
+            "response_type" to event.queryStringParameters?.getOrDefault("response_type", ""),
+            "scope" to event.queryStringParameters?.getOrDefault("scope", ""),
+            "state" to event.queryStringParameters?.getOrDefault("state", ""),
+            "label_username" to "Username",
+            "label_password" to "Password",
+            "label_login" to "Login",
+            "label_cancel" to "Cancel",
+        )
+
+        var loginString = loginPage
+        parameters.forEach { (parameter, value) ->
+            loginString = loginString.replace("{{$parameter}}", value ?: "")
+        }
+
+        return loginString
+    }
+
+    /**
+     * Handles the actual login/submission from the login page.  There are currently a couple requirements
+     * to complete this request successfully:
+     * - The client id must match
+     * - The request must be a POST
+     */
     private fun handleCodeRequest(event: APIGatewayV2HTTPEvent): APIGatewayProxyResponseEvent {
+        event.queryStringParameters.getOrDefault("client_id", "").let {
+            if (it !== clientId) {
+                return invalidClientIdResponse(it)
+            }
+        }
+
         return APIGatewayProxyResponseEvent()
     }
 
@@ -90,6 +143,12 @@ class AuthenticationHandler internal constructor(
      * @return a successful 200 with the OAuth token
      */
     private fun handleAuthTokenRequest(event: APIGatewayV2HTTPEvent): APIGatewayProxyResponseEvent {
+        event.queryStringParameters.getOrDefault("client_id", "").let {
+            if (it !== clientId) {
+                return invalidClientIdResponse(it)
+            }
+        }
+
         return if (event.queryStringParameters.containsKey("refresh_token")) {
             handleRefreshRequest(event)
         } else {
@@ -98,7 +157,7 @@ class AuthenticationHandler internal constructor(
     }
 
     /**
-     * Calls through to the
+     * Handles the refresh of the token.  This just makes a new getAuthToken request and returns it.
      */
     private fun handleRefreshRequest(event: APIGatewayV2HTTPEvent): APIGatewayProxyResponseEvent {
         return APIGatewayProxyResponseEvent()
@@ -110,16 +169,13 @@ class AuthenticationHandler internal constructor(
      * look into implementing a timer, which will remove old Tokens at regular intervals.
      */
     private fun handleAuthCodeRequest(event: APIGatewayV2HTTPEvent): APIGatewayProxyResponseEvent {
-        val clientId = event.queryStringParameters["client_id"] ?: "NOT_PROVIDED"
-        if (clientId != CLIENT_ID)
-            return invalidClientIdResponse(clientId)
-
         val code = event.queryStringParameters["code"]
         val state = event.queryStringParameters["state"]
         if (code.isNullOrEmpty() or state.isNullOrEmpty())
             return codeOrStateNotProvided(code, state)
 
-        TOKEN_STORAGE[AuthTokenKey(code!!, state!!)]
+        val authTokenKey = AuthTokenKey(code!!, state!!)
+        tokenRepository[authTokenKey]
 
         return APIGatewayProxyResponseEvent().apply {
             statusCode = 400
@@ -127,11 +183,10 @@ class AuthenticationHandler internal constructor(
         }
     }
 
-    companion object Store {
-        val TOKEN_STORAGE: Map<AuthTokenKey, AuthToken> = ConcurrentHashMap()
+    private fun getLoginPageTemplate() =
+        this::class.java.getResource("login.html")?.readText() ?: "<html/>"
 
-        val CLIENT_ID: String = System.getenv("CLIENT_ID") ?: UUID.randomUUID().toString()
-        val CLIENT_SECRET: String = System.getenv("CLIENT_SECRET") ?: UUID.randomUUID().toString()
-        val CLIENT_SCOPES: String = System.getenv("CLIENT_SCOPES") ?: "address email offline_access openid phone profile roles"
+    companion object {
+        const val DEFAULT_SCOPES = "address email offline_access openid phone profile roles"
     }
 }

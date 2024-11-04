@@ -54,5 +54,8 @@ openApiGenerate {
     apiPackage = "kjd.golfcanada.client.api"
     invokerPackage = "kjd.golfcanada.client.invoker"
     modelPackage = "kjd.golfcanada.client.model"
+    typeMappings = mapOf(
+        "identifier" to "kotlin.Long"
+    )
 }
 

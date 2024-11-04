@@ -4,7 +4,7 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 
 fun invalidClientIdResponse(clientId: String) =
     APIGatewayProxyResponseEvent().apply {
-        statusCode = 400
+        statusCode = 401
         body = "Invalid Client Id: '$clientId'"
     }
 
