@@ -86,6 +86,7 @@ class AuthenticationHandler internal constructor(
 
         return APIGatewayProxyResponseEvent().apply {
             statusCode = 200
+            headers = mapOf("Content-Type" to "text/html")
             body = buildLoginPage(event)
         }
     }

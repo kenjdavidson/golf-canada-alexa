@@ -2,6 +2,7 @@ package kjd.golfcanada.auth
 
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.maps.shouldContain
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldContain
@@ -83,6 +84,7 @@ class AuthenticationHandlerTest: DescribeSpec({
 
                 response shouldNotBe null
                 response.statusCode shouldBe 200
+                response.headers shouldContain Pair("Content-Type", "text/html")
                 response.body shouldContain "value=\"$clientId\""
                 response.body shouldContain "value=\"https://redirect_uri.com\""
                 response.body shouldContain "value=\"code\""
@@ -117,7 +119,11 @@ class AuthenticationHandlerTest: DescribeSpec({
                 response.body shouldBe "Invalid Client Id: '$invalidClientId'"
             }
 
-            it("should authorize and return a code when successful") {
+            it("") {
+
+            }
+
+            it("should authorize and redirect") {
                 val handler = AuthenticationHandler(
                     authApi,
                     clientId,

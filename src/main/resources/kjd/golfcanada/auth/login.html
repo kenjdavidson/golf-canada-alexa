@@ -5,24 +5,106 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login to Golf Canada</title>
     <style>
+        body {
+            background: black;
+            color: lightgray;
+            margin: 0;
+            padding: 0;
+        }
 
+        h1 {
+            text-align: center;
+        }
+
+        div.container {
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-content: stretch;
+        }
+
+        div.field_container {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-content: stretch;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        div.field_container > label {
+            font-size: 0.9rem;
+        }
+
+        div.field_container > input {
+            font-size: 1.2rem;
+        }
+
+        div.button_bar {
+            margin-top: 2rem;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-content: stretch;
+            gap: 1rem;
+        }
+
+        button {
+            font-size: 1rem;
+            padding: 0.5rem 1.5rem;
+            border-radius: 0.25rem;
+            border-width: 0;
+        }
+
+        button[type=submit] {
+            background-color: royalblue;
+            color: lightgray;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <form>
-            <input id="username" name="username" aria-label="{{label_username}}" type="text"/>
-            <input id="password" name="password" aria-label="{{label_password}}" type="password"/>
-            <input id="client_id" name="client_id" hidden aria-hidden="true" value="{{client_id}}"/>
-            <input id="redirect_uri" name="redirect_uri" hidden aria-hidden="true" value="{{redirect_uri}}"/>
-            <input id="response_type" name="response_type" hidden aria-hidden="true" value="{{response_type}}"/>
-            <input id="scope" name="scope" hidden aria-hidden="true" value="{{scope}}"/>
-            <input id="state" name="state" hidden aria-hidden="true" value="{{state}}"/>
-            <div class="button-bar">
-                <button type="submit">{{label_login}}</button>
-                <button type="reset">{{label_cancel}}</button>
+        <h1>Golf Canada Alexa Skill</h1>
+        <p>
+            Login to give the Golf Canada Alexa skill the ability to perform user-centric requests:
+        </p>
+        <ul>
+            <li>Ask about your current handicap and round history,</li>
+            <li>Ask about your friends handicap and round history,</li>
+            <li>Save new rounds scorecards through conversation,</li>
+            <li>and whatever else might become available...</li>
+        </ul>
+        <form action="/code">
+            <div class="input_container">
+                <div class="field_container">
+                    <label for="username">{{label_username}}</label>
+                    <input id="username" name="username" aria-label="{{label_username}}" type="text"/>
+                </div>
+                <div class="field_container">
+                    <label for="password">{{label_password}}</label>
+                    <input id="password" name="password" aria-label="{{label_password}}" type="password"/>
+                </div>
+                <input type="hidden" id="client_id" name="client_id" aria-hidden="true" value="{{client_id}}"/>
+                <input type="hidden" id="redirect_uri" name="redirect_uri" hidden aria-hidden="true" value="{{redirect_uri}}"/>
+                <input type="hidden" id="response_type" name="response_type" hidden aria-hidden="true" value="{{response_type}}"/>
+                <input type="hidden" id="scope" name="scope" hidden aria-hidden="true" value="{{scope}}"/>
+                <input type="hidden" id="state" name="state" hidden aria-hidden="true" value="{{state}}"/>
+                <div class="button_bar">
+                    <button type="submit">{{label_login}}</button>
+                    <button type="reset">{{label_cancel}}</button>
+                </div>
             </div>
         </form>
+        <h4>Information</h4>
+        <p>
+            Logging is not required for retrieving news and general information.
+            For more details or issues please see <a href="https://github.com/kenjdavidson/golf-canada-alexa">Golf Canada Alexa</a>
+            website.
+        </p>
+        <p>
+            <a href="https://github.com/kenjdavidson/golf-canada-alexa/privacy-policy.md">Privacy policy</a>
+        </p>
     </div>
 </body>
 </html>
