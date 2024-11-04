@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login to Golf Canada</title>
+    <style>
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <form>
+            <input id="username" name="username" aria-label="{{label_username}}" type="text"/>
+            <input id="password" name="password" aria-label="{{label_password}}" type="password"/>
+            <input id="client_id" name="client_id" hidden aria-hidden="true" value="{{client_id}}"/>
+            <input id="redirect_uri" name="redirect_uri" hidden aria-hidden="true" value="{{redirect_uri}}"/>
+            <input id="response_type" name="response_type" hidden aria-hidden="true" value="{{response_type}}"/>
+            <input id="scope" name="scope" hidden aria-hidden="true" value="{{scope}}"/>
+            <input id="state" name="state" hidden aria-hidden="true" value="{{state}}"/>
+            <div class="button-bar">
+                <button type="submit">{{label_login}}</button>
+                <button type="reset">{{label_cancel}}</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
