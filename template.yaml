@@ -1,0 +1,45 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  golf-canada-alexa
+
+  Sample SAM Template for golf-canada-alexa
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 20
+    MemorySize: 512
+
+Resources:
+  GolfCanadaAuthFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      FunctionName: GolfCanadaAuthFunction
+      Description: Provides OAuth functionality for Alexa account linking
+      CodeUri: GolfCanadaAuthFunction
+      Handler: kjd.golfcanada.auth.AuthenticationHandler::handleRequest
+      Runtime: java21
+      Architectures:
+        - x86_64
+      MemorySize: 128
+      Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
+        Variables:
+          CLIENT_ID: sample_client_id
+          CLIENT_SECRET: sample_client_secret
+      Events:
+        LoginRequestEvent:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /login
+            Method: get
+        CodeRequestEvent:
+          Type: Api
+          Properties:
+            Path: /code
+            Method: post
+        AuthTokenRequestEvent:
+          Type: Api
+          Properties:
+            Path: /authToken
+            Method: post
