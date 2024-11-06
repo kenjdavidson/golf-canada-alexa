@@ -8,6 +8,7 @@ import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldContain
 import io.mockk.every
 import io.mockk.mockk
+import kjd.golfcanada.TestContext
 import kjd.golfcanada.client.api.AuthApi
 import kjd.golfcanada.client.model.AuthToken
 import java.time.OffsetDateTime
@@ -55,7 +56,7 @@ class AuthenticationHandlerTest: DescribeSpec({
                         "client_id" to invalidClientId
                     ))
                     .build()
-                val response = handler.handleRequest(event)
+                val response = handler.handleRequest(event, TestContext())
 
                 response shouldNotBe null
                 response.statusCode shouldBe 401
@@ -80,7 +81,7 @@ class AuthenticationHandlerTest: DescribeSpec({
                         "state" to "1234567890"
                     ))
                     .build()
-                val response = handler.handleRequest(event)
+                val response = handler.handleRequest(event, TestContext())
 
                 response shouldNotBe null
                 response.statusCode shouldBe 200
@@ -112,15 +113,11 @@ class AuthenticationHandlerTest: DescribeSpec({
                         "client_id" to invalidClientId
                     ))
                     .build()
-                val response = handler.handleRequest(event)
+                val response = handler.handleRequest(event, TestContext())
 
                 response shouldNotBe null
                 response.statusCode shouldBe 401
                 response.body shouldBe "Invalid Client Id: '$invalidClientId'"
-            }
-
-            it("") {
-
             }
 
             it("should authorize and redirect") {
@@ -141,7 +138,7 @@ class AuthenticationHandlerTest: DescribeSpec({
                 } returns(authToken)
 
                 val event = buildAPIGatewayHTTPEvent("/code").build()
-                val response = handler.handleRequest(event)
+                val response = handler.handleRequest(event, TestContext())
 
                 response shouldNotBe null
                 response.statusCode shouldBe 401
@@ -162,7 +159,7 @@ class AuthenticationHandlerTest: DescribeSpec({
                 )
 
                 val event = buildAPIGatewayHTTPEvent("/").build()
-                val response = handler.handleRequest(event)
+                val response = handler.handleRequest(event, TestContext())
 
                 response shouldNotBe null
                 response.statusCode shouldBe 400

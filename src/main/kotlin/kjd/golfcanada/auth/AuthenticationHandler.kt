@@ -1,7 +1,11 @@
 package kjd.golfcanada.auth
 
+import com.amazonaws.services.lambda.runtime.Context
+import com.amazonaws.services.lambda.runtime.RequestHandler
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent
+import com.fasterxml.jackson.databind.ObjectMapper
+import kjd.golfcanada.auth.impl.TokenRepositoryMapImpl
 import kjd.golfcanada.client.api.AuthApi
 import kjd.golfcanada.client.model.AuthToken
 import java.util.concurrent.ConcurrentHashMap
@@ -33,8 +37,8 @@ class AuthenticationHandler internal constructor(
     private val authApi: AuthApi,
     private val clientId: String,
     private val clientSecret: String,
-    private val tokenRepository: Map<AuthTokenKey, AuthToken> = ConcurrentHashMap()
-) {
+    private val tokenRepository: TokenRepository<AuthTokenKey, AuthToken> = TokenRepositoryMapImpl()
+): RequestHandler<APIGatewayV2HTTPEvent, APIGatewayProxyResponseEvent> {
     private val loginPage = getLoginPageTemplate()
 
     /**
@@ -47,7 +51,7 @@ class AuthenticationHandler internal constructor(
         System.getenv("CLIENT_SECRET"),
     )
 
-    fun handleRequest(event: APIGatewayV2HTTPEvent): APIGatewayProxyResponseEvent {
+    override fun handleRequest(event: APIGatewayV2HTTPEvent, context: Context): APIGatewayProxyResponseEvent {
         return when(event.rawPath) {
             "/login" -> handleLoginRequest(event)
             "/code" -> handleCodeRequest(event)
@@ -175,12 +179,14 @@ class AuthenticationHandler internal constructor(
         if (code.isNullOrEmpty() or state.isNullOrEmpty())
             return codeOrStateNotProvided(code, state)
 
-        val authTokenKey = AuthTokenKey(code!!, state!!)
-        tokenRepository[authTokenKey]
-
-        return APIGatewayProxyResponseEvent().apply {
-            statusCode = 400
-            body = "Unable to process request"
+        return tokenRepository.get(AuthTokenKey(code!!, state!!))?.let { token ->
+            APIGatewayProxyResponseEvent().apply {
+                statusCode = 200
+                body = "serialized token"
+            }
+        } ?: APIGatewayProxyResponseEvent().apply {
+            statusCode = 401
+            body = "Authentication request failed (AUTH_CODE_REQUEST)"
         }
     }
 
