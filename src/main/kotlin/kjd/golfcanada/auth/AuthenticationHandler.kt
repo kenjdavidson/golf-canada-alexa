@@ -4,11 +4,9 @@ import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent
-import com.fasterxml.jackson.databind.ObjectMapper
 import kjd.golfcanada.auth.impl.TokenRepositoryMapImpl
 import kjd.golfcanada.client.api.AuthApi
 import kjd.golfcanada.client.model.AuthToken
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Lambda based OAuth wrapper for Golf Canada authentication.
