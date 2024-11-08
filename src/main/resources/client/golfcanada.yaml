@@ -38,14 +38,21 @@ components:
   schemas:
     AuthRequest:
       type: object
+      required:
+        - grant_type
+        - scope
       properties:
         grant_type:
+          type: string
+          enum: [password, refresh_token]
+          x-enum-varnames: [PASSWORD, REFRESH_TOKEN]
+        scope:
           type: string
         username:
           type: string
         password:
           type: string
-        scope:
+        refresh_token:
           type: string
 
     AuthToken:
