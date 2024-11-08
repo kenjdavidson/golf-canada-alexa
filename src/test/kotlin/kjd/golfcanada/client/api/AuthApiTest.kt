@@ -2,6 +2,7 @@ package kjd.golfcanada.client.api
 
 import io.kotest.core.annotation.EnabledIf
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import kjd.golfcanada.auth.AuthenticationHandler.Companion.DEFAULT_SCOPES
 
@@ -22,9 +23,11 @@ class AuthApiTest: DescribeSpec({
             val authToken = authApi.getAuthToken("password", username, password, DEFAULT_SCOPES)
 
             print(authToken)
+
             authToken shouldNotBe null
             authToken.accessToken shouldNotBe null
             authToken.refreshToken shouldNotBe null
+            authToken.expiresIn shouldBe 3600
         }
     }
 })
