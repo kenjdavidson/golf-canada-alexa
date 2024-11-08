@@ -8,9 +8,9 @@ class UserTest : DescribeSpec({
     describe("User") {
         it("should just work") {
             val user = User(
-                allowedScorePosting = true,
+                allowScorePosting = true,
                 authUserId = 1111111111L,
-                clubManagementGroup = 1,
+                clubManagementGroupId = 1,
                 email = "test@email.com",
                 expirationDate = "2024-01-01T00:00:00",
                 firstName = "Test",

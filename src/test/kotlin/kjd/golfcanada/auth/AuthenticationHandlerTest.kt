@@ -199,7 +199,7 @@ class AuthenticationHandlerTest: DescribeSpec({
                 val authToken = authToken()
                 every {
                     authApi.getAuthToken(
-                        "password",
+                        AuthApi.GrantTypeGetAuthToken.PASSWORD,
                         "username",
                         "password1",
                         AuthenticationHandler.DEFAULT_SCOPES
@@ -220,7 +220,7 @@ class AuthenticationHandlerTest: DescribeSpec({
                 response.statusCode shouldBe 302
                 response.body shouldBe "https://redirect_uri.com?state=1234567890&code=${authToken.hashCode()}"
 
-                verify(exactly = 1) { authApi.getAuthToken("password", "username", "password1", AuthenticationHandler.DEFAULT_SCOPES) }
+                verify(exactly = 1) { authApi.getAuthToken(AuthApi.GrantTypeGetAuthToken.PASSWORD, "username", "password1", AuthenticationHandler.DEFAULT_SCOPES) }
                 verify(exactly = 1) { tokenRepository.store(AuthTokenKey("1234567890", "${authToken.hashCode()}"), authToken) }
             }
         }
