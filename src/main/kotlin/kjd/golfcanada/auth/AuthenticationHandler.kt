@@ -4,9 +4,12 @@ import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent
+import kjd.golfcanada.auth.ext.assertHttpMethod
+import kjd.golfcanada.auth.ext.assertQueryParameter
 import kjd.golfcanada.auth.impl.TokenRepositoryMapImpl
 import kjd.golfcanada.client.api.AuthApi
 import kjd.golfcanada.client.model.AuthToken
+import okhttp3.internal.http.HttpMethod
 
 /**
  * Lambda based OAuth wrapper for Golf Canada authentication.
@@ -50,14 +53,17 @@ class AuthenticationHandler internal constructor(
     )
 
     override fun handleRequest(event: APIGatewayV2HTTPEvent, context: Context): APIGatewayProxyResponseEvent {
-        return when(event.rawPath) {
-            "/login" -> handleLoginRequest(event)
-            "/code" -> handleCodeRequest(event)
-            "/authToken" -> handleAuthTokenRequest(event)
-            else -> APIGatewayProxyResponseEvent().apply {
-                statusCode = 400
-                body = "Unknown authentication request"
+        return try {
+            when(event.rawPath) {
+                "/login" -> handleLoginRequest(event)
+                "/code" -> handleCodeRequest(event)
+                "/authToken" -> handleAuthTokenRequest(event)
+                else -> throw RuntimeException("Unknown authentication request")
             }
+        } catch (exception: AuthenticationException) {
+            exception.response
+        } catch (exception: Exception) {
+            invalidAuthenticationRequest(exception)
         }
     }
 
@@ -80,11 +86,8 @@ class AuthenticationHandler internal constructor(
      * @return the API Gateway proxy response redirecting to the redirect_uri with the state and code parameters
      */
     private fun handleLoginRequest(event: APIGatewayV2HTTPEvent): APIGatewayProxyResponseEvent {
-        event.queryStringParameters.getOrDefault("client_id", "").let {
-            if (it !== clientId) {
-                return invalidClientIdResponse(it)
-            }
-        }
+        event.assertHttpMethod("GET") { invalidAuthenticationRequest(RuntimeException("Invalid Authentication method")) }
+        event.assertQueryParameter("client_id", clientId) { invalidClientIdResponse(it) }
 
         return APIGatewayProxyResponseEvent().apply {
             statusCode = 200
@@ -93,6 +96,7 @@ class AuthenticationHandler internal constructor(
         }
     }
 
+    // TODO: separate this out in to a PageBuilder or TemplateBuilder
     private fun buildLoginPage(event: APIGatewayV2HTTPEvent): String {
         val parameters = mapOf(
             "client_id" to event.queryStringParameters?.getOrDefault("client_id", ""),
@@ -121,11 +125,8 @@ class AuthenticationHandler internal constructor(
      * - The request must be a POST
      */
     private fun handleCodeRequest(event: APIGatewayV2HTTPEvent): APIGatewayProxyResponseEvent {
-        event.queryStringParameters.getOrDefault("client_id", "").let {
-            if (it !== clientId) {
-                return invalidClientIdResponse(it)
-            }
-        }
+        event.assertHttpMethod("POST") { invalidAuthenticationRequest(RuntimeException("Invalid Authentication method")) }
+        event.assertQueryParameter("client_id", clientId) { invalidClientIdResponse(it) }
 
         return APIGatewayProxyResponseEvent()
     }
