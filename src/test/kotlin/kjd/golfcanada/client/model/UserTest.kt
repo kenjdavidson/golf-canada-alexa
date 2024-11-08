@@ -12,7 +12,7 @@ class UserTest : DescribeSpec({
                 authUserId = 1111111111L,
                 clubManagementGroup = 1,
                 email = "test@email.com",
-                expirationDate = OffsetDateTime.now(),
+                expirationDate = "2024-01-01T00:00:00",
                 firstName = "Test",
                 fullName = "Test User",
                 golfCanadaCardId = "11111111",
@@ -21,7 +21,7 @@ class UserTest : DescribeSpec({
                 lastName = "User",
                 membershipLevel = "Gold",
                 networkId = "1",
-                termsAndConditionsDate = OffsetDateTime.now(),
+                termsAndConditionsDate = "2024-01-01T00:00:00",
                 username = "test_user_1",
                 scoreDefaults = ScoreDefaults(
                     "Golf and Country Club",

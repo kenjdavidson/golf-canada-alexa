@@ -9,6 +9,6 @@ object ResourceBundleUtil {
     fun getResourceBundle(input: HandlerInput): ResourceBundle =
         input.requestEnvelope.request.locale.let {
             val languageAndCountry = it.split("_")
-            ResourceBundle.getBundle(RESOURCE_BASE, Locale.of(languageAndCountry[0], languageAndCountry[1]))
+            ResourceBundle.getBundle(RESOURCE_BASE, Locale.forLanguageTag(it))
         }
 }

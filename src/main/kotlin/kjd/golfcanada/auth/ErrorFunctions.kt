@@ -2,6 +2,12 @@ package kjd.golfcanada.auth
 
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 
+fun invalidAuthenticationRequest(exception: Exception) =
+    APIGatewayProxyResponseEvent().apply {
+        statusCode = 400
+        body = exception.localizedMessage
+    }
+
 fun invalidClientIdResponse(clientId: String) =
     APIGatewayProxyResponseEvent().apply {
         statusCode = 401

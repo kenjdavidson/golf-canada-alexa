@@ -49,3 +49,22 @@ If you've worked on a feature of a fix, please open a well documented pull reque
 
 At this point I'm unsure whether the Wiki or Discussions will be available for this project, but if they
 are I'll always welcome help with documentation.
+
+## Golf Canada SSL Certificate
+
+The one thing that's pretty effing annoying about Java is the lack of being up to date with SSL Certificate
+roots.  In this instance, the https://golfcanada.ca certificate rooted by Go Daddy doesn't exactly match the 
+Go Daddy root available in the Coretto JDK.   I haven't had a chance to test different JDKs but I'm assuming
+it's the same across the board.
+
+This may mean it will never work, or it means I just have to release the Authentication Lambda in another
+language that works better, I'll have to test Javascript and/or Python.   I'll have to look into how annoying
+this is to get working on Lambda:
+- https://stackoverflow.com/questions/73399963/using-ssl-certificates-within-lambda
+- https://aws.amazon.com/blogs/compute/implementing-mutual-tls-for-java-based-aws-lambda-functions/
+
+Regardless, to get the tests and everything running locally:
+
+```shell 
+$JAVA_HOME\bin\keytool -importcert -file $PROJECT_ROOT\src\main\resources\client\_.golfcanada.ca.crt -keystore $JAVA_HOME\lib\security\cacerts -alias "GolfCanadaCert" -noprompt
+```

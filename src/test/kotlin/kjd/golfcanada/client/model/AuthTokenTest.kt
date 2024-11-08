@@ -4,15 +4,15 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import java.time.LocalDate
 import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
 
 class AuthTokenTest : DescribeSpec({
     describe("AuthToken") {
         it("should just work") {
-            val expireDate = OffsetDateTime.now()
             val authToken = AuthToken(
                 "accessToken",
                 "refreshToken",
-                expireDate,
+                "idToken",
                 expiresIn = 3600,
                 tokenType = "bearer",
                 user = null
@@ -20,7 +20,7 @@ class AuthTokenTest : DescribeSpec({
 
             authToken.accessToken shouldBe "accessToken"
             authToken.refreshToken shouldBe "refreshToken"
-            authToken.expireDate shouldBe expireDate
+            authToken.idToken shouldBe "idToken"
             authToken.expiresIn shouldBe 3600
             authToken.user shouldBe null
         }
