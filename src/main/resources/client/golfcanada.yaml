@@ -67,11 +67,11 @@ components:
     User:
       type: object
       properties:
-        allowedScorePosting:
+        allowScorePosting:
           type: boolean
         authUserId:
           type: identifier
-        clubManagementGroup:
+        clubManagementGroupId:
           type: integer
         email:
           type: string
@@ -109,5 +109,7 @@ components:
           type: string
         nationalAssociation:
           type: string
+        postHoleByHole:
+          type: boolean
 
 
