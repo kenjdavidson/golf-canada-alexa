@@ -13,7 +13,7 @@ class ResourceBundleUtilTest : DescribeSpec({
     describe("getResourceBundle") {
         it("loads the appropriate Locale EN") {
             val request = LaunchRequest.builder()
-                .withLocale("en_CA")
+                .withLocale("en-CA")
                 .build()
             val requestEnvelope = RequestEnvelope.builder()
                 .withRequest(request)
@@ -30,7 +30,7 @@ class ResourceBundleUtilTest : DescribeSpec({
 
         it("loads the appropriate Locale FR") {
             val request = LaunchRequest.builder()
-                .withLocale("fr_CA")
+                .withLocale("fr-CA")
                 .build()
             val requestEnvelope = RequestEnvelope.builder()
                 .withRequest(request)
