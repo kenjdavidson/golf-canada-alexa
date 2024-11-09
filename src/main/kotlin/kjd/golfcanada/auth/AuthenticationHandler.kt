@@ -127,8 +127,31 @@ class AuthenticationHandler internal constructor(
     private fun handleCodeRequest(event: APIGatewayV2HTTPEvent): APIGatewayProxyResponseEvent {
         event.assertHttpMethod("POST") { invalidAuthenticationRequest(RuntimeException("Invalid Authentication method")) }
         event.assertQueryParameter("client_id", clientId) { invalidClientIdResponse(it) }
+        event.assertQueryParameter("response_type", "code") { queryParameterNotProvided(it) }
+        val redirectUri = event.assertQueryParameter("redirect_uri") { queryParameterNotProvided(it) }
+        val scope = event.assertQueryParameter("scope") { queryParameterNotProvided(it) }
+        val state = event.assertQueryParameter("state") { queryParameterNotProvided(it) }
+        val username = event.assertQueryParameter("username") { queryParameterNotProvided(it) }
+        val password = event.assertQueryParameter("password") { queryParameterNotProvided(it) }
 
-        return APIGatewayProxyResponseEvent()
+        return try {
+            val authToken = authApi.getAuthToken(
+                AuthApi.GrantTypeGetAuthToken.PASSWORD,
+                scope,
+                username,
+                password
+            )
+
+            val code = "${authToken.hashCode()}"
+            tokenRepository.store(AuthTokenKey(state, code), authToken)
+
+            return APIGatewayProxyResponseEvent().apply {
+                statusCode = 301
+                body = "${redirectUri}?code=${code}&state=${state}"
+            }
+        } catch (exception: Exception) {
+            return invalidAuthenticationRequest(exception)
+        }
     }
 
     /**

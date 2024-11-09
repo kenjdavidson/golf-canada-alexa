@@ -6,6 +6,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import kjd.golfcanada.auth.AuthenticationHandler.Companion.DEFAULT_SCOPES
 import kjd.golfcanada.client.api.AuthApi.GrantTypeGetAuthToken
+import org.junit.jupiter.api.assertThrows
 
 @EnabledIf(UsernamePasswordCondition::class)
 class AuthApiTest: DescribeSpec({
@@ -38,6 +39,16 @@ class AuthApiTest: DescribeSpec({
             refreshedToken.accessToken shouldNotBe null
             refreshedToken.refreshToken shouldNotBe null
             refreshedToken.expiresIn shouldBe 3600
+        }
+
+        it("should return bad request when invalid login") {
+
+            val response = assertThrows<Exception> {
+                authApi.getAuthToken(GrantTypeGetAuthToken.PASSWORD, DEFAULT_SCOPES, username = "${username}1", password = password)
+            }
+
+            response shouldNotBe null
+            response.message shouldBe "Client error : 400 Bad Request"
         }
     }
 })

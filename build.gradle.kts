@@ -59,3 +59,15 @@ openApiGenerate {
     )
 }
 
+task("packageJar", Zip::class) {
+    group = "release"
+
+    into("lib") {
+        from(tasks.jar)
+        from(configurations.runtimeClasspath)
+    }
+}
+
+tasks.build {
+    dependsOn("packageJar")
+}
