@@ -13,6 +13,6 @@ class TokenRepositoryMapImpl(
     }
 
     override fun get(key: AuthTokenKey): AuthToken? {
-        return store[key]
+        return store.remove(key)
     }
 }
