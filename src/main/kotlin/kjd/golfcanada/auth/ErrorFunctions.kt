@@ -2,32 +2,22 @@ package kjd.golfcanada.auth
 
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 
-fun invalidAuthenticationRequest(exception: String) =
+fun invalidAuthenticationRequest(code: ErrorCode) =
     APIGatewayProxyResponseEvent().apply {
         statusCode = 400
-        body = exception
+        headers = mapOf("Content-Type" to "application/json;charset=UTF-8")
+        body = """{
+        |   "error": "${code.errorResponse}"
+        |   "code": "${code.code}"
+        |}""".trimMargin()
     }
 
 fun invalidAuthenticationRequest(exception: Exception) =
     APIGatewayProxyResponseEvent().apply {
         statusCode = 400
-        body = exception.localizedMessage
-    }
-
-fun invalidClientIdResponse(clientId: String) =
-    APIGatewayProxyResponseEvent().apply {
-        statusCode = 401
-        body = "Invalid Client Id: '$clientId'"
-    }
-
-fun codeOrStateNotProvided(code: String?, state: String?) =
-    APIGatewayProxyResponseEvent().apply {
-        statusCode = 400
-        body = "Invalid code '$code' or state '$state'"
-    }
-
-fun queryParameterNotProvided(parameterName: String) =
-    APIGatewayProxyResponseEvent().apply {
-        statusCode = 400
-        body = "Required parameter not provided: '${parameterName}'"
+        headers = mapOf("Content-Type" to "application/json;charset=UTF-8")
+        body = """{
+        |   "error": "invalid_request"
+        |   "cause": "${exception.message}"
+        |}""".trimMargin()
     }

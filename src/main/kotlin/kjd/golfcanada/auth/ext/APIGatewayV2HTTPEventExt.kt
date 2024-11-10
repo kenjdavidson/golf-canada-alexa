@@ -3,7 +3,6 @@ package kjd.golfcanada.auth.ext
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent
 import kjd.golfcanada.auth.AuthenticationException
-import kjd.golfcanada.auth.invalidClientIdResponse
 
 fun APIGatewayV2HTTPEvent.assertHttpMethod(
     method: String,

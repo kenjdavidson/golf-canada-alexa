@@ -4,11 +4,14 @@ import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent
+import com.fasterxml.jackson.databind.JsonNode
 import kjd.golfcanada.auth.ext.assertHttpMethod
 import kjd.golfcanada.auth.ext.assertQueryParameter
 import kjd.golfcanada.auth.impl.TokenRepositoryMapImpl
 import kjd.golfcanada.client.api.AuthApi
 import kjd.golfcanada.client.model.AuthToken
+import kjd.golfcanada.client.model.code
+import kjd.golfcanada.client.model.toJson
 import okhttp3.internal.http.HttpMethod
 
 /**
@@ -58,7 +61,7 @@ class AuthenticationHandler internal constructor(
                 "/login" -> handleLoginRequest(event)
                 "/code" -> handleCodeRequest(event)
                 "/authToken" -> handleAuthTokenRequest(event)
-                else -> throw RuntimeException("Unknown authentication request")
+                else -> invalidAuthenticationRequest(ErrorCode.INVALID_API_CALL)
             }
         } catch (exception: AuthenticationException) {
             exception.response
@@ -86,8 +89,8 @@ class AuthenticationHandler internal constructor(
      * @return the API Gateway proxy response redirecting to the redirect_uri with the state and code parameters
      */
     private fun handleLoginRequest(event: APIGatewayV2HTTPEvent): APIGatewayProxyResponseEvent {
-        event.assertHttpMethod("GET") { invalidAuthenticationRequest(RuntimeException("Invalid Authentication method")) }
-        event.assertQueryParameter("client_id", clientId) { invalidClientIdResponse(it) }
+        event.assertHttpMethod("GET") { invalidAuthenticationRequest(ErrorCode.INVALID_API_CALL) }
+        event.assertQueryParameter("client_id", clientId) { invalidAuthenticationRequest(ErrorCode.INVALID_CLIENT_ID) }
 
         return APIGatewayProxyResponseEvent().apply {
             statusCode = 200
@@ -126,13 +129,13 @@ class AuthenticationHandler internal constructor(
      */
     private fun handleCodeRequest(event: APIGatewayV2HTTPEvent): APIGatewayProxyResponseEvent {
         event.assertHttpMethod("POST") { invalidAuthenticationRequest(RuntimeException("Invalid Authentication method")) }
-        event.assertQueryParameter("client_id", clientId) { invalidClientIdResponse(it) }
-        event.assertQueryParameter("response_type", "code") { queryParameterNotProvided(it) }
-        val redirectUri = event.assertQueryParameter("redirect_uri") { queryParameterNotProvided(it) }
-        val scope = event.assertQueryParameter("scope") { queryParameterNotProvided(it) }
-        val state = event.assertQueryParameter("state") { queryParameterNotProvided(it) }
-        val username = event.assertQueryParameter("username") { queryParameterNotProvided(it) }
-        val password = event.assertQueryParameter("password") { queryParameterNotProvided(it) }
+        event.assertQueryParameter("client_id", clientId) { invalidAuthenticationRequest(ErrorCode.INVALID_CLIENT_ID) }
+        event.assertQueryParameter("response_type", "code") { invalidAuthenticationRequest(ErrorCode.INVALID_RESPONSE_TYPE) }
+        val redirectUri = event.assertQueryParameter("redirect_uri") { invalidAuthenticationRequest(ErrorCode.INVALID_REDIRECT_URI) }
+        val scope = event.assertQueryParameter("scope") { invalidAuthenticationRequest(ErrorCode.INVALID_SCOPE) }
+        val state = event.assertQueryParameter("state") { invalidAuthenticationRequest(ErrorCode.INVALID_STATE) }
+        val username = event.assertQueryParameter("username") { invalidAuthenticationRequest(ErrorCode.INVALID_USERNAME) }
+        val password = event.assertQueryParameter("password") { invalidAuthenticationRequest(ErrorCode.INVALID_PASSWORD) }
 
         return try {
             val authToken = authApi.getAuthToken(
@@ -142,15 +145,15 @@ class AuthenticationHandler internal constructor(
                 password
             )
 
-            val code = "${authToken.hashCode()}"
+            val code = authToken.code()
             tokenRepository.store(AuthTokenKey(state, code), authToken)
 
-            return APIGatewayProxyResponseEvent().apply {
+            APIGatewayProxyResponseEvent().apply {
                 statusCode = 301
                 body = "${redirectUri}?code=${code}&state=${state}"
             }
         } catch (exception: Exception) {
-            return invalidAuthenticationRequest(exception)
+            invalidAuthenticationRequest(ErrorCode.CLIENT_ERROR)
         }
     }
 
@@ -170,50 +173,71 @@ class AuthenticationHandler internal constructor(
      * @return a successful 200 with the OAuth token
      */
     private fun handleAuthTokenRequest(event: APIGatewayV2HTTPEvent): APIGatewayProxyResponseEvent {
-        event.queryStringParameters.getOrDefault("client_id", "").let {
-            if (it !== clientId) {
-                return invalidClientIdResponse(it)
-            }
-        }
+        event.assertHttpMethod("POST") { invalidAuthenticationRequest(RuntimeException("173: Invalid Authentication method")) }
+        event.assertQueryParameter("client_id", clientId) { invalidAuthenticationRequest(ErrorCode.INVALID_CLIENT_ID) }
+        event.assertQueryParameter("client_secret", clientSecret) { invalidAuthenticationRequest(ErrorCode.INVALID_SECRET) }
+        val grantType = event.assertQueryParameter("grant_type") { invalidAuthenticationRequest(ErrorCode.INVALID_GRANT_TYPE) }
+        val state = event.assertQueryParameter("state") { invalidAuthenticationRequest(ErrorCode.INVALID_STATE) }
+        val code = event.assertQueryParameter("code") { invalidAuthenticationRequest(ErrorCode.INVALID_CODE) }
 
-        return if (event.queryStringParameters.containsKey("refresh_token")) {
-            handleRefreshRequest(event)
+        return if (grantType == "refresh_token") {
+            val refreshToken = event.assertQueryParameter("refresh_token") { invalidAuthenticationRequest(ErrorCode.INVALID_GRANT_TYPE) }
+            handleRefreshRequest(refreshToken)
         } else {
-            handleAuthCodeRequest(event)
+            handleAuthCodeRequest(state, code)
         }
     }
 
     /**
      * Handles the refresh of the token.  This just makes a new getAuthToken request and returns it.
      */
-    private fun handleRefreshRequest(event: APIGatewayV2HTTPEvent): APIGatewayProxyResponseEvent {
-        return APIGatewayProxyResponseEvent()
+    private fun handleRefreshRequest(refreshToken: String): APIGatewayProxyResponseEvent {
+        return try {
+            val authToken = authApi.getAuthToken(
+                AuthApi.GrantTypeGetAuthToken.REFRESH_TOKEN,
+                DEFAULT_SCOPES,
+                refreshToken = refreshToken
+            )
+            authTokenResponse(authToken)
+        } catch (exception: Exception) {
+            invalidAuthenticationRequest(ErrorCode.INVALID_API_CALL)
+        }
     }
 
     /**
      * Attempt to grab the AuthToken from the TOKEN_STORAGE or returns a 400.  This will also remove the
      * AuthToken, so that we aren't keeping anything around for long periods of time.   Should probably
      * look into implementing a timer, which will remove old Tokens at regular intervals.
+     *
+     * @param state the session state
+     * @param code the returned code to retrieve the access token
      */
-    private fun handleAuthCodeRequest(event: APIGatewayV2HTTPEvent): APIGatewayProxyResponseEvent {
-        val code = event.queryStringParameters["code"]
-        val state = event.queryStringParameters["state"]
-        if (code.isNullOrEmpty() or state.isNullOrEmpty())
-            return codeOrStateNotProvided(code, state)
-
-        return tokenRepository.get(AuthTokenKey(code!!, state!!))?.let { token ->
-            APIGatewayProxyResponseEvent().apply {
-                statusCode = 200
-                body = "serialized token"
-            }
-        } ?: APIGatewayProxyResponseEvent().apply {
-            statusCode = 401
-            body = "Authentication request failed (AUTH_CODE_REQUEST)"
-        }
+    private fun handleAuthCodeRequest(state: String, code: String): APIGatewayProxyResponseEvent {
+        return tokenRepository.get(AuthTokenKey(state, code))?.let { authToken ->
+            authTokenResponse(authToken)
+        } ?: invalidAuthenticationRequest(ErrorCode.CODE_NOT_FOUND)
     }
 
+    /**
+     * Build the login page template.
+     *
+     * @return the HTML content for the login page.
+     */
     private fun getLoginPageTemplate() =
         this::class.java.getResource("login.html")?.readText() ?: "<html/>"
+
+    /**
+     * Builds the response for a successful AuthToken
+     *
+     * @param authToken the AuthToken providing access and refresh tokens
+     * @return successful API Gateway response
+     */
+    private fun authTokenResponse(authToken: AuthToken) =
+        APIGatewayProxyResponseEvent().apply {
+            statusCode = 200
+            headers = mapOf("Content-Type" to "application/json;charset=UTF-8")
+            body = authToken.toJson()
+        }
 
     companion object {
         const val DEFAULT_SCOPES = "address email offline_access openid phone profile roles"
