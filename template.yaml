@@ -12,34 +12,60 @@ Globals:
     MemorySize: 512
 
 Resources:
-  GolfCanadaAuthFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+  GolfCanadaAuthenticationFunction:
+    Type: AWS::Serverless::Function
     Properties:
-      FunctionName: GolfCanadaAuthFunction
-      Description: Provides OAuth functionality for Alexa account linking
-      CodeUri: GolfCanadaAuthFunction
+      CodeUri: .
+      Description: 'Provides OAuth wrapper for Golf Canada authentication'
+      MemorySize: 512
+      Timeout: 120
       Handler: kjd.golfcanada.auth.AuthenticationHandler::handleRequest
       Runtime: java21
       Architectures:
         - x86_64
-      MemorySize: 128
-      Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
+      EphemeralStorage:
+        Size: 512
+      Environment:
         Variables:
-          CLIENT_ID: sample_client_id
-          CLIENT_SECRET: sample_client_secret
-      Events:
-        LoginRequestEvent:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
-          Properties:
-            Path: /login
-            Method: get
-        CodeRequestEvent:
-          Type: Api
-          Properties:
-            Path: /code
-            Method: post
-        AuthTokenRequestEvent:
-          Type: Api
-          Properties:
-            Path: /authToken
-            Method: post
+          CLIENT_ID: 9efcb059-bf7a-406f-8dc4-770ca508cb93
+          CLIENT_SECRET: 30b50b74-1034-4234-830e-b503035e9870
+          JAVA_TOOL_OPTIONS: "-Djavax.net.ssl.trustStore=/opt/cacerts/cacertsclient_keystore_1.jks"
+      EventInvokeConfig:
+        MaximumEventAgeInSeconds: 21600
+        MaximumRetryAttempts: 2
+      FunctionUrlConfig:
+        AuthType: NONE
+        InvokeMode: BUFFERED
+      Layers:
+        - !Ref Layer1
+      PackageType: Zip
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+              Resource: arn:aws:logs:us-east-1:772896054063:*
+            - Effect: Allow
+              Action:
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource:
+                - >-
+                  arn:aws:logs:us-east-1:772896054063:log-group:/aws/lambda/kjd_golfcanada_alexa_authentication:*
+      SnapStart:
+        ApplyOn: None
+      Tags:
+        application: golfcanada
+        application_type: authentication
+      RuntimeManagementConfig:
+        UpdateRuntimeOn: Auto
+
+  # This resource represents your Layer with name GolfCanadaAuthenticationCertLayer.
+  # This provides the /opts/cacerts/cacerts file to replace the Java 21 standard cacerts
+  Layer1:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      ContentUri: ./GolfCanadaAuthenticationCertLayer
+      LayerName: GolfCanadaAuthenticationCertLayer
+      CompatibleRuntimes:
+        - java21

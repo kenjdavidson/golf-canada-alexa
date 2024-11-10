@@ -66,5 +66,10 @@ this is to get working on Lambda:
 Regardless, to get the tests and everything running locally:
 
 ```shell 
-$JAVA_HOME\bin\keytool -importcert -file $PROJECT_ROOT\src\main\resources\client\_.golfcanada.ca.crt -keystore $JAVA_HOME\lib\security\cacerts -alias "GolfCanadaCert" -noprompt
+# Add Certificate
+$JAVA_HOME/bin/keytool -importcert -file $PROJECT_ROOT/layers/cacerts/_.golfcanada.ca.crt -keystore $JAVA_HOME/lib/security/cacerts -alias "GolfCanadaCert" -noprompt
+
+
+# Remove Certificate
+$JAVA_HOME/bin/keytool -delete -keystore $JAVA_HOME/lib/security/cacerts -cacerts -alias "GolfCanadaCert"
 ```
