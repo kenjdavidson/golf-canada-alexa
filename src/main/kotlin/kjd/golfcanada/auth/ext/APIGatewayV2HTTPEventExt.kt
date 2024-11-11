@@ -15,19 +15,20 @@ fun APIGatewayV2HTTPEvent.assertHttpMethod(
 
 fun APIGatewayV2HTTPEvent.assertQueryParameter(
     parameterName: String,
-    expectedValue: String?,
+    expectedValue: String,
     responseProvider: (invalidValue: String) -> APIGatewayProxyResponseEvent
-) {
-    val parameterValue = this.queryStringParameters.getOrDefault(parameterName, "")
-    if (parameterValue !== expectedValue) {
-        throw AuthenticationException(responseProvider(parameterValue))
+): String {
+    val parameterValue = this.queryStringParameters?.getOrDefault(parameterName, null)
+    if (parameterValue != expectedValue) {
+        throw AuthenticationException(responseProvider("$parameterValue"))
     }
+    return parameterValue
 }
 
 fun APIGatewayV2HTTPEvent.assertQueryParameter(
     parameterName: String,
     responseProvider: (invalidValue: String) -> APIGatewayProxyResponseEvent
 ): String {
-    return this.queryStringParameters[parameterName]
+    return this.queryStringParameters?.get(parameterName)
         ?: throw AuthenticationException(responseProvider(parameterName))
 }

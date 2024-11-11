@@ -4,7 +4,6 @@ import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent
-import com.fasterxml.jackson.databind.JsonNode
 import kjd.golfcanada.auth.ext.assertHttpMethod
 import kjd.golfcanada.auth.ext.assertQueryParameter
 import kjd.golfcanada.auth.impl.TokenRepositoryMapImpl
@@ -12,7 +11,8 @@ import kjd.golfcanada.client.api.AuthApi
 import kjd.golfcanada.client.model.AuthToken
 import kjd.golfcanada.client.model.code
 import kjd.golfcanada.client.model.toJson
-import okhttp3.internal.http.HttpMethod
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * Lambda based OAuth wrapper for Golf Canada authentication.
@@ -44,6 +44,7 @@ class AuthenticationHandler internal constructor(
     private val tokenRepository: TokenRepository<AuthTokenKey, AuthToken> = TokenRepositoryMapImpl()
 ): RequestHandler<APIGatewayV2HTTPEvent, APIGatewayProxyResponseEvent> {
     private val loginPage = getLoginPageTemplate()
+    private val logger: Logger = LoggerFactory.getLogger(AuthenticationHandler::class.java)
 
     /**
      * Default constructor used during creation
@@ -52,10 +53,14 @@ class AuthenticationHandler internal constructor(
     constructor() : this(
         AuthApi(),
         System.getenv("CLIENT_ID"),
-        System.getenv("CLIENT_SECRET"),
-    )
+        System.getenv("CLIENT_SECRET")
+    ) {
+        logger.info("Building AuthenticationHandler with client_id: '$clientId' and client_secret: '$clientSecret'")
+    }
 
     override fun handleRequest(event: APIGatewayV2HTTPEvent, context: Context): APIGatewayProxyResponseEvent {
+        logger.info("Attempting request with query params ${event.queryStringParameters}")
+
         return try {
             when(event.rawPath) {
                 "/login" -> handleLoginRequest(event)
@@ -89,8 +94,16 @@ class AuthenticationHandler internal constructor(
      * @return the API Gateway proxy response redirecting to the redirect_uri with the state and code parameters
      */
     private fun handleLoginRequest(event: APIGatewayV2HTTPEvent): APIGatewayProxyResponseEvent {
-        event.assertHttpMethod("GET") { invalidAuthenticationRequest(ErrorCode.INVALID_API_CALL) }
-        event.assertQueryParameter("client_id", clientId) { invalidAuthenticationRequest(ErrorCode.INVALID_CLIENT_ID) }
+        logger.info("Handling GET /login")
+
+        event.assertHttpMethod("GET") {
+            logger.error("Attempt GET /login with incorrect HTTP Method")
+            invalidAuthenticationRequest(ErrorCode.INVALID_API_CALL)
+        }
+        event.assertQueryParameter("client_id", clientId) { invalidClientId ->
+            logger.error("Attempt to validate client_id failed with value '${invalidClientId}'")
+            invalidAuthenticationRequest(ErrorCode.INVALID_CLIENT_ID)
+        }
 
         return APIGatewayProxyResponseEvent().apply {
             statusCode = 200
