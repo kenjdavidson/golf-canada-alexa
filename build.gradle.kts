@@ -25,10 +25,12 @@ dependencies {
     implementation("com.amazonaws:aws-lambda-java-core:1.2.3")
     implementation("com.amazonaws:aws-lambda-java-events:3.14.0")
 
-    implementation("org.apache.logging.log4j:log4j-core:2.8.1")
-    implementation("org.apache.commons:commons-lang3:3.3.2")
-    implementation("org.slf4j:slf4j-api:1.7.10")
+    implementation("org.apache.logging.log4j:log4j-core:2.20.0")
+    implementation("org.apache.logging.log4j:log4j-api:2.20.0")
+    implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.20.0")
+    implementation("com.amazonaws:aws-lambda-java-log4j2:1.6.0")
 
+    implementation("org.apache.commons:commons-lang3:3.3.2")
     implementation("org.openapitools:openapi-generator-gradle-plugin:6.6.0")
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
     implementation("com.squareup.moshi:moshi:1.15.0")
@@ -66,6 +68,8 @@ task("packageJar", Zip::class) {
         from(tasks.jar)
         from(configurations.runtimeClasspath)
     }
+
+    dependsOn(tasks.test)
 }
 
 tasks.build {

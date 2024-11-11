@@ -37,6 +37,14 @@ Please feel free to contribute with suggestions, issues founds, pull requests or
 updates.   You should be able to tell from the current code what the expected styles and 
 practices are... please continue with them.
 
+### SAM
+
+The IntelliJ AWS Toolkit seems wonky with Lambda code generation.  It looks like it builds within
+`build/generated/src/main/kotlin/.aws-sam` which then brakes the regular project as all the classes
+are duplicated.
+
+
+
 ### Issues and Suggestions
 
 Open an Issue on the projects Github page.
