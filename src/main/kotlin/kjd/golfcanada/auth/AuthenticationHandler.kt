@@ -6,6 +6,7 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent
 import kjd.golfcanada.auth.ext.assertHttpMethod
 import kjd.golfcanada.auth.ext.assertQueryParameter
+import kjd.golfcanada.auth.ext.assertValue
 import kjd.golfcanada.auth.impl.TokenRepositoryMapImpl
 import kjd.golfcanada.client.api.AuthApi
 import kjd.golfcanada.client.model.AuthToken
@@ -13,6 +14,7 @@ import kjd.golfcanada.client.model.code
 import kjd.golfcanada.client.model.toJson
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.util.*
 
 /**
  * Lambda based OAuth wrapper for Golf Canada authentication.
@@ -59,10 +61,12 @@ class AuthenticationHandler internal constructor(
     }
 
     override fun handleRequest(event: APIGatewayV2HTTPEvent, context: Context): APIGatewayProxyResponseEvent {
-        logger.info("Attempting request with query params ${event.queryStringParameters}")
+        logger.debug("Attempting request with query params: {}", event.queryStringParameters)
+        logger.debug("Attempting request with body: {}", event.body)
 
         return try {
             when(event.rawPath) {
+                "/favicon.ico" -> handleFavIcon(event)
                 "/login" -> handleLoginRequest(event)
                 "/code" -> handleCodeRequest(event)
                 "/authToken" -> handleAuthTokenRequest(event)
@@ -72,6 +76,18 @@ class AuthenticationHandler internal constructor(
             exception.response
         } catch (exception: Exception) {
             invalidAuthenticationRequest(exception)
+        }
+    }
+
+    /**
+     * Return the fav-icon.
+     *
+     * TODO: return the binary content of an icon, shouldn't be too bad.
+     */
+    private fun handleFavIcon(event: APIGatewayV2HTTPEvent): APIGatewayProxyResponseEvent {
+        return APIGatewayProxyResponseEvent().apply {
+            statusCode = 200
+            body = ""
         }
     }
 
@@ -94,7 +110,7 @@ class AuthenticationHandler internal constructor(
      * @return the API Gateway proxy response redirecting to the redirect_uri with the state and code parameters
      */
     private fun handleLoginRequest(event: APIGatewayV2HTTPEvent): APIGatewayProxyResponseEvent {
-        logger.info("Handling GET /login")
+        logger.debug("Handling GET /login")
 
         event.assertHttpMethod("GET") {
             logger.error("Attempt GET /login with incorrect HTTP Method")
@@ -103,6 +119,14 @@ class AuthenticationHandler internal constructor(
         event.assertQueryParameter("client_id", clientId) { invalidClientId ->
             logger.error("Attempt to validate client_id failed with value '${invalidClientId}'")
             invalidAuthenticationRequest(ErrorCode.INVALID_CLIENT_ID)
+        }
+        event.assertQueryParameter("response_type", "code") { invalidResponseType ->
+            logger.error("Invalid response_type '$invalidResponseType' for GET /login request")
+            invalidAuthenticationRequest(ErrorCode.INVALID_RESPONSE_TYPE)
+        }
+        event.assertQueryParameter("state") {
+            logger.error("State was not provided for GET /login request")
+            invalidAuthenticationRequest(ErrorCode.INVALID_STATE)
         }
 
         return APIGatewayProxyResponseEvent().apply {
@@ -139,18 +163,32 @@ class AuthenticationHandler internal constructor(
      * to complete this request successfully:
      * - The client id must match
      * - The request must be a POST
+     *
+     * @param event from the simulated Lambda API Gateway
+     * @return the redirect request with code and state if valid or the login screen with error
      */
     private fun handleCodeRequest(event: APIGatewayV2HTTPEvent): APIGatewayProxyResponseEvent {
-        event.assertHttpMethod("POST") { invalidAuthenticationRequest(RuntimeException("Invalid Authentication method")) }
-        event.assertQueryParameter("client_id", clientId) { invalidAuthenticationRequest(ErrorCode.INVALID_CLIENT_ID) }
-        event.assertQueryParameter("response_type", "code") { invalidAuthenticationRequest(ErrorCode.INVALID_RESPONSE_TYPE) }
-        val redirectUri = event.assertQueryParameter("redirect_uri") { invalidAuthenticationRequest(ErrorCode.INVALID_REDIRECT_URI) }
-        val scope = event.assertQueryParameter("scope") { invalidAuthenticationRequest(ErrorCode.INVALID_SCOPE) }
-        val state = event.assertQueryParameter("state") { invalidAuthenticationRequest(ErrorCode.INVALID_STATE) }
-        val username = event.assertQueryParameter("username") { invalidAuthenticationRequest(ErrorCode.INVALID_USERNAME) }
-        val password = event.assertQueryParameter("password") { invalidAuthenticationRequest(ErrorCode.INVALID_PASSWORD) }
+        logger.debug("Handling POST /code")
 
         return try {
+            event.assertHttpMethod("POST") { invalidAuthenticationRequest(RuntimeException("Invalid Authentication method")) }
+
+            val bodyContent = String(Base64.getUrlDecoder().decode(event.body))
+            val parameters = bodyContent.split("&")
+                .map { parameters -> parameters.split("=") }
+                .associate { keyValues -> keyValues[0] to keyValues[1] }
+
+            parameters.assertValue("client_id", clientId) { invalidAuthenticationRequest(ErrorCode.INVALID_CLIENT_ID) }
+            parameters.assertValue("response_type", "code") { invalidAuthenticationRequest(ErrorCode.INVALID_RESPONSE_TYPE) }
+            val redirectUri = parameters.assertValue("redirect_uri") { invalidAuthenticationRequest(ErrorCode.INVALID_REDIRECT_URI) }
+            val scope = parameters.assertValue("scope") { invalidAuthenticationRequest(ErrorCode.INVALID_SCOPE) }
+                .replace("+", " ") // Shady, not sure why decoding isn't decoding these
+                .replace("%20", " ")
+            val state = parameters.assertValue("state") { invalidAuthenticationRequest(ErrorCode.INVALID_STATE) }
+            val username = parameters.assertValue("username") { invalidAuthenticationRequest(ErrorCode.INVALID_USERNAME) }
+            val password = parameters.assertValue("password") { invalidAuthenticationRequest(ErrorCode.INVALID_PASSWORD) }
+
+            logger.info("Attempting login for user {} with scopes {}", username, scope)
             val authToken = authApi.getAuthToken(
                 AuthApi.GrantTypeGetAuthToken.PASSWORD,
                 scope,
@@ -165,8 +203,12 @@ class AuthenticationHandler internal constructor(
                 statusCode = 301
                 body = "${redirectUri}?code=${code}&state=${state}"
             }
+        } catch(exception: AuthenticationException) {
+            logger.error("Invalid authentication request", exception)
+            exception.response
         } catch (exception: Exception) {
-            invalidAuthenticationRequest(ErrorCode.CLIENT_ERROR)
+            logger.error("Error occurred while attempting AuthApi#getAuthToken", exception)
+            invalidAuthenticationRequest(ErrorCode.INVALID_API_CALL)
         }
     }
 
