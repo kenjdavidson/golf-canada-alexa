@@ -10,11 +10,15 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kjd.golfcanada.TestContext
+import kjd.golfcanada.auth.AuthenticationHandler.Companion.DEFAULT_SCOPES
 import kjd.golfcanada.auth.impl.TokenRepositoryMapImpl
 import kjd.golfcanada.client.api.AuthApi
 import kjd.golfcanada.client.model.AuthToken
 import kjd.golfcanada.client.model.code
 import kjd.golfcanada.client.model.toJson
+import kjd.golfcanada.util.apiGatewayHttpEventBuilder
+import kjd.golfcanada.util.authToken
+import kjd.golfcanada.util.buildBody
 import org.apache.http.client.ClientProtocolException
 import org.apache.http.client.HttpResponseException
 import org.openapitools.client.infrastructure.ClientException
@@ -27,33 +31,6 @@ class AuthenticationHandlerTest : DescribeSpec({
     val clientId = UUID.randomUUID().toString()
     val clientSecret = UUID.randomUUID().toString()
     val state = "1234567890"
-
-    fun apiGatewayHttpEventBuilder(
-        method: String,
-        rawPath: String,
-        queryParameters: Map<String, String> = emptyMap()
-    ) =
-        APIGatewayV2HTTPEvent.builder()
-            .withRequestContext(
-                APIGatewayV2HTTPEvent.RequestContext.builder()
-                    .withHttp(
-                        APIGatewayV2HTTPEvent.RequestContext.Http.builder().withMethod(method.uppercase()).build()
-                    )
-                    .build()
-            )
-            .withRawPath(rawPath)
-            .withQueryStringParameters(
-                mapOf("client_id" to clientId).plus(queryParameters)
-            )
-
-    fun authToken() =
-        AuthToken(
-            UUID.randomUUID().toString(),
-            UUID.randomUUID().toString(),
-            UUID.randomUUID().toString(),
-            3600,
-            tokenType = "bearer"
-        )
 
     beforeEach {
         authApi = mockk<AuthApi>()
@@ -138,7 +115,7 @@ class AuthenticationHandlerTest : DescribeSpec({
                 )
 
                 val event = apiGatewayHttpEventBuilder(
-                    "GET", "/login",
+                    "GET", "/login", clientId,
                     mapOf(
                         "redirect_uri" to "https://redirect_uri.com",
                         "response_type" to "code",
@@ -186,6 +163,24 @@ class AuthenticationHandlerTest : DescribeSpec({
                 }
             }
 
+            it("should return 400 when body is not provided") {
+                val handler = AuthenticationHandler(
+                    authApi,
+                    clientId,
+                    clientSecret
+                )
+
+                val event = apiGatewayHttpEventBuilder("POST", "/code").build()
+                val response = handler.handleRequest(event, TestContext())
+
+                response shouldNotBe null
+                response.statusCode shouldBe 400
+                response.body shouldBe """{
+   "error": "invalid_request"
+   "code": "100"
+}"""
+            }
+
             it("should return 400 when invalid client_id") {
                 val handler = AuthenticationHandler(
                     authApi,
@@ -193,12 +188,9 @@ class AuthenticationHandlerTest : DescribeSpec({
                     clientSecret
                 )
 
-                val invalidClientId = UUID.randomUUID().toString()
-                val event = apiGatewayHttpEventBuilder(
-                    "POST", "/code", mapOf(
-                        "client_id" to invalidClientId
-                    )
-                ).build()
+                val event = apiGatewayHttpEventBuilder("POST", "/code",  clientId)
+                    .withBody(buildBody(mapOf("username" to "username")))
+                    .build()
                 val response = handler.handleRequest(event, TestContext())
 
                 response shouldNotBe null
@@ -206,6 +198,105 @@ class AuthenticationHandlerTest : DescribeSpec({
                 response.body shouldBe """{
    "error": "unauthorized_client"
    "code": "101"
+}"""
+            }
+
+            it("should return 400 when invalid response_type") {
+                val handler = AuthenticationHandler(
+                    authApi,
+                    clientId,
+                    clientSecret
+                )
+
+                val event = apiGatewayHttpEventBuilder("POST", "/code", clientId)
+                    .withBody(buildBody(mapOf(
+                        "username" to "username",
+                        "client_id" to clientId,
+                        "response_type" to "something"
+                    )))
+                    .build()
+                val response = handler.handleRequest(event, TestContext())
+
+                response shouldNotBe null
+                response.statusCode shouldBe 400
+                response.body shouldBe """{
+   "error": "invalid_request"
+   "code": "106"
+}"""
+            }
+
+            it("should return 400 when missing redirect uri") {
+                val handler = AuthenticationHandler(
+                    authApi,
+                    clientId,
+                    clientSecret
+                )
+
+                val event = apiGatewayHttpEventBuilder("POST", "/code", clientId)
+                    .withBody(buildBody(mapOf(
+                        "username" to "username",
+                        "client_id" to clientId,
+                        "response_type" to "code"
+                    )))
+                    .build()
+                val response = handler.handleRequest(event, TestContext())
+
+                response shouldNotBe null
+                response.statusCode shouldBe 400
+                response.body shouldBe """{
+   "error": "invalid_request"
+   "code": "107"
+}"""
+            }
+
+            it("should return 400 when missing scope") {
+                val handler = AuthenticationHandler(
+                    authApi,
+                    clientId,
+                    clientSecret
+                )
+
+                val event = apiGatewayHttpEventBuilder("POST", "/code", clientId)
+                    .withBody(buildBody(mapOf(
+                        "username" to "username",
+                        "client_id" to clientId,
+                        "response_type" to "code",
+                        "redirect_uri" to "https://redirect-uri.com"
+                    )))
+                    .build()
+                val response = handler.handleRequest(event, TestContext())
+
+                response shouldNotBe null
+                response.statusCode shouldBe 400
+                response.body shouldBe """{
+   "error": "invalid_scope"
+   "code": "108"
+}"""
+            }
+
+            it("should return 400 when missing state") {
+                val handler = AuthenticationHandler(
+                    authApi,
+                    clientId,
+                    clientSecret
+                )
+
+                val event = apiGatewayHttpEventBuilder("POST", "/code", clientId)
+                    .withBody(buildBody(mapOf(
+                        "username" to "username",
+                        "client_id" to clientId,
+                        "response_type" to "code",
+                        "redirect_uri" to "https://redirect-uri.com",
+                        "scope" to "some scopes here"
+                    )))
+                    .build()
+                val response = handler.handleRequest(event, TestContext())
+
+                response shouldNotBe null
+                response.statusCode shouldBe 400
+                response.body shouldBe """{
+   "error": "invalid_request"
+   "code": "104"
 }"""
             }
 
@@ -227,16 +318,16 @@ class AuthenticationHandlerTest : DescribeSpec({
                     )
                 } throws ClientException("Invalid Request", 400)
 
-                val event = apiGatewayHttpEventBuilder(
-                    "POST", "/code", mapOf(
-                        "redirect_uri" to "https://redirect_uri.com",
-                        "response_type" to "code",
-                        "scope" to AuthenticationHandler.DEFAULT_SCOPES,
-                        "state" to state,
+                val event = apiGatewayHttpEventBuilder("POST", "/code", clientId)
+                    .withBody(buildBody(mapOf(
                         "username" to "username",
-                        "password" to "password"
-                    )
-                )
+                        "password" to "password",
+                        "client_id" to clientId,
+                        "response_type" to "code",
+                        "redirect_uri" to "https://redirect-uri.com",
+                        "scope" to DEFAULT_SCOPES,
+                        "state" to state
+                    )))
                     .build()
                 val response = handler.handleRequest(event, TestContext())
 
@@ -244,7 +335,7 @@ class AuthenticationHandlerTest : DescribeSpec({
                 response.statusCode shouldBe 400
                 response.body shouldBe """{
    "error": "invalid_request"
-   "code": "1"
+   "code": "100"
 }"""
 
                 verify(exactly = 1) {
@@ -287,16 +378,16 @@ class AuthenticationHandlerTest : DescribeSpec({
                         .store(any(), any())
                 } returns Unit
 
-                val event = apiGatewayHttpEventBuilder(
-                    "POST", "/code", mapOf(
-                        "redirect_uri" to "https://redirect_uri.com",
-                        "response_type" to "code",
-                        "scope" to AuthenticationHandler.DEFAULT_SCOPES,
-                        "state" to state,
+                val event = apiGatewayHttpEventBuilder("POST", "/code", clientId)
+                    .withBody(buildBody(mapOf(
                         "username" to "username",
-                        "password" to "password"
-                    )
-                )
+                        "password" to "password",
+                        "client_id" to clientId,
+                        "response_type" to "code",
+                        "redirect_uri" to "https://redirect_uri.com",
+                        "scope" to DEFAULT_SCOPES,
+                        "state" to state
+                    )))
                     .build()
                 val response = handler.handleRequest(event, TestContext())
 
@@ -361,7 +452,7 @@ class AuthenticationHandlerTest : DescribeSpec({
                 )
 
                 val invalidClientId = UUID.randomUUID().toString()
-                val event = apiGatewayHttpEventBuilder("POST", "/authToken", mapOf(
+                val event = apiGatewayHttpEventBuilder("POST", "/authToken", clientId, mapOf(
                     "client_id" to invalidClientId
                 ))
                     .build()
@@ -382,8 +473,7 @@ class AuthenticationHandlerTest : DescribeSpec({
                     clientSecret
                 )
 
-                val event = apiGatewayHttpEventBuilder("POST", "/authToken", mapOf(
-                    "client_id" to clientId,
+                val event = apiGatewayHttpEventBuilder("POST", "/authToken", clientId, mapOf(
                     "client_secret" to ""
                 ))
                     .build()
@@ -404,7 +494,7 @@ class AuthenticationHandlerTest : DescribeSpec({
                     clientSecret
                 )
 
-                val event = apiGatewayHttpEventBuilder("POST", "/authToken", mapOf(
+                val event = apiGatewayHttpEventBuilder("POST", "/authToken", clientId, mapOf(
                     "client_secret" to clientSecret
                 ))
                     .build()
@@ -425,7 +515,7 @@ class AuthenticationHandlerTest : DescribeSpec({
                     clientSecret
                 )
 
-                val event = apiGatewayHttpEventBuilder("POST", "/authToken", mapOf(
+                val event = apiGatewayHttpEventBuilder("POST", "/authToken", clientId, mapOf(
                     "client_secret" to clientSecret,
                     "state" to state
                 ))
@@ -452,12 +542,12 @@ class AuthenticationHandlerTest : DescribeSpec({
                 val authToken = authToken()
                 tokenRepo.store(AuthTokenKey(state, authToken.code()), authToken)
 
-                val event = apiGatewayHttpEventBuilder("POST", "/authToken", mapOf(
+                val event = apiGatewayHttpEventBuilder("POST", "/authToken", clientId, mapOf(
                     "client_id" to clientId,
                     "client_secret" to clientSecret,
                     "state" to state,
                     "code" to authToken.code(),
-                    "grant_type" to "authorization_code"
+                    "grant_type" to "code"
                 ))
                     .build()
                 val response = handler.handleRequest(event, TestContext())

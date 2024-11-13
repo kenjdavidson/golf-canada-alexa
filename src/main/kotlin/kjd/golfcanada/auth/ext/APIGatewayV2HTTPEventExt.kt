@@ -32,3 +32,23 @@ fun APIGatewayV2HTTPEvent.assertQueryParameter(
     return this.queryStringParameters?.get(parameterName)
         ?: throw AuthenticationException(responseProvider(parameterName))
 }
+
+fun <K, V> Map<K, V>.assertValue(
+    parameterName: K,
+    expectedValue: V,
+    responseProvider: (invalidValue: String) -> APIGatewayProxyResponseEvent
+): V? {
+    val parameterValue = this[parameterName]
+    if (parameterValue != expectedValue) {
+        throw AuthenticationException(responseProvider("$parameterValue"))
+    }
+    return parameterValue
+}
+
+fun <K, V> Map<K, V>.assertValue(
+    parameterName: K,
+    responseProvider: (invalidValue: String) -> APIGatewayProxyResponseEvent
+): V {
+    return this[parameterName]
+        ?: throw AuthenticationException(responseProvider("$parameterName"))
+}
