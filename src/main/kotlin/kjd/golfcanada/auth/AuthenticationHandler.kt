@@ -1,5 +1,6 @@
 package kjd.golfcanada.auth
 
+import com.amazon.ask.model.services.lwa.model.GrantType
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
@@ -16,7 +17,6 @@ import org.openapitools.client.infrastructure.ClientException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.net.URLDecoder
-import java.net.URLEncoder
 import java.util.*
 
 /**
@@ -113,8 +113,6 @@ class AuthenticationHandler internal constructor(
      * @return the API Gateway proxy response redirecting to the redirect_uri with the state and code parameters
      */
     private fun handleLoginRequest(event: APIGatewayV2HTTPEvent): APIGatewayProxyResponseEvent {
-        logger.debug("Handling GET /login with event {}", event)
-
         event.assertHttpMethod("GET") {
             logger.error("Attempt GET /login with incorrect HTTP Method")
             invalidAuthenticationRequest(ErrorCode.INVALID_API_CALL)
@@ -161,6 +159,14 @@ class AuthenticationHandler internal constructor(
         return loginString
     }
 
+    private fun parseBodyParameters(event: APIGatewayV2HTTPEvent): Map<String, String> {
+        val bodyContent = event.body?.let { String(Base64.getUrlDecoder().decode(it)) }
+            ?: throw AuthenticationException(invalidAuthenticationRequest(ErrorCode.INVALID_CODE_BODY))
+        return bodyContent.split("&")
+            .map { parameters -> parameters.split("=") }
+            .associate { keyValues -> keyValues[0] to URLDecoder.decode(keyValues[1], "UTF-8") }
+    }
+
     /**
      * Handles the actual login/submission from the login page.   Will attempt to log in and redirect
      * to the provided url.
@@ -169,17 +175,10 @@ class AuthenticationHandler internal constructor(
      * @return the redirect request with code and state if valid or the login screen with error
      */
     private fun handleCodeRequest(event: APIGatewayV2HTTPEvent): APIGatewayProxyResponseEvent {
-        logger.debug("Handling POST /code with event: {}", event)
-
         return try {
             event.assertHttpMethod("POST") { invalidAuthenticationRequest(RuntimeException("Invalid Authentication method")) }
 
-            val bodyContent = event.body?.let { String(Base64.getUrlDecoder().decode(it)) }
-                ?: throw AuthenticationException(invalidAuthenticationRequest(ErrorCode.INVALID_CODE_BODY))
-            val parameters = bodyContent.split("&")
-                .map { parameters -> parameters.split("=") }
-                .associate { keyValues -> keyValues[0] to URLDecoder.decode(keyValues[1], "UTF-8") }
-
+            val parameters = parseBodyParameters(event)
             parameters.assertValue("client_id", clientId) { invalidAuthenticationRequest(ErrorCode.INVALID_CLIENT_ID) }
             parameters.assertValue("response_type", "code") { invalidAuthenticationRequest(ErrorCode.INVALID_RESPONSE_TYPE) }
 
@@ -232,18 +231,36 @@ class AuthenticationHandler internal constructor(
      * @return a successful 200 with the OAuth token
      */
     private fun handleAuthTokenRequest(event: APIGatewayV2HTTPEvent): APIGatewayProxyResponseEvent {
-        event.assertHttpMethod("POST") { invalidAuthenticationRequest(RuntimeException("173: Invalid Authentication method")) }
-        event.assertQueryParameter("client_id", clientId) { invalidAuthenticationRequest(ErrorCode.INVALID_CLIENT_ID) }
-        event.assertQueryParameter("client_secret", clientSecret) { invalidAuthenticationRequest(ErrorCode.INVALID_SECRET) }
-        val grantType = event.assertQueryParameter("grant_type") { invalidAuthenticationRequest(ErrorCode.INVALID_GRANT_TYPE) }
-        val state = event.assertQueryParameter("state") { invalidAuthenticationRequest(ErrorCode.INVALID_STATE) }
-        val code = event.assertQueryParameter("code") { invalidAuthenticationRequest(ErrorCode.INVALID_CODE) }
+        event.assertHttpMethod("POST") {
+            invalidAuthenticationRequest(RuntimeException("173: Invalid Authentication method")) }
 
-        return if (grantType == "refresh_token") {
-            val refreshToken = event.assertQueryParameter("refresh_token") { invalidAuthenticationRequest(ErrorCode.INVALID_GRANT_TYPE) }
-            handleRefreshRequest(refreshToken)
-        } else {
-            handleAuthCodeRequest(state, code)
+        val parameters = parseBodyParameters(event)
+        parameters.assertValue("client_id", clientId) {
+            invalidAuthenticationRequest(ErrorCode.INVALID_CLIENT_ID) }
+        parameters.assertValue("client_secret", clientSecret) {
+            invalidAuthenticationRequest(ErrorCode.INVALID_SECRET) }
+
+        val grantType = parameters.assertValue("grant_type") {
+            invalidAuthenticationRequest(ErrorCode.INVALID_GRANT_TYPE) }
+
+        return when (grantType) {
+            "refresh_token" -> {
+                val refreshToken = parameters.assertValue("refresh_token") {
+                    invalidAuthenticationRequest(ErrorCode.INVALID_REFRESH_TOKEN) }
+                handleRefreshRequest(refreshToken)
+            }
+            "authorization_code" -> {
+                val state = parameters.assertValue("state") {
+                    invalidAuthenticationRequest(ErrorCode.INVALID_STATE) }
+                val code = parameters.assertValue("code") {
+                    invalidAuthenticationRequest(ErrorCode.INVALID_CODE) }
+
+                handleAuthCodeRequest(state, code)
+            }
+            else -> {
+                logger.error("Request has grant_type '{}' which is not valid", grantType)
+                invalidAuthenticationRequest(ErrorCode.INVALID_GRANT_TYPE)
+            }
         }
     }
 
