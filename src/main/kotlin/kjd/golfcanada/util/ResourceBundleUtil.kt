@@ -8,7 +8,6 @@ object ResourceBundleUtil {
 
     fun getResourceBundle(input: HandlerInput): ResourceBundle =
         input.requestEnvelope.request.locale.let {
-            val languageAndCountry = it.split("_")
             ResourceBundle.getBundle(RESOURCE_BASE, Locale.forLanguageTag(it))
         }
 }

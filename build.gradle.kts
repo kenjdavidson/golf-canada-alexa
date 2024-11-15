@@ -32,7 +32,7 @@ dependencies {
 
     implementation("org.apache.commons:commons-lang3:3.3.2")
     implementation("org.openapitools:openapi-generator-gradle-plugin:6.6.0")
-    implementation("com.squareup.okhttp3:okhttp:4.11.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.moshi:moshi:1.15.0")
     implementation("com.squareup.moshi:moshi-kotlin:1.15.0")
 }
@@ -40,7 +40,7 @@ dependencies {
 sourceSets {
     main {
         kotlin {
-            srcDir("${buildDir}/generated/src/main/kotlin")
+            srcDir("${buildDir}/generated/openapi/src/main/kotlin")
         }
     }
 }
@@ -52,7 +52,7 @@ tasks.test {
 openApiGenerate {
     generatorName = "kotlin"
     inputSpec = "$rootDir/src/main/resources/client/golfcanada.yaml"
-    outputDir = "${buildDir}/generated"
+    outputDir = "${buildDir}/generated/openapi"
     apiPackage = "kjd.golfcanada.client.api"
     invokerPackage = "kjd.golfcanada.client.invoker"
     modelPackage = "kjd.golfcanada.client.model"
@@ -72,6 +72,6 @@ task("packageJar", Zip::class) {
     dependsOn(tasks.test)
 }
 
-tasks.build {
-    dependsOn("packageJar")
+tasks.compileKotlin {
+    dependsOn("openApiGenerate")
 }

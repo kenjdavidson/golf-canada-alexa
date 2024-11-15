@@ -177,7 +177,7 @@ class AuthenticationHandlerTest : DescribeSpec({
                 response.statusCode shouldBe 400
                 response.body shouldBe """{
    "error": "invalid_request"
-   "code": "100"
+   "code": "112"
 }"""
             }
 
