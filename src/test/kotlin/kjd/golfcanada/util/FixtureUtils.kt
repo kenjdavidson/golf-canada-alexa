@@ -2,6 +2,7 @@ package kjd.golfcanada.util
 
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent
 import kjd.golfcanada.client.model.AuthToken
+import java.net.URLEncoder
 import java.util.*
 
 fun apiGatewayHttpEventBuilder(
@@ -9,7 +10,7 @@ fun apiGatewayHttpEventBuilder(
     rawPath: String,
     clientId: String = UUID.randomUUID().toString(),
     queryParameters: Map<String, String> = emptyMap()
-) =
+): APIGatewayV2HTTPEvent.APIGatewayV2HTTPEventBuilder =
     APIGatewayV2HTTPEvent.builder()
         .withRequestContext(
             APIGatewayV2HTTPEvent.RequestContext.builder()
@@ -23,7 +24,7 @@ fun apiGatewayHttpEventBuilder(
             mapOf("client_id" to clientId).plus(queryParameters)
         )
 
-fun authToken() =
+fun authToken(): AuthToken =
     AuthToken(
         UUID.randomUUID().toString(),
         UUID.randomUUID().toString(),
@@ -34,6 +35,6 @@ fun authToken() =
 
 fun buildBody(parameters: Map<String, String>): String =
     parameters
-        .map { (k, v) -> "${k}=${v}" }
+        .map { (k, v) -> "${k}=${URLEncoder.encode(v, "UTF-8")}" }
         .joinToString("&")
         .let { String(Base64.getUrlEncoder().encode(it.toByteArray())) }

@@ -16,7 +16,8 @@ enum class ErrorCode(
     INVALID_SCOPE(108, "invalid_scope"),
     INVALID_USERNAME(109, "invalid_request"),
     INVALID_PASSWORD(110, "invalid_request"),
-    INVALID_GRANT_TYPE(111, "invalid_grant")
+    INVALID_GRANT_TYPE(111, "invalid_grant"),
+    INVALID_CODE_BODY(112, "invalid_request")
     ;
 
     override fun toString(): String {

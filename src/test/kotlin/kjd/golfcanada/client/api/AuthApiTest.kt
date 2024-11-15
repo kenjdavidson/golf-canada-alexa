@@ -89,7 +89,6 @@ class AuthApiTest: DescribeSpec({
                     "response_type" to "code",
                     "redirect_uri" to "https://redirect_uri.com",
                     "state" to "1234567890",
-                    "code" to authToken.code(),
                     "scope" to DEFAULT_SCOPES,
                     "grant_type" to "code",
                     "username" to username,
