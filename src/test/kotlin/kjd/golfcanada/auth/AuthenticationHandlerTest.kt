@@ -19,8 +19,6 @@ import kjd.golfcanada.client.model.toJson
 import kjd.golfcanada.util.apiGatewayHttpEventBuilder
 import kjd.golfcanada.util.authToken
 import kjd.golfcanada.util.buildBody
-import org.apache.http.client.ClientProtocolException
-import org.apache.http.client.HttpResponseException
 import org.openapitools.client.infrastructure.ClientException
 import java.util.*
 
@@ -119,7 +117,7 @@ class AuthenticationHandlerTest : DescribeSpec({
                     mapOf(
                         "redirect_uri" to "https://redirect_uri.com",
                         "response_type" to "code",
-                        "scope" to AuthenticationHandler.DEFAULT_SCOPES,
+                        "scope" to DEFAULT_SCOPES,
                         "state" to state
                     )
                 )
@@ -132,7 +130,7 @@ class AuthenticationHandlerTest : DescribeSpec({
                 response.body shouldContain "value=\"$clientId\""
                 response.body shouldContain "value=\"https://redirect_uri.com\""
                 response.body shouldContain "value=\"code\""
-                response.body shouldContain "value=\"${AuthenticationHandler.DEFAULT_SCOPES}\""
+                response.body shouldContain "value=\"${DEFAULT_SCOPES}\""
                 response.body shouldContain "value=\"1234567890\""
                 response.body shouldContain "aria-label=\"Username\""
                 response.body shouldContain "aria-label=\"Password\""
@@ -311,7 +309,7 @@ class AuthenticationHandlerTest : DescribeSpec({
                 every {
                     authApi.getAuthToken(
                         AuthApi.GrantTypeGetAuthToken.PASSWORD,
-                        AuthenticationHandler.DEFAULT_SCOPES,
+                        DEFAULT_SCOPES,
                         "username",
                         "password",
                         null
@@ -341,7 +339,7 @@ class AuthenticationHandlerTest : DescribeSpec({
                 verify(exactly = 1) {
                     authApi.getAuthToken(
                         AuthApi.GrantTypeGetAuthToken.PASSWORD,
-                        AuthenticationHandler.DEFAULT_SCOPES,
+                        DEFAULT_SCOPES,
                         "username",
                         "password",
                         null
@@ -367,7 +365,7 @@ class AuthenticationHandlerTest : DescribeSpec({
                 every {
                     authApi.getAuthToken(
                         AuthApi.GrantTypeGetAuthToken.PASSWORD,
-                        AuthenticationHandler.DEFAULT_SCOPES,
+                        DEFAULT_SCOPES,
                         "username",
                         "password",
                         null
@@ -398,7 +396,7 @@ class AuthenticationHandlerTest : DescribeSpec({
                 verify(exactly = 1) {
                     authApi.getAuthToken(
                         AuthApi.GrantTypeGetAuthToken.PASSWORD,
-                        AuthenticationHandler.DEFAULT_SCOPES,
+                        DEFAULT_SCOPES,
                         "username",
                         "password",
                         null
@@ -452,9 +450,10 @@ class AuthenticationHandlerTest : DescribeSpec({
                 )
 
                 val invalidClientId = UUID.randomUUID().toString()
-                val event = apiGatewayHttpEventBuilder("POST", "/authToken", clientId, mapOf(
-                    "client_id" to invalidClientId
-                ))
+                val event = apiGatewayHttpEventBuilder("POST", "/authToken", clientId)
+                    .withBody(buildBody(mapOf(
+                        "client_id" to invalidClientId,
+                    )))
                     .build()
                 val response = handler.handleRequest(event, TestContext())
 
@@ -473,9 +472,11 @@ class AuthenticationHandlerTest : DescribeSpec({
                     clientSecret
                 )
 
-                val event = apiGatewayHttpEventBuilder("POST", "/authToken", clientId, mapOf(
-                    "client_secret" to ""
-                ))
+                val event = apiGatewayHttpEventBuilder("POST", "/authToken", clientId)
+                    .withBody(buildBody(mapOf(
+                        "client_id" to clientId,
+                        "client_secret" to ""
+                    )))
                     .build()
                 val response = handler.handleRequest(event, TestContext())
 
@@ -487,16 +488,18 @@ class AuthenticationHandlerTest : DescribeSpec({
 }"""
             }
 
-            it ("should throw authentication error when no state found") {
+            it ("should throw authentication error when no grant_type found") {
                 val handler = AuthenticationHandler(
                     authApi,
                     clientId,
                     clientSecret
                 )
 
-                val event = apiGatewayHttpEventBuilder("POST", "/authToken", clientId, mapOf(
-                    "client_secret" to clientSecret
-                ))
+                val event = apiGatewayHttpEventBuilder("POST", "/authToken", clientId)
+                    .withBody(buildBody(mapOf(
+                        "client_id" to clientId,
+                        "client_secret" to clientSecret,
+                    )))
                     .build()
                 val response = handler.handleRequest(event, TestContext())
 
@@ -505,6 +508,30 @@ class AuthenticationHandlerTest : DescribeSpec({
                 response.body shouldBe """{
    "error": "invalid_grant"
    "code": "111"
+}"""
+            }
+
+            it ("should throw authentication error when no state found") {
+                val handler = AuthenticationHandler(
+                    authApi,
+                    clientId,
+                    clientSecret
+                )
+
+                val event = apiGatewayHttpEventBuilder("POST", "/authToken", clientId)
+                    .withBody(buildBody(mapOf(
+                        "client_id" to clientId,
+                        "client_secret" to clientSecret,
+                        "grant_type" to "authorization_code"
+                    )))
+                    .build()
+                val response = handler.handleRequest(event, TestContext())
+
+                response shouldNotBe null
+                response.statusCode shouldBe 400
+                response.body shouldBe """{
+   "error": "invalid_request"
+   "code": "104"
 }"""
             }
 
@@ -515,10 +542,12 @@ class AuthenticationHandlerTest : DescribeSpec({
                     clientSecret
                 )
 
-                val event = apiGatewayHttpEventBuilder("POST", "/authToken", clientId, mapOf(
-                    "client_secret" to clientSecret,
-                    "state" to state
-                ))
+                val event = apiGatewayHttpEventBuilder("POST", "/authToken", clientId)
+                    .withBody(buildBody(mapOf(
+                        "client_id" to clientId,
+                        "client_secret" to clientSecret,
+                        "state" to state,
+                    )))
                     .build()
                 val response = handler.handleRequest(event, TestContext())
 
@@ -529,6 +558,7 @@ class AuthenticationHandlerTest : DescribeSpec({
    "code": "111"
 }"""
             }
+
 
             it("should return AuthToken when found") {
                 val tokenRepo = TokenRepositoryMapImpl()
@@ -542,13 +572,14 @@ class AuthenticationHandlerTest : DescribeSpec({
                 val authToken = authToken()
                 tokenRepo.store(AuthTokenKey(state, authToken.code()), authToken)
 
-                val event = apiGatewayHttpEventBuilder("POST", "/authToken", clientId, mapOf(
-                    "client_id" to clientId,
-                    "client_secret" to clientSecret,
-                    "state" to state,
-                    "code" to authToken.code(),
-                    "grant_type" to "code"
-                ))
+                val event = apiGatewayHttpEventBuilder("POST", "/authToken", clientId)
+                    .withBody(buildBody(mapOf(
+                        "client_id" to clientId,
+                        "client_secret" to clientSecret,
+                        "state" to state,
+                        "code" to authToken.code(),
+                        "grant_type" to "authorization_code"
+                    )))
                     .build()
                 val response = handler.handleRequest(event, TestContext())
 
@@ -558,10 +589,48 @@ class AuthenticationHandlerTest : DescribeSpec({
 
                 tokenRepo.get(AuthTokenKey(state, authToken.code())) shouldBe null
             }
-        }
 
-        describe("/authToken refresh_code") {
+            it("should attempt to refresh_code when requested") {
+                val handler = AuthenticationHandler(
+                    authApi,
+                    clientId,
+                    clientSecret,
+                    tokenRepository
+                )
 
+                val authToken = authToken()
+                every {
+                    authApi.getAuthToken(
+                        AuthApi.GrantTypeGetAuthToken.REFRESH_TOKEN,
+                        DEFAULT_SCOPES,
+                        refreshToken = authToken.refreshToken
+                    )
+                } returns authToken
+
+                val event = apiGatewayHttpEventBuilder("POST", "/authToken", clientId)
+                    .withBody(buildBody(mapOf(
+                        "client_id" to clientId,
+                        "client_secret" to clientSecret,
+                        "grant_type" to "refresh_token",
+                        "refresh_token" to "${authToken.refreshToken}"
+                    )))
+                    .build()
+                val response = handler.handleRequest(event, TestContext())
+
+                response shouldNotBe null
+                response.statusCode shouldBe 200
+                response.body shouldBe authToken.toJson()
+
+                verify(exactly = 1) {
+                    authApi.getAuthToken(
+                        AuthApi.GrantTypeGetAuthToken.REFRESH_TOKEN,
+                        DEFAULT_SCOPES,
+                        null,
+                        null,
+                        authToken.refreshToken
+                    )
+                }
+            }
         }
 
         describe("invalid requests") {
