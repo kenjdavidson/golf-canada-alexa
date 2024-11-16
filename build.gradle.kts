@@ -17,9 +17,7 @@ dependencies {
     testImplementation("io.kotest:kotest-runner-junit5:5.7.2")
     testImplementation("io.mockk:mockk:1.13.13")
 
-    implementation("com.amazon.alexa:ask-sdk-core:2.86.0")
-    implementation("com.amazon.alexa:ask-sdk-lambda-support:2.86.0")
-    implementation("com.amazon.alexa:ask-sdk-servlet-support:2.86.0")
+    implementation("com.amazon.alexa:ask-sdk:2.86.0")
     implementation("com.amazon.alexa:ask-sdk-apache-client:2.86.0")
     implementation("com.amazon.alexa:alexa-skills-kit:1.1.2")
     implementation("com.amazonaws:aws-lambda-java-core:1.2.3")
