@@ -62,6 +62,13 @@ class AuthenticationHandler internal constructor(
         logger.info("Building AuthenticationHandler with client_id: '$clientId' and client_secret: '$clientSecret'")
     }
 
+    /**
+     * Main entry point provides routing for the expected requests and "global" error handling.
+     *
+     * @param event simulated API Gateway event from Lambda URL
+     * @param context Lambda context
+     * @returns API Gateway response matching Alexa Account Linking requirements
+     */
     override fun handleRequest(event: APIGatewayV2HTTPEvent, context: Context): APIGatewayProxyResponseEvent {
         logger.debug("Attempting request with query params: {}", event.queryStringParameters)
         logger.debug("Attempting request with body: {}", event.body)
@@ -218,6 +225,10 @@ class AuthenticationHandler internal constructor(
      * Authenticates request clientId and clientSecret based on where they are in the event:
      * - body parameters
      * - http basic header
+     *
+     * @param event from the simulated Lambda API Gateway
+     * @param parameters map containing the body content expected for Account linking
+     * @throws AuthenticationException when fails clientId or clientSecret check
      */
     private fun authenticateRequest(event: APIGatewayV2HTTPEvent, parameters: Map<String, String>) {
         event.headers?.get("Authorization")?.let {
@@ -284,6 +295,9 @@ class AuthenticationHandler internal constructor(
 
     /**
      * Handles the refresh of the token.  This just makes a new getAuthToken request and returns it.
+     *
+     * @param refreshToken provided by authToken request
+     * @return a successful 200 with the OAuth token
      */
     private fun handleRefreshRequest(refreshToken: String): APIGatewayProxyResponseEvent {
         return try {
