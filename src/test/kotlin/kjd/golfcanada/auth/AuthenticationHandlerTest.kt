@@ -174,8 +174,8 @@ class AuthenticationHandlerTest : DescribeSpec({
                 response shouldNotBe null
                 response.statusCode shouldBe 400
                 response.body shouldBe """{
-   "error": "invalid_request"
-   "code": "112"
+   "error": "unauthorized_client"
+   "code": "101"
 }"""
             }
 
@@ -465,6 +465,29 @@ class AuthenticationHandlerTest : DescribeSpec({
 }"""
             }
 
+            it("should return 400 when invalid client_id in header") {
+                val handler = AuthenticationHandler(
+                    authApi,
+                    clientId,
+                    clientSecret
+                )
+
+                val invalidClientId = UUID.randomUUID().toString()
+                val authorization = "${Base64.getEncoder().encodeToString(invalidClientId.toByteArray())}:${Base64.getEncoder().encodeToString(clientSecret.toByteArray())}"
+                val event = apiGatewayHttpEventBuilder("POST", "/authToken", clientId)
+                    .withHeaders(mapOf("Authorization" to "Basic $authorization"))
+                    .withBody("")
+                    .build()
+                val response = handler.handleRequest(event, TestContext())
+
+                response shouldNotBe null
+                response.statusCode shouldBe 400
+                response.body shouldBe """{
+   "error": "unauthorized_client"
+   "code": "101"
+}"""
+            }
+
             it("should return 400 when invalid client_secret") {
                 val handler = AuthenticationHandler(
                     authApi,
@@ -477,6 +500,29 @@ class AuthenticationHandlerTest : DescribeSpec({
                         "client_id" to clientId,
                         "client_secret" to ""
                     )))
+                    .build()
+                val response = handler.handleRequest(event, TestContext())
+
+                response shouldNotBe null
+                response.statusCode shouldBe 400
+                response.body shouldBe """{
+   "error": "unauthorized_client"
+   "code": "102"
+}"""
+            }
+
+            it("should return 400 when invalid client_secret in header") {
+                val handler = AuthenticationHandler(
+                    authApi,
+                    clientId,
+                    clientSecret
+                )
+
+                val invalidSecret = UUID.randomUUID().toString()
+                val authorization = "${Base64.getEncoder().encodeToString(clientId.toByteArray())}:${Base64.getEncoder().encodeToString(invalidSecret.toByteArray())}"
+                val event = apiGatewayHttpEventBuilder("POST", "/authToken", clientId)
+                    .withHeaders(mapOf("Authorization" to "Basic $authorization"))
+                    .withBody("")
                     .build()
                 val response = handler.handleRequest(event, TestContext())
 
