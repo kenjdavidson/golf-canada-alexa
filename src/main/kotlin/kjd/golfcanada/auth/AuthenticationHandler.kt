@@ -1,6 +1,5 @@
 package kjd.golfcanada.auth
 
-import com.amazon.ask.model.services.lwa.model.GrantType
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
@@ -161,7 +160,7 @@ class AuthenticationHandler internal constructor(
 
     private fun parseBodyParameters(event: APIGatewayV2HTTPEvent): Map<String, String> {
         val bodyContent = event.body?.let { String(Base64.getUrlDecoder().decode(it)) }
-            ?: throw AuthenticationException(invalidAuthenticationRequest(ErrorCode.INVALID_CODE_BODY))
+        if (bodyContent.isNullOrEmpty()) return emptyMap()
         return bodyContent.split("&")
             .map { parameters -> parameters.split("=") }
             .associate { keyValues -> keyValues[0] to URLDecoder.decode(keyValues[1], "UTF-8") }
@@ -216,6 +215,28 @@ class AuthenticationHandler internal constructor(
     }
 
     /**
+     * Authenticates request clientId and clientSecret based on where they are in the event:
+     * - body parameters
+     * - http basic header
+     */
+    private fun authenticateRequest(event: APIGatewayV2HTTPEvent, parameters: Map<String, String>) {
+        event.headers?.get("Authorization")?.let {
+            val userPassword = it.substring(6).split(":")
+            if (String(Base64.getDecoder().decode(userPassword[0])) != clientId) {
+                throw AuthenticationException(invalidAuthenticationRequest(ErrorCode.INVALID_CLIENT_ID))
+            }
+            if (String(Base64.getDecoder().decode(userPassword[1])) != clientSecret) {
+                throw AuthenticationException(invalidAuthenticationRequest(ErrorCode.INVALID_SECRET))
+            }
+        } ?: parameters.let {
+            it.assertValue("client_id", clientId) {
+                invalidAuthenticationRequest(ErrorCode.INVALID_CLIENT_ID) }
+            it.assertValue("client_secret", clientSecret) {
+                invalidAuthenticationRequest(ErrorCode.INVALID_SECRET) }
+        }
+    }
+
+    /**
      * Handles the POST /authToken that is used to exchange the code provided earlier with the actual OAuth and
      * refresh tokens.  The form encoded input will be:
      * - grant_type which is always authentication_code
@@ -235,10 +256,7 @@ class AuthenticationHandler internal constructor(
             invalidAuthenticationRequest(RuntimeException("173: Invalid Authentication method")) }
 
         val parameters = parseBodyParameters(event)
-        parameters.assertValue("client_id", clientId) {
-            invalidAuthenticationRequest(ErrorCode.INVALID_CLIENT_ID) }
-        parameters.assertValue("client_secret", clientSecret) {
-            invalidAuthenticationRequest(ErrorCode.INVALID_SECRET) }
+        authenticateRequest(event, parameters)
 
         val grantType = parameters.assertValue("grant_type") {
             invalidAuthenticationRequest(ErrorCode.INVALID_GRANT_TYPE) }
