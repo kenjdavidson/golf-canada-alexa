@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "kjd.golfcanada"
-version = "1.0-SNAPSHOT"
+version = "1.1-SNAPSHOT"
 
 repositories {
     mavenCentral()
