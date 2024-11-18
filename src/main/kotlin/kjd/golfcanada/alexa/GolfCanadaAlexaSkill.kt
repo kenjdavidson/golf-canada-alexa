@@ -3,11 +3,18 @@ package kjd.golfcanada.alexa
 import com.amazon.ask.Skill
 import com.amazon.ask.SkillStreamHandler
 import com.amazon.ask.Skills
+import kjd.golfcanada.alexa.interceptor.AuthenticationInterceptor
 
 class GolfCanadaAlexaSkill: SkillStreamHandler(getSkills()) {
     companion object {
-        fun getSkills(): Skill =
-            Skills.custom()
+        fun getSkills(): Skill {
+            val authInterceptor = AuthenticationInterceptor()
+
+            return Skills.custom()
+                .withSkillId(System.getenv("SKILL_ID") ?: "ERROR - No SKILL_ID provided!!!")
+                .addRequestInterceptors(authInterceptor)
+                .addResponseInterceptors(authInterceptor)
                 .build()
+        }
     }
 }

@@ -15,7 +15,8 @@ import java.util.*
  * - etc
  */
 class LaunchRequestHandler : com.amazon.ask.dispatcher.request.handler.impl.LaunchRequestHandler {
-    override fun canHandle(input: HandlerInput?, request: LaunchRequest?): Boolean = true
+    override fun canHandle(input: HandlerInput?, request: LaunchRequest?): Boolean =
+        true
 
     override fun handle(input: HandlerInput?, request: LaunchRequest?): Optional<Response> {
         TODO("Not yet implemented")
