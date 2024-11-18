@@ -10,9 +10,8 @@ import java.util.*
  * Provides information on what is currently available for the application.
  */
 class HelpRequestHandler : RequestHandler {
-    override fun canHandle(input: HandlerInput): Boolean {
-        return input.matches(intentName("AMAZON.HelpIntent"))
-    }
+    override fun canHandle(input: HandlerInput): Boolean =
+        input.matches(intentName("AMAZON.HelpIntent"))
 
     override fun handle(input: HandlerInput): Optional<Response> {
         val speechText = "You can say hello to me!"
