@@ -1,6 +1,7 @@
 package kjd.golfcanada.alexa.handler
 
 import com.amazon.ask.dispatcher.request.handler.HandlerInput
+import com.amazon.ask.model.Intent
 import com.amazon.ask.model.IntentRequest
 import com.amazon.ask.model.RequestEnvelope
 import com.amazon.ask.model.ui.PlainTextOutputSpeech
@@ -11,14 +12,66 @@ import kjd.golfcanada.alexa.util.TemplateFactoryUtil
 class CancelAndStopIntentHandlerTest : DescribeSpec({
     context("canHandle") {
         it("should return true for StopIntent") {
-            TODO("Not yet implemented")
+            val templateFactory = TemplateFactoryUtil.getTemplateFactory()
+            val input = HandlerInput.builder()
+                .withRequestEnvelope(RequestEnvelope.builder()
+                    .withRequest(IntentRequest.builder()
+                        .withIntent(Intent.builder()
+                            .withName("AMAZON.StopIntent")
+                            .build()
+                        ).build()
+                    )
+                    .build()
+                )
+                .withTemplateFactory(templateFactory)
+                .build()
+
+            val handler = CancelAndStopIntentHandler()
+            val canHandle = handler.canHandle(input)
+
+            canHandle shouldBe true
         }
 
         it("should return true for CancelIntent") {
-            TODO("Not yet implemented")
+            val templateFactory = TemplateFactoryUtil.getTemplateFactory()
+            val input = HandlerInput.builder()
+                .withRequestEnvelope(RequestEnvelope.builder()
+                    .withRequest(IntentRequest.builder()
+                        .withIntent(Intent.builder()
+                            .withName("AMAZON.CancelIntent")
+                            .build()
+                        ).build()
+                    )
+                    .build()
+                )
+                .withTemplateFactory(templateFactory)
+                .build()
+
+            val handler = CancelAndStopIntentHandler()
+            val canHandle = handler.canHandle(input)
+
+            canHandle shouldBe true
         }
+
         it("should return false for other than StopIntent or CancelIntent") {
-            TODO("Not yet implemented")
+            val templateFactory = TemplateFactoryUtil.getTemplateFactory()
+            val input = HandlerInput.builder()
+                .withRequestEnvelope(RequestEnvelope.builder()
+                    .withRequest(IntentRequest.builder()
+                        .withIntent(Intent.builder()
+                            .withName("AMAZON.StartIntent")
+                            .build()
+                        ).build()
+                    )
+                    .build()
+                )
+                .withTemplateFactory(templateFactory)
+                .build()
+
+            val handler = CancelAndStopIntentHandler()
+            val canHandle = handler.canHandle(input)
+
+            canHandle shouldBe false
         }
     }
 
@@ -38,6 +91,7 @@ class CancelAndStopIntentHandlerTest : DescribeSpec({
             val response = handler.handle(input).get()
             val outputSpeech = response.outputSpeech as PlainTextOutputSpeech
 
+            response.shouldEndSession shouldBe true
             outputSpeech.type shouldBe "PlainText"
             outputSpeech.text shouldBe "Goodbye and hit em straight!"
         }
@@ -59,6 +113,7 @@ class CancelAndStopIntentHandlerTest : DescribeSpec({
             val response = handler.handle(input).get()
             val outputSpeech = response.outputSpeech as PlainTextOutputSpeech
 
+            response.shouldEndSession shouldBe true
             outputSpeech.type shouldBe "PlainText"
             outputSpeech.text shouldBe "Goodbye and hit em straight!"
         }
@@ -80,6 +135,7 @@ class CancelAndStopIntentHandlerTest : DescribeSpec({
             val response = handler.handle(input).get()
             val outputSpeech = response.outputSpeech as PlainTextOutputSpeech
 
+            response.shouldEndSession shouldBe true
             outputSpeech.type shouldBe "PlainText"
             outputSpeech.text shouldBe "Au revoir et frappez-les directement!"
         }
