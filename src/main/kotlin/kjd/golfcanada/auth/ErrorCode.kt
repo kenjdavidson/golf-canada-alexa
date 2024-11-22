@@ -22,6 +22,6 @@ enum class ErrorCode(
     ;
 
     override fun toString(): String {
-        return "$code"
+        return "$code: $errorResponse"
     }
 }
