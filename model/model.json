@@ -1,0 +1,134 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "golf canada",
+      "intents": [
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": [
+            "cancel that",
+            "I don't want to keep going",
+            "ignore that",
+            "cancel"
+          ]
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": [
+            "what does golf canada do",
+            "what does the skill do",
+            "give me information about the skill",
+            "help me",
+            "what options are there",
+            "what can you do"
+          ]
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": [
+            "done",
+            "finish",
+            "please stop",
+            "stop that",
+            "close",
+            "stop"
+          ]
+        },
+        {
+          "name": "AMAZON.NavigateHomeIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.FallbackIntent",
+          "samples": []
+        },
+        {
+          "name": "PlayerProfileHandicapIntent",
+          "slots": [],
+          "samples": [
+            "what is my handicap index",
+            "what is my handicap high index",
+            "what is my handicap low index",
+            "how is my handicap looking",
+            "how does my handicap look",
+            "give me information about my handicap",
+            "tell me about my handicap",
+            "what is my handicap"
+          ]
+        },
+        {
+          "name": "FavoritePlayerHistoryIntent",
+          "slots": [
+            {
+              "name": "playerName",
+              "type": "AMAZON.FirstName"
+            },
+            {
+              "name": "numberOfRounds",
+              "type": "AMAZON.NUMBER"
+            }
+          ],
+          "samples": [
+            "what was {playerName} last score",
+            "how did {playerName} shoot last",
+            "what are {playerName} last {numberOfRounds} scores",
+            "how had {playerName} shot the last {numberOfRounds} rounds",
+            "what are {playerName} 's last {numberOfRounds} scores",
+            "what did {playerName} shoot recently",
+            "how has {playerName} been playing"
+          ]
+        },
+        {
+          "name": "PlayerProfileMembershipIntent",
+          "slots": [],
+          "samples": [
+            "is my membership close to expiry",
+            "when does my membership expire",
+            "is my membership active",
+            "how active is my membership",
+            "what level is my membership",
+            "what's my membership level",
+            "what's my membership",
+            "what's my membership details",
+            "what's my membership information",
+            "what's my membership info",
+            "tell me about my membership status",
+            "tell me about my status",
+            "tell me about my membership"
+          ]
+        },
+        {
+          "name": "PlayerProfileHistoryIntent",
+          "slots": [
+            {
+              "name": "numberOfRounds",
+              "type": "AMAZON.NUMBER"
+            },
+            {
+              "name": "year",
+              "type": "AMAZON.FOUR_DIGIT_NUMBER"
+            }
+          ],
+          "samples": [
+            "tell me about {year}",
+            "tell me about my last {numberOfRounds} rounds",
+            "tell me about my last round",
+            "what are my stats for {year}",
+            "how did I play in {year}",
+            "how did I do my last round",
+            "how did I play last",
+            "how did I play last round",
+            "how did I score my last {numberOfRounds} rounds",
+            "how did I play my last {numberOfRounds} rounds"
+          ]
+        },
+        {
+          "name": "AddScorecardIntent",
+          "slots": [],
+          "samples": []
+        }
+      ],
+      "types": []
+    }
+  }
+}
