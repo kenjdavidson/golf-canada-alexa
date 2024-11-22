@@ -9,16 +9,11 @@ import java.util.*
 /**
  * Provides information on what is currently available for the application.
  */
-class HelpRequestHandler : RequestHandler {
+class HelpIntentHandler : RequestHandler {
     override fun canHandle(input: HandlerInput): Boolean =
         input.matches(intentName("AMAZON.HelpIntent"))
 
     override fun handle(input: HandlerInput): Optional<Response> {
-        val speechText = "You can say hello to me!"
-        return input.responseBuilder
-            .withSpeech(speechText)
-            .withSimpleCard("HelloWorld", speechText)
-            .withReprompt(speechText)
-            .build()
+        return input.generateTemplateResponse("HelpIntentResponse", emptyMap())
     }
 }
