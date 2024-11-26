@@ -53,7 +53,8 @@ class CancelAndStopIntentHandlerTest : DescribeSpec({
             canHandle shouldBe true
         }
 
-        it("should return false for other than StopIntent or CancelIntent") {
+
+        it("should ") {
             val templateFactory = TemplateFactoryUtil.getTemplateFactory()
             val input = HandlerInput.builder()
                 .withRequestEnvelope(RequestEnvelope.builder()
