@@ -185,14 +185,28 @@ class AuthenticationHandler internal constructor(
             event.assertHttpMethod("POST") { invalidAuthenticationRequest(RuntimeException("Invalid Authentication method")) }
 
             val parameters = parseBodyParameters(event)
-            parameters.assertValue("client_id", clientId) { invalidAuthenticationRequest(ErrorCode.INVALID_CLIENT_ID) }
-            parameters.assertValue("response_type", "code") { invalidAuthenticationRequest(ErrorCode.INVALID_RESPONSE_TYPE) }
+            parameters.assertValue("client_id", clientId) {
+                invalidAuthenticationRequest(ErrorCode.INVALID_CLIENT_ID)
+            }
+            parameters.assertValue("response_type", "code") {
+                invalidAuthenticationRequest(ErrorCode.INVALID_RESPONSE_TYPE)
+            }
 
-            val redirectUri = parameters.assertValue("redirect_uri") { invalidAuthenticationRequest(ErrorCode.INVALID_REDIRECT_URI) }
-            val scopes = parameters.assertValue("scope") { invalidAuthenticationRequest(ErrorCode.INVALID_SCOPE) }
-            val state = parameters.assertValue("state") { invalidAuthenticationRequest(ErrorCode.INVALID_STATE) }
-            val username = parameters.assertValue("username") { invalidAuthenticationRequest(ErrorCode.INVALID_USERNAME) }
-            val password = parameters.assertValue("password") { invalidAuthenticationRequest(ErrorCode.INVALID_PASSWORD) }
+            val redirectUri = parameters.assertValue("redirect_uri") {
+                invalidAuthenticationRequest(ErrorCode.INVALID_REDIRECT_URI)
+            }
+            val scopes = parameters.assertValue("scope") {
+                invalidAuthenticationRequest(ErrorCode.INVALID_SCOPE)
+            }
+            val state = parameters.assertValue("state") {
+                invalidAuthenticationRequest(ErrorCode.INVALID_STATE)
+            }
+            val username = parameters.assertValue("username") {
+                invalidAuthenticationRequest(ErrorCode.INVALID_USERNAME)
+            }.lowercase().trim()
+            val password = parameters.assertValue("password") {
+                invalidAuthenticationRequest(ErrorCode.INVALID_PASSWORD)
+            }.trim()
 
             logger.info("Attempting login {}:{} with scopes '{}'", username, "***********", scopes)
             val authToken = authApi.getAuthToken(
@@ -208,6 +222,9 @@ class AuthenticationHandler internal constructor(
             APIGatewayProxyResponseEvent().apply {
                 statusCode = 301
                 body = "${redirectUri}?code=${code}&state=${state}"
+                headers = mapOf(
+                    "Set-Cookie" to "${COOKIE_STATE}=${state}; HttpOnly; Secure;"
+                )
             }
         } catch(exception: AuthenticationException) {
             logger.error("Invalid authentication request", exception)
@@ -273,19 +290,8 @@ class AuthenticationHandler internal constructor(
             invalidAuthenticationRequest(ErrorCode.INVALID_GRANT_TYPE) }
 
         return when (grantType) {
-            "refresh_token" -> {
-                val refreshToken = parameters.assertValue("refresh_token") {
-                    invalidAuthenticationRequest(ErrorCode.INVALID_REFRESH_TOKEN) }
-                handleRefreshRequest(refreshToken)
-            }
-            "authorization_code" -> {
-                val state = parameters.assertValue("state") {
-                    invalidAuthenticationRequest(ErrorCode.INVALID_STATE) }
-                val code = parameters.assertValue("code") {
-                    invalidAuthenticationRequest(ErrorCode.INVALID_CODE) }
-
-                handleAuthCodeRequest(state, code)
-            }
+            "refresh_token" -> handleRefreshRequest(event, parameters)
+            "authorization_code" -> handleAuthCodeRequest(event, parameters)
             else -> {
                 logger.error("Request has grant_type '{}' which is not valid", grantType)
                 invalidAuthenticationRequest(ErrorCode.INVALID_GRANT_TYPE)
@@ -296,10 +302,20 @@ class AuthenticationHandler internal constructor(
     /**
      * Handles the refresh of the token.  This just makes a new getAuthToken request and returns it.
      *
-     * @param refreshToken provided by authToken request
-     * @return a successful 200 with the OAuth token
+     * @param event provided from Lambda URL
+     * @param parameters map containing pre-parsed query parameters
+     * @return Api gateway response containing auth token
+     *
+     * @throws AuthenticationException when refresh_token does not exist
+     * @throws AuthenticationException if there is a failure refreshing token
      */
-    private fun handleRefreshRequest(refreshToken: String): APIGatewayProxyResponseEvent {
+    private fun handleRefreshRequest(
+        event: APIGatewayV2HTTPEvent,
+        parameters: Map<String, String>
+    ): APIGatewayProxyResponseEvent {
+        val refreshToken = parameters.assertValue("refresh_token") {
+            invalidAuthenticationRequest(ErrorCode.INVALID_REFRESH_TOKEN) }
+
         return try {
             val authToken = authApi.getAuthToken(
                 AuthApi.GrantTypeGetAuthToken.REFRESH_TOKEN,
@@ -317,10 +333,34 @@ class AuthenticationHandler internal constructor(
      * AuthToken, so that we aren't keeping anything around for long periods of time.   Should probably
      * look into implementing a timer, which will remove old Tokens at regular intervals.
      *
-     * @param state the session state
-     * @param code the returned code to retrieve the access token
+     * Expects the code and state to be provided within query parameters.  Also expects a cookie containing the state
+     * that should be matched, otherwise an invalid Authentication is thrown.
+     *
+     * @param event provided from Lambda URL
+     * @param parameters map containing pre-parsed query parameters
+     * @return Api gateway response
+     *
+     * @throws AuthenticationException when state, code are invalid
+     * @throws AuthenticationException when state does not match session state
+     * @throws AuthenticationException if there is no valid code found for the request
      */
-    private fun handleAuthCodeRequest(state: String, code: String): APIGatewayProxyResponseEvent {
+    private fun handleAuthCodeRequest(
+        event: APIGatewayV2HTTPEvent,
+        parameters: Map<String, String>
+    ): APIGatewayProxyResponseEvent {
+        val state = parameters.assertValue("state") {
+            invalidAuthenticationRequest(ErrorCode.INVALID_STATE) }
+        val code = parameters.assertValue("code") {
+            invalidAuthenticationRequest(ErrorCode.INVALID_CODE) }
+        val sessionState = event.cookies
+            ?.firstOrNull { cookie -> cookie.startsWith(COOKIE_STATE) }
+            ?.split("=")
+            ?.last()
+
+        if (state != sessionState) {
+            throw AuthenticationException(invalidAuthenticationRequest(ErrorCode.INVALID_STATE))
+        }
+
         return tokenRepository.get(AuthTokenKey(state, code))?.let { authToken ->
             authTokenResponse(authToken)
         } ?: invalidAuthenticationRequest(ErrorCode.CODE_NOT_FOUND)
@@ -328,6 +368,8 @@ class AuthenticationHandler internal constructor(
 
     /**
      * Build the login page template.
+     *
+     * TODO: needs to be updated to manage languages from the event.
      *
      * @return the HTML content for the login page.
      */
@@ -349,5 +391,6 @@ class AuthenticationHandler internal constructor(
 
     companion object {
         const val DEFAULT_SCOPES = "address email offline_access openid phone profile roles"
+        const val COOKIE_STATE = "x-csrf-token"
     }
 }

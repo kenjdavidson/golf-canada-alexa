@@ -10,6 +10,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kjd.golfcanada.TestContext
+import kjd.golfcanada.auth.AuthenticationHandler.Companion.COOKIE_STATE
 import kjd.golfcanada.auth.AuthenticationHandler.Companion.DEFAULT_SCOPES
 import kjd.golfcanada.auth.impl.TokenRepositoryMapImpl
 import kjd.golfcanada.client.api.AuthApi
@@ -605,6 +606,33 @@ class AuthenticationHandlerTest : DescribeSpec({
 }"""
             }
 
+            it("should throw authentication error when state does not match") {
+                val handler = AuthenticationHandler(
+                    authApi,
+                    clientId,
+                    clientSecret
+                )
+
+                val authToken = authToken()
+                val event = apiGatewayHttpEventBuilder("POST", "/authToken", clientId)
+                    .withCookies(listOf("${COOKIE_STATE}=11111111111"))
+                    .withBody(buildBody(mapOf(
+                        "client_id" to clientId,
+                        "client_secret" to clientSecret,
+                        "state" to state,
+                        "code" to authToken.code(),
+                        "grant_type" to "authorization_code"
+                    )))
+                    .build()
+                val response = handler.handleRequest(event, TestContext())
+
+                response shouldNotBe null
+                response.statusCode shouldBe 400
+                response.body shouldBe """{
+   "error": "invalid_request"
+   "code": "104"
+}"""
+            }
 
             it("should return AuthToken when found") {
                 val tokenRepo = TokenRepositoryMapImpl()
@@ -619,6 +647,7 @@ class AuthenticationHandlerTest : DescribeSpec({
                 tokenRepo.store(AuthTokenKey(state, authToken.code()), authToken)
 
                 val event = apiGatewayHttpEventBuilder("POST", "/authToken", clientId)
+                    .withCookies(listOf("${COOKIE_STATE}=${state}"))
                     .withBody(buildBody(mapOf(
                         "client_id" to clientId,
                         "client_secret" to clientSecret,
