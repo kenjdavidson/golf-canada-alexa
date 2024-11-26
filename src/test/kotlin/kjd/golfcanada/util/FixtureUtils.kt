@@ -1,6 +1,8 @@
 package kjd.golfcanada.util
 
+import com.amazon.ask.model.Response
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent
+import com.fasterxml.jackson.databind.ObjectMapper
 import kjd.golfcanada.client.model.AuthToken
 import java.net.URLEncoder
 import java.util.*
@@ -38,3 +40,8 @@ fun buildBody(parameters: Map<String, String>): String =
         .map { (k, v) -> "${k}=${URLEncoder.encode(v, "UTF-8")}" }
         .joinToString("&")
         .let { String(Base64.getUrlEncoder().encode(it.toByteArray())) }
+
+fun responseFixture(fixtureName: String): Response =
+    object {}.javaClass.getResource(fixtureName).let {
+        ObjectMapper().readValue(it, Response::class.java)
+    }

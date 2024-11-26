@@ -4,10 +4,13 @@ import com.amazon.ask.dispatcher.request.handler.HandlerInput
 import com.amazon.ask.model.Intent
 import com.amazon.ask.model.IntentRequest
 import com.amazon.ask.model.RequestEnvelope
+import com.amazon.ask.model.Response
 import com.amazon.ask.model.ui.PlainTextOutputSpeech
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import kjd.golfcanada.alexa.util.TemplateFactoryUtil
+import kjd.golfcanada.util.responseFixture
 
 class HelpRequestHandlerTest : DescribeSpec({
     context("canHandle") {
@@ -72,9 +75,7 @@ class HelpRequestHandlerTest : DescribeSpec({
 
             response.shouldEndSession shouldBe false
             outputSpeech.type shouldBe "PlainText"
-            outputSpeech.text shouldBe """
-                
-            """.trimIndent()
+            outputSpeech.text shouldBe "Feel free to ask me about things like handicaps, recent scores, course details among other things.  For more information check out the Alexa app skill page.".trimIndent()
         }
 
         it("should return en response") {
@@ -96,9 +97,7 @@ class HelpRequestHandlerTest : DescribeSpec({
 
             response.shouldEndSession shouldBe false
             outputSpeech.type shouldBe "PlainText"
-            outputSpeech.text shouldBe """
-                
-            """.trimIndent()
+            outputSpeech.text shouldBe "Feel free to ask me about things like handicaps, recent scores, course details among other things.  For more information check out the Alexa app skill page.".trimIndent()
         }
 
         it("should return fr response") {
@@ -120,9 +119,7 @@ class HelpRequestHandlerTest : DescribeSpec({
 
             response.shouldEndSession shouldBe false
             outputSpeech.type shouldBe "PlainText"
-            outputSpeech.text shouldBe """
-                
-            """.trimIndent()
+            outputSpeech.text shouldBe "N'hésitez pas à me poser des questions sur des choses comme les handicaps, les scores récents, les détails des cours, entre autres.  Pour plus d'informations, consultez la page des compétences de l'application Alexa.".trimIndent()
         }
     }
 })
