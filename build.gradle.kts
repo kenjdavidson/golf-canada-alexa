@@ -38,6 +38,7 @@ dependencies {
 sourceSets {
     main {
         kotlin {
+            srcDir("${buildDir}/generated/aws")
             srcDir("${buildDir}/generated/openapi/src/main/kotlin")
         }
     }
