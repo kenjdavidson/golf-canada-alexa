@@ -16,8 +16,8 @@ The following interactions are currently available:
 The following interactions are under development or review.   More advanced requests may be available; eventually this list will be removed from the README and contained
 within the project issues.
 
-- [ ] Logging in with your Golf Canada account
-- [ ] Terms of Use and Privacy Policy
+- [X] Logging in with your Golf Canada account
+- [X] Terms of Use and Privacy Policy
 
 > Note that this application is hosted on AWS and gains access to your Golf Canada
 > account through Account Linking, which you can read about here:
@@ -43,7 +43,12 @@ The IntelliJ AWS Toolkit seems wonky with Lambda code generation.  It looks like
 `build/generated/src/main/kotlin/.aws-sam` which then brakes the regular project as all the classes
 are duplicated.
 
+#### Windows
 
+```shell
+> $env:JAVA_HOME="/c/Users/User/.jdks/corretto-21.0.5"
+> sam build GolfCanadaAuthenticationFunction
+```
 
 ### Issues and Suggestions
 
