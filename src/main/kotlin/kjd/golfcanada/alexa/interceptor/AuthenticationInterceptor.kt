@@ -19,7 +19,13 @@ class AuthenticationInterceptor: RequestInterceptor, ResponseInterceptor {
 
         input
             .requestEnvelope
-
+            .context
+            ?.system
+            ?.apiAccessToken
+            ?.let { token ->
+                logger.debug("Adding AuthToken to AuthTokenContext")
+                AuthTokenContext.setToken(token)
+            }
     }
 
     override fun process(input: HandlerInput, response: Optional<Response>?) {
