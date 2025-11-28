@@ -3,10 +3,12 @@ package kjd.golfcanada.alexa
 import com.amazon.ask.Skill
 import com.amazon.ask.SkillStreamHandler
 import com.amazon.ask.Skills
+import kjd.golfcanada.alexa.handler.AccountLinkingExceptionHandler
 import kjd.golfcanada.alexa.handler.CancelAndStopIntentHandler
 import kjd.golfcanada.alexa.handler.HelpIntentHandler
 import kjd.golfcanada.alexa.handler.LaunchRequestHandler
 import kjd.golfcanada.alexa.handler.SessionEndedRequestHandler
+import kjd.golfcanada.alexa.interceptor.AuthenticationRequestInterceptor
 
 class GolfCanadaAlexaSkill: SkillStreamHandler(getSkills()) {
     companion object {
@@ -19,6 +21,8 @@ class GolfCanadaAlexaSkill: SkillStreamHandler(getSkills()) {
                     CancelAndStopIntentHandler(),
                     SessionEndedRequestHandler()
                 )
+                .addRequestInterceptor(AuthenticationRequestInterceptor())
+                .addExceptionHandler(AccountLinkingExceptionHandler())
                 .build()
         }
     }
