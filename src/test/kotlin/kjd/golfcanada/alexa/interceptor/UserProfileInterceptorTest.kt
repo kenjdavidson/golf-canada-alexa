@@ -205,7 +205,7 @@ class UserProfileInterceptorTest : DescribeSpec({
         }
 
         it("should skip when user profile already exists in session") {
-            val existingProfile = mapOf("id" to 123L)
+            val existingProfile = kjd.golfcanada.client.model.User(id = 123L)
             val sessionAttributes = mutableMapOf<String, Any>(
                 UserProfileInterceptor.USER_SESSION_KEY to existingProfile
             )
@@ -271,11 +271,10 @@ class UserProfileInterceptorTest : DescribeSpec({
             
             sessionAttributes shouldContainKey UserProfileInterceptor.USER_SESSION_KEY
             
-            @Suppress("UNCHECKED_CAST")
-            val storedUser = sessionAttributes[UserProfileInterceptor.USER_SESSION_KEY] as Map<String, Any?>
-            storedUser["id"] shouldBe 1538533L
-            storedUser["username"] shouldBe "KENJDAVIDSON"
-            storedUser["firstName"] shouldBe "Ken"
+            val storedUser = sessionAttributes[UserProfileInterceptor.USER_SESSION_KEY] as kjd.golfcanada.client.model.User
+            storedUser.id shouldBe 1538533L
+            storedUser.username shouldBe "KENJDAVIDSON"
+            storedUser.firstName shouldBe "Ken"
         }
 
         it("should handle invalid JWT gracefully without throwing exception") {
