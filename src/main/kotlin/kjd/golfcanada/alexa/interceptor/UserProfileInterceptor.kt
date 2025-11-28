@@ -55,9 +55,13 @@ class UserProfileInterceptor : RequestInterceptor {
     /**
      * Parses a JWT access token and extracts the claims into a [User] object.
      *
+     * Note: This method does not verify the JWT signature because the token comes from Alexa's
+     * account linking process and has already been validated by Amazon. The token is stored
+     * in the Alexa user profile after successful OAuth authentication with Golf Canada.
+     *
      * @param jwt The JWT access token string
      * @return A [User] object populated with claims from the JWT
-     * @throws IllegalArgumentException if the JWT format is invalid
+     * @throws IllegalArgumentException if the JWT format is invalid or payload cannot be decoded
      */
     internal fun parseJwtToUser(jwt: String): User {
         val parts = jwt.split(".")
