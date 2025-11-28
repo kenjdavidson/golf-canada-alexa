@@ -9,6 +9,7 @@ import kjd.golfcanada.alexa.handler.HelpIntentHandler
 import kjd.golfcanada.alexa.handler.LaunchRequestHandler
 import kjd.golfcanada.alexa.handler.SessionEndedRequestHandler
 import kjd.golfcanada.alexa.interceptor.AuthenticationRequestInterceptor
+import kjd.golfcanada.alexa.interceptor.UserProfileInterceptor
 
 class GolfCanadaAlexaSkill: SkillStreamHandler(getSkills()) {
     companion object {
@@ -22,6 +23,7 @@ class GolfCanadaAlexaSkill: SkillStreamHandler(getSkills()) {
                     SessionEndedRequestHandler()
                 )
                 .addRequestInterceptor(AuthenticationRequestInterceptor())
+                .addRequestInterceptor(UserProfileInterceptor())
                 .addExceptionHandler(AccountLinkingExceptionHandler())
                 .build()
         }
