@@ -44,7 +44,7 @@ class UserProfileInterceptor : RequestInterceptor {
 
         try {
             val user = parseJwtToUser(accessToken)
-            sessionAttributes[USER_SESSION_KEY] = userToMap(user)
+            sessionAttributes[USER_SESSION_KEY] = user
             input.attributesManager.sessionAttributes = sessionAttributes
             logger.info("User profile extracted from JWT and stored in session")
         } catch (e: Exception) {
@@ -127,34 +127,6 @@ class UserProfileInterceptor : RequestInterceptor {
             "false" -> false
             else -> null
         }
-    }
-
-    /**
-     * Converts a [User] object to a Map for storing in session attributes.
-     */
-    private fun userToMap(user: User): Map<String, Any?> {
-        return mapOf(
-            "id" to user.id,
-            "username" to user.username,
-            "authUserId" to user.authUserId,
-            "networkId" to user.networkId,
-            "golfCanadaCardId" to user.golfCanadaCardId,
-            "firstName" to user.firstName,
-            "lastName" to user.lastName,
-            "email" to user.email,
-            "handicap" to user.handicap,
-            "membershipLevel" to user.membershipLevel,
-            "clubManagementGroupId" to user.clubManagementGroupId,
-            "allowScorePosting" to user.allowScorePosting,
-            "termsAndConditionsDate" to user.termsAndConditionsDate,
-            "scoreDefaults" to user.scoreDefaults?.let {
-                mapOf(
-                    "facilityName" to it.facilityName,
-                    "nationalAssociation" to it.nationalAssociation,
-                    "postHoleByHole" to it.postHoleByHole
-                )
-            }
-        )
     }
 
     companion object {
