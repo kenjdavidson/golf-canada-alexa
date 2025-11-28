@@ -39,6 +39,8 @@ paths:
       summary: Retrieve member snapshot
       tags: ["Members"]
       operationId: getSnapshot
+      security:
+        - bearerAuth: []
       parameters:
         - name: userId
           in: path
@@ -59,6 +61,11 @@ paths:
           description: Member Not Found
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
     AuthRequest:
       type: object
