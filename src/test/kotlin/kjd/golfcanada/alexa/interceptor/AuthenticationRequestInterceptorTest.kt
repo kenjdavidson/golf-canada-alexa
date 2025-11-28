@@ -13,7 +13,6 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import kjd.golfcanada.alexa.exception.AccountLinkingException
-import kjd.golfcanada.alexa.util.TemplateFactoryUtil
 
 class AuthenticationRequestInterceptorTest : DescribeSpec({
 
