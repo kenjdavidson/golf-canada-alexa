@@ -19,6 +19,7 @@ class LaunchRequestHandler : com.amazon.ask.dispatcher.request.handler.impl.Laun
         true
 
     override fun handle(input: HandlerInput?, request: LaunchRequest?): Optional<Response> {
-        TODO("Not yet implemented")
+        return input?.generateTemplateResponse("LaunchRequestResponse", emptyMap())
+            ?: Optional.empty()
     }
 }
