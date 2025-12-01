@@ -12,6 +12,7 @@ import kjd.golfcanada.client.api.AuthApi
 import kjd.golfcanada.client.model.AuthToken
 import kjd.golfcanada.client.model.code
 import kjd.golfcanada.client.model.toJson
+import kjd.golfcanada.client.model.withConcatenatedToken
 import org.openapitools.client.infrastructure.ClientException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -386,7 +387,7 @@ class AuthenticationHandler internal constructor(
         APIGatewayProxyResponseEvent().apply {
             statusCode = 200
             headers = mapOf("Content-Type" to "application/json;charset=UTF-8")
-            body = authToken.toJson()
+            body = authToken.withConcatenatedToken().toJson()
         }
 
     companion object {

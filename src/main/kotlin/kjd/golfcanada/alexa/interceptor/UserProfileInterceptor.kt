@@ -4,6 +4,7 @@ import com.amazon.ask.dispatcher.request.handler.HandlerInput
 import com.amazon.ask.dispatcher.request.interceptor.RequestInterceptor
 import kjd.golfcanada.client.model.ScoreDefaults
 import kjd.golfcanada.client.model.User
+import kjd.golfcanada.client.model.extractIdToken
 import org.slf4j.LoggerFactory
 import java.util.Base64
 
@@ -20,10 +21,14 @@ class UserProfileInterceptor : RequestInterceptor {
     private val logger = LoggerFactory.getLogger(UserProfileInterceptor::class.java)
 
     /**
-     * Processes the incoming request to extract user profile from the JWT access token.
+     * Processes the incoming request to extract user profile from the JWT id_token.
      *
      * If an access token is present and a user profile is not already in session attributes,
-     * this interceptor will decode the JWT and store the extracted user profile.
+     * this interceptor will extract the id_token from the concatenated access token and
+     * decode the JWT to store the extracted user profile.
+     * 
+     * The access token is expected to be in the format: access_token#id_token
+     * If the delimiter is not present (no id_token), user profile extraction is skipped.
      *
      * @param input The handler input containing the request envelope
      */
@@ -43,7 +48,14 @@ class UserProfileInterceptor : RequestInterceptor {
         }
 
         try {
-            val user = parseJwtToUser(accessToken)
+            // Extract the id_token from the concatenated token
+            val idToken = accessToken.extractIdToken()
+            if (idToken == null) {
+                logger.debug("No id_token found in access token, skipping user profile extraction")
+                return
+            }
+            
+            val user = parseJwtToUser(idToken)
             sessionAttributes[USER_SESSION_KEY] = user
             input.attributesManager.sessionAttributes = sessionAttributes
             logger.info("User profile extracted from JWT and stored in session")
