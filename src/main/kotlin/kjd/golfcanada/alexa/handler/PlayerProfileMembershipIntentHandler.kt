@@ -4,6 +4,9 @@ import com.amazon.ask.dispatcher.request.handler.HandlerInput
 import com.amazon.ask.dispatcher.request.handler.RequestHandler
 import com.amazon.ask.model.Response
 import com.amazon.ask.request.Predicates.intentName
+import kjd.golfcanada.alexa.exception.NoUserDetailsException
+import kjd.golfcanada.alexa.interceptor.UserProfileInterceptor
+import kjd.golfcanada.client.model.User
 import java.util.*
 
 /**
@@ -14,6 +17,21 @@ class PlayerProfileMembershipIntentHandler : RequestHandler {
         input.matches(intentName("PlayerProfileMembershipIntent"))
 
     override fun handle(input: HandlerInput): Optional<Response> {
-        return input.generateTemplateResponse("PlayerProfileMembershipIntentResponse", emptyMap())
+        val sessionAttributes = input.attributesManager.sessionAttributes
+        
+        // Get user from session
+        val user = sessionAttributes[UserProfileInterceptor.USER_SESSION_KEY] as? User
+            ?: throw NoUserDetailsException()
+        
+        // Prepare data model for the template
+        val dataModel = mapOf(
+            "firstName" to (user.firstName ?: ""),
+            "lastName" to (user.lastName ?: ""),
+            "membershipLevel" to (user.membershipLevel ?: ""),
+            "golfCanadaCardId" to (user.golfCanadaCardId ?: ""),
+            "handicap" to (user.handicap ?: "")
+        )
+        
+        return input.generateTemplateResponse("PlayerProfileMembershipIntentResponse", dataModel)
     }
 }

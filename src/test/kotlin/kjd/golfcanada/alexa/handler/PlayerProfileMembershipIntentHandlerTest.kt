@@ -1,13 +1,21 @@
 package kjd.golfcanada.alexa.handler
 
+import com.amazon.ask.attributes.AttributesManager
 import com.amazon.ask.dispatcher.request.handler.HandlerInput
 import com.amazon.ask.model.Intent
 import com.amazon.ask.model.IntentRequest
 import com.amazon.ask.model.RequestEnvelope
 import com.amazon.ask.model.ui.PlainTextOutputSpeech
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
+import io.mockk.every
+import io.mockk.mockk
+import kjd.golfcanada.alexa.exception.NoUserDetailsException
+import kjd.golfcanada.alexa.interceptor.UserProfileInterceptor
 import kjd.golfcanada.alexa.util.TemplateFactoryUtil
+import kjd.golfcanada.client.model.User
 
 class PlayerProfileMembershipIntentHandlerTest : DescribeSpec({
     context("canHandle") {
@@ -55,36 +63,55 @@ class PlayerProfileMembershipIntentHandlerTest : DescribeSpec({
     }
 
     context("handle") {
-        it("should return response") {
-            val templateFactory = TemplateFactoryUtil.getTemplateFactory()
-            val input = HandlerInput.builder()
-                .withRequestEnvelope(RequestEnvelope.builder()
-                    .withRequest(IntentRequest.builder().build())
-                    .build()
-                )
-                .withTemplateFactory(templateFactory)
+        it("should throw NoUserDetailsException when user profile is not in session") {
+            val attributesManager = mockk<AttributesManager>(relaxed = true)
+            every { attributesManager.sessionAttributes } returns mutableMapOf()
+            
+            val input = mockk<HandlerInput>(relaxed = true)
+            every { input.requestEnvelope } returns RequestEnvelope.builder()
+                .withRequest(IntentRequest.builder().build())
                 .build()
+            every { input.attributesManager } returns attributesManager
 
             val handler = PlayerProfileMembershipIntentHandler()
 
-            val response = handler.handle(input).get()
-            val outputSpeech = response.outputSpeech as PlainTextOutputSpeech
-
-            response.shouldEndSession shouldBe false
-            outputSpeech.type shouldBe "PlainText"
-            outputSpeech.text shouldBe "Your membership information is not yet available. This feature is under development."
+            shouldThrow<NoUserDetailsException> {
+                handler.handle(input)
+            }
         }
 
-        it("should return fr response") {
-            val templateFactory = TemplateFactoryUtil.getTemplateFactory()
-            val input = HandlerInput.builder()
-                .withRequestEnvelope(RequestEnvelope.builder()
-                    .withRequest(IntentRequest.builder()
-                        .withLocale("fr-CA").build())
-                    .build()
-                )
-                .withTemplateFactory(templateFactory)
+        it("should return response with user membership information") {
+            val user = User(
+                firstName = "John",
+                lastName = "Doe",
+                membershipLevel = "Gold",
+                golfCanadaCardId = "12345678",
+                handicap = "5.4"
+            )
+            
+            val attributesManager = mockk<AttributesManager>(relaxed = true)
+            val sessionAttributes: MutableMap<String, Any> = mutableMapOf(
+                UserProfileInterceptor.USER_SESSION_KEY to user
+            )
+            every { attributesManager.sessionAttributes } returns sessionAttributes
+            
+            val input = mockk<HandlerInput>(relaxed = true)
+            every { input.requestEnvelope } returns RequestEnvelope.builder()
+                .withRequest(IntentRequest.builder().build())
                 .build()
+            every { input.attributesManager } returns attributesManager
+            every { input.generateTemplateResponse(any(), any()) } answers {
+                val dataModel = secondArg<Map<String, Any>>()
+                val text = "Hello ${dataModel["firstName"]} ${dataModel["lastName"]}. " +
+                        "Your membership level is ${dataModel["membershipLevel"]}. " +
+                        "Your Golf Canada card ID is ${dataModel["golfCanadaCardId"]}. " +
+                        "Your handicap is ${dataModel["handicap"]}."
+                val response = com.amazon.ask.model.Response.builder()
+                    .withOutputSpeech(PlainTextOutputSpeech.builder().withText(text).build())
+                    .withShouldEndSession(false)
+                    .build()
+                java.util.Optional.of(response)
+            }
 
             val handler = PlayerProfileMembershipIntentHandler()
 
@@ -93,7 +120,57 @@ class PlayerProfileMembershipIntentHandlerTest : DescribeSpec({
 
             response.shouldEndSession shouldBe false
             outputSpeech.type shouldBe "PlainText"
-            outputSpeech.text shouldBe "Vos informations d'adhésion ne sont pas encore disponibles. Cette fonctionnalité est en cours de développement."
+            outputSpeech.text shouldContain "John Doe"
+            outputSpeech.text shouldContain "Gold"
+            outputSpeech.text shouldContain "12345678"
+            outputSpeech.text shouldContain "5.4"
+        }
+
+        it("should return fr response with user membership information") {
+            val user = User(
+                firstName = "Jean",
+                lastName = "Dupont",
+                membershipLevel = "Argent",
+                golfCanadaCardId = "87654321",
+                handicap = "8.2"
+            )
+            
+            val attributesManager = mockk<AttributesManager>(relaxed = true)
+            val sessionAttributes: MutableMap<String, Any> = mutableMapOf(
+                UserProfileInterceptor.USER_SESSION_KEY to user
+            )
+            every { attributesManager.sessionAttributes } returns sessionAttributes
+            
+            val input = mockk<HandlerInput>(relaxed = true)
+            every { input.requestEnvelope } returns RequestEnvelope.builder()
+                .withRequest(IntentRequest.builder()
+                    .withLocale("fr-CA").build())
+                .build()
+            every { input.attributesManager } returns attributesManager
+            every { input.generateTemplateResponse(any(), any()) } answers {
+                val dataModel = secondArg<Map<String, Any>>()
+                val text = "Bonjour ${dataModel["firstName"]} ${dataModel["lastName"]}. " +
+                        "Votre niveau d'adhésion est ${dataModel["membershipLevel"]}. " +
+                        "Votre numéro de carte Golf Canada est ${dataModel["golfCanadaCardId"]}. " +
+                        "Votre handicap est ${dataModel["handicap"]}."
+                val response = com.amazon.ask.model.Response.builder()
+                    .withOutputSpeech(PlainTextOutputSpeech.builder().withText(text).build())
+                    .withShouldEndSession(false)
+                    .build()
+                java.util.Optional.of(response)
+            }
+
+            val handler = PlayerProfileMembershipIntentHandler()
+
+            val response = handler.handle(input).get()
+            val outputSpeech = response.outputSpeech as PlainTextOutputSpeech
+
+            response.shouldEndSession shouldBe false
+            outputSpeech.type shouldBe "PlainText"
+            outputSpeech.text shouldContain "Jean Dupont"
+            outputSpeech.text shouldContain "Argent"
+            outputSpeech.text shouldContain "87654321"
+            outputSpeech.text shouldContain "8.2"
         }
     }
 })
