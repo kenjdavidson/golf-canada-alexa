@@ -29,7 +29,8 @@ class PlayerProfileMembershipIntentHandler : RequestHandler {
         user.lastName?.let { dataModel["lastName"] = it }
         user.membershipLevel?.let { dataModel["membershipLevel"] = it }
         user.golfCanadaCardId?.let { dataModel["golfCanadaCardId"] = it }
-        user.handicap?.let { dataModel["handicap"] = it }
+        user.expirationDate?.let { dataModel["expirationDate"] = it }
+        user.scoreDefaults?.postHoleByHole?.let { dataModel["postHoleByHole"] = it }
         
         return input.generateTemplateResponse("PlayerProfileMembershipIntentResponse", dataModel)
     }

@@ -128,6 +128,7 @@ class UserProfileInterceptor : RequestInterceptor {
             clubManagementGroupId = claims[CLAIM_CLUB_MANAGEMENT_GROUP_ID]?.toString()?.toIntOrNull(),
             allowScorePosting = claims[CLAIM_ALLOW_SCORE_POSTING]?.toString()?.toBooleanOrNull(),
             termsAndConditionsDate = claims[CLAIM_TERMS_AND_CONDITIONS_DATE]?.toString(),
+            expirationDate = claims[CLAIM_EXPIRATION_DATE]?.toString(),
             scoreDefaults = scoreDefaults
         )
     }
@@ -162,6 +163,7 @@ class UserProfileInterceptor : RequestInterceptor {
         private const val CLAIM_CLUB_MANAGEMENT_GROUP_ID = "http://schemas.golfnet.com/clubmanagementgroupid"
         private const val CLAIM_ALLOW_SCORE_POSTING = "http://schemas.golfnet.com/allowscoreposting"
         private const val CLAIM_TERMS_AND_CONDITIONS_DATE = "http://schemas.golfnet.com/termsandconditionsdate"
+        private const val CLAIM_EXPIRATION_DATE = "http://schemas.golfnet.com/`"
         private const val CLAIM_DEFAULT_FACILITY_NAME = "http://schemas.golfnet.com/defaultfacilityname"
         private const val CLAIM_DEFAULT_FACILITY_ID = "http://schemas.golfnet.com/defaultfacilityid"
         private const val CLAIM_DEFAULT_COURSE_ID = "http://schemas.golfnet.com/defaultcourseid"

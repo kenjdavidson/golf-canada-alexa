@@ -86,7 +86,10 @@ class PlayerProfileMembershipIntentHandlerTest : DescribeSpec({
                 lastName = "Doe",
                 membershipLevel = "Gold",
                 golfCanadaCardId = "12345678",
-                handicap = "5.4"
+                expirationDate = "2/1/2026 12:00:00 AM",
+                scoreDefaults = kjd.golfcanada.client.model.ScoreDefaults(
+                    postHoleByHole = true
+                )
             )
             
             val attributesManager = mockk<AttributesManager>(relaxed = true)
@@ -102,10 +105,12 @@ class PlayerProfileMembershipIntentHandlerTest : DescribeSpec({
             every { input.attributesManager } returns attributesManager
             every { input.generateTemplateResponse(any(), any()) } answers {
                 val dataModel = secondArg<Map<String, Any>>()
+                val postHoleByHoleText = if (dataModel["postHoleByHole"] == true) "required" else "not required"
                 val text = "Hello ${dataModel["firstName"]} ${dataModel["lastName"]}. " +
                         "Your membership level is ${dataModel["membershipLevel"]}. " +
+                        "Your membership expires on ${dataModel["expirationDate"]}. " +
                         "Your Golf Canada card ID is ${dataModel["golfCanadaCardId"]}. " +
-                        "Your handicap is ${dataModel["handicap"]}."
+                        "Hole by hole scoring is $postHoleByHoleText."
                 val response = com.amazon.ask.model.Response.builder()
                     .withOutputSpeech(PlainTextOutputSpeech.builder().withText(text).build())
                     .withShouldEndSession(false)
@@ -123,7 +128,8 @@ class PlayerProfileMembershipIntentHandlerTest : DescribeSpec({
             outputSpeech.text shouldContain "John Doe"
             outputSpeech.text shouldContain "Gold"
             outputSpeech.text shouldContain "12345678"
-            outputSpeech.text shouldContain "5.4"
+            outputSpeech.text shouldContain "2/1/2026"
+            outputSpeech.text shouldContain "required"
         }
 
         it("should return fr response with user membership information") {
@@ -132,7 +138,10 @@ class PlayerProfileMembershipIntentHandlerTest : DescribeSpec({
                 lastName = "Dupont",
                 membershipLevel = "Argent",
                 golfCanadaCardId = "87654321",
-                handicap = "8.2"
+                expirationDate = "1/3/2025 12:00:00 AM",
+                scoreDefaults = kjd.golfcanada.client.model.ScoreDefaults(
+                    postHoleByHole = false
+                )
             )
             
             val attributesManager = mockk<AttributesManager>(relaxed = true)
@@ -149,10 +158,12 @@ class PlayerProfileMembershipIntentHandlerTest : DescribeSpec({
             every { input.attributesManager } returns attributesManager
             every { input.generateTemplateResponse(any(), any()) } answers {
                 val dataModel = secondArg<Map<String, Any>>()
+                val postHoleByHoleText = if (dataModel["postHoleByHole"] == false) "non obligatoire" else "obligatoire"
                 val text = "Bonjour ${dataModel["firstName"]} ${dataModel["lastName"]}. " +
                         "Votre niveau d'adhésion est ${dataModel["membershipLevel"]}. " +
+                        "Votre adhésion expire le ${dataModel["expirationDate"]}. " +
                         "Votre numéro de carte Golf Canada est ${dataModel["golfCanadaCardId"]}. " +
-                        "Votre handicap est ${dataModel["handicap"]}."
+                        "La saisie trou par trou est $postHoleByHoleText."
                 val response = com.amazon.ask.model.Response.builder()
                     .withOutputSpeech(PlainTextOutputSpeech.builder().withText(text).build())
                     .withShouldEndSession(false)
@@ -170,7 +181,8 @@ class PlayerProfileMembershipIntentHandlerTest : DescribeSpec({
             outputSpeech.text shouldContain "Jean Dupont"
             outputSpeech.text shouldContain "Argent"
             outputSpeech.text shouldContain "87654321"
-            outputSpeech.text shouldContain "8.2"
+            outputSpeech.text shouldContain "1/3/2025"
+            outputSpeech.text shouldContain "non obligatoire"
         }
     }
 })
