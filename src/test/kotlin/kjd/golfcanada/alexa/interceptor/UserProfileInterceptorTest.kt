@@ -243,7 +243,37 @@ class UserProfileInterceptorTest : DescribeSpec({
             sessionAttributes[UserProfileInterceptor.USER_SESSION_KEY] shouldBe existingProfile
         }
 
-        it("should store user profile in session attributes when valid JWT provided") {
+        it("should skip user profile extraction when access token has no delimiter") {
+            val sessionAttributes = mutableMapOf<String, Any>()
+            
+            val attributesManager = mockk<AttributesManager>(relaxed = true)
+            every { attributesManager.sessionAttributes } returns sessionAttributes
+            
+            // Plain access token without delimiter (not a JWT, just a string)
+            val plainAccessToken = "someAccessTokenString"
+            
+            val input = mockk<HandlerInput>(relaxed = true)
+            every { input.requestEnvelope } returns RequestEnvelope.builder()
+                .withRequest(LaunchRequest.builder().build())
+                .withContext(
+                    Context.builder()
+                        .withSystem(
+                            SystemState.builder()
+                                .withUser(User.builder().withAccessToken(plainAccessToken).build())
+                                .build()
+                        )
+                        .build()
+                )
+                .build()
+            every { input.attributesManager } returns attributesManager
+            
+            interceptor.process(input)
+            
+            // User profile should NOT be stored because there's no id_token
+            sessionAttributes.containsKey(UserProfileInterceptor.USER_SESSION_KEY) shouldBe false
+        }
+
+        it("should extract id_token from concatenated access token and parse user profile") {
             val sessionAttributes = mutableMapOf<String, Any>()
             val capturedAttributes = slot<MutableMap<String, Any>>()
             
@@ -256,7 +286,10 @@ class UserProfileInterceptorTest : DescribeSpec({
                 "name" to "KENJDAVIDSON",
                 "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname" to "Ken"
             )
-            val jwt = createJwt(claims)
+            val idToken = createJwt(claims)
+            
+            // Simulate concatenated token: access_token#id_token
+            val concatenatedToken = "someAccessToken123#$idToken"
             
             val input = mockk<HandlerInput>(relaxed = true)
             every { input.requestEnvelope } returns RequestEnvelope.builder()
@@ -265,7 +298,7 @@ class UserProfileInterceptorTest : DescribeSpec({
                     Context.builder()
                         .withSystem(
                             SystemState.builder()
-                                .withUser(User.builder().withAccessToken(jwt).build())
+                                .withUser(User.builder().withAccessToken(concatenatedToken).build())
                                 .build()
                         )
                         .build()

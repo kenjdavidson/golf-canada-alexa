@@ -17,6 +17,7 @@ import kjd.golfcanada.client.api.AuthApi
 import kjd.golfcanada.client.model.AuthToken
 import kjd.golfcanada.client.model.code
 import kjd.golfcanada.client.model.toJson
+import kjd.golfcanada.client.model.withConcatenatedToken
 import kjd.golfcanada.util.apiGatewayHttpEventBuilder
 import kjd.golfcanada.util.authToken
 import kjd.golfcanada.util.buildBody
@@ -660,7 +661,7 @@ class AuthenticationHandlerTest : DescribeSpec({
 
                 response shouldNotBe null
                 response.statusCode shouldBe 200
-                response.body shouldBe authToken.toJson()
+                response.body shouldBe authToken.withConcatenatedToken().toJson()
 
                 tokenRepo.get(AuthTokenKey(state, authToken.code())) shouldBe null
             }
@@ -694,7 +695,7 @@ class AuthenticationHandlerTest : DescribeSpec({
 
                 response shouldNotBe null
                 response.statusCode shouldBe 200
-                response.body shouldBe authToken.toJson()
+                response.body shouldBe authToken.withConcatenatedToken().toJson()
 
                 verify(exactly = 1) {
                     authApi.getAuthToken(
