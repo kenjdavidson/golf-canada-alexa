@@ -95,6 +95,9 @@ class UserProfileInterceptor : RequestInterceptor {
     internal fun mapClaimsToUser(claims: Map<String, Any>): User {
         val scoreDefaults = ScoreDefaults(
             facilityName = claims[CLAIM_DEFAULT_FACILITY_NAME]?.toString(),
+            facilityId = claims[CLAIM_DEFAULT_FACILITY_ID]?.toString()?.toIntOrNull(),
+            courseId = claims[CLAIM_DEFAULT_COURSE_ID]?.toString()?.toIntOrNull(),
+            teeId = claims[CLAIM_DEFAULT_TEE_ID]?.toString()?.toIntOrNull(),
             nationalAssociation = claims[CLAIM_DEFAULT_NATIONAL_ASSOCIATION]?.toString(),
             postHoleByHole = claims[CLAIM_POST_HOLE_BY_HOLE]?.toString()?.toBooleanOrNull()
         )
@@ -148,6 +151,9 @@ class UserProfileInterceptor : RequestInterceptor {
         private const val CLAIM_ALLOW_SCORE_POSTING = "http://schemas.golfnet.com/allowscoreposting"
         private const val CLAIM_TERMS_AND_CONDITIONS_DATE = "http://schemas.golfnet.com/termsandconditionsdate"
         private const val CLAIM_DEFAULT_FACILITY_NAME = "http://schemas.golfnet.com/defaultfacilityname"
+        private const val CLAIM_DEFAULT_FACILITY_ID = "http://schemas.golfnet.com/defaultfacilityid"
+        private const val CLAIM_DEFAULT_COURSE_ID = "http://schemas.golfnet.com/defaultcourseid"
+        private const val CLAIM_DEFAULT_TEE_ID = "http://schemas.golfnet.com/defaultteeid"
         private const val CLAIM_DEFAULT_NATIONAL_ASSOCIATION = "http://schemas.golfnet.com/defaultnationalassociation"
         private const val CLAIM_POST_HOLE_BY_HOLE = "http://schemas.golfnet.com/postholebyhole"
     }
