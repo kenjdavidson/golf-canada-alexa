@@ -17,6 +17,7 @@ import kjd.golfcanada.client.api.AuthApi
 import kjd.golfcanada.client.model.AuthToken
 import kjd.golfcanada.client.model.code
 import kjd.golfcanada.client.model.toJson
+import kjd.golfcanada.client.model.withConcatenatedToken
 import kjd.golfcanada.util.apiGatewayHttpEventBuilder
 import kjd.golfcanada.util.authToken
 import kjd.golfcanada.util.buildBody
@@ -660,7 +661,7 @@ class AuthenticationHandlerTest : DescribeSpec({
 
                 response shouldNotBe null
                 response.statusCode shouldBe 200
-                response.body shouldBe authToken.toJson()
+                response.body shouldBe authToken.withConcatenatedToken().toJson()
 
                 tokenRepo.get(AuthTokenKey(state, authToken.code())) shouldBe null
             }
@@ -694,7 +695,51 @@ class AuthenticationHandlerTest : DescribeSpec({
 
                 response shouldNotBe null
                 response.statusCode shouldBe 200
-                response.body shouldBe authToken.toJson()
+                response.body shouldBe authToken.withConcatenatedToken().toJson()
+
+                verify(exactly = 1) {
+                    authApi.getAuthToken(
+                        AuthApi.GrantTypeGetAuthToken.REFRESH_TOKEN,
+                        DEFAULT_SCOPES,
+                        null,
+                        null,
+                        authToken.refreshToken
+                    )
+                }
+            }
+
+            it("should extract access token from concatenated refresh_token before refreshing") {
+                val handler = AuthenticationHandler(
+                    authApi,
+                    clientId,
+                    clientSecret,
+                    tokenRepository
+                )
+
+                val authToken = authToken()
+                val concatenatedRefreshToken = "${authToken.refreshToken}#someIdToken"
+                
+                every {
+                    authApi.getAuthToken(
+                        AuthApi.GrantTypeGetAuthToken.REFRESH_TOKEN,
+                        DEFAULT_SCOPES,
+                        refreshToken = authToken.refreshToken
+                    )
+                } returns authToken
+
+                val event = apiGatewayHttpEventBuilder("POST", "/authToken", clientId)
+                    .withBody(buildBody(mapOf(
+                        "client_id" to clientId,
+                        "client_secret" to clientSecret,
+                        "grant_type" to "refresh_token",
+                        "refresh_token" to concatenatedRefreshToken
+                    )))
+                    .build()
+                val response = handler.handleRequest(event, TestContext())
+
+                response shouldNotBe null
+                response.statusCode shouldBe 200
+                response.body shouldBe authToken.withConcatenatedToken().toJson()
 
                 verify(exactly = 1) {
                     authApi.getAuthToken(

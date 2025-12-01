@@ -277,6 +277,49 @@ class UserProfileInterceptorTest : DescribeSpec({
             storedUser.firstName shouldBe "Ken"
         }
 
+        it("should extract id_token from concatenated access token and parse user profile") {
+            val sessionAttributes = mutableMapOf<String, Any>()
+            val capturedAttributes = slot<MutableMap<String, Any>>()
+            
+            val attributesManager = mockk<AttributesManager>(relaxed = true)
+            every { attributesManager.sessionAttributes } returns sessionAttributes
+            every { attributesManager.sessionAttributes = capture(capturedAttributes) } answers { }
+            
+            val claims = mapOf(
+                "sub" to "1538533",
+                "name" to "KENJDAVIDSON",
+                "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname" to "Ken"
+            )
+            val idToken = createJwt(claims)
+            
+            // Simulate concatenated token: access_token#id_token
+            val concatenatedToken = "someAccessToken123#$idToken"
+            
+            val input = mockk<HandlerInput>(relaxed = true)
+            every { input.requestEnvelope } returns RequestEnvelope.builder()
+                .withRequest(LaunchRequest.builder().build())
+                .withContext(
+                    Context.builder()
+                        .withSystem(
+                            SystemState.builder()
+                                .withUser(User.builder().withAccessToken(concatenatedToken).build())
+                                .build()
+                        )
+                        .build()
+                )
+                .build()
+            every { input.attributesManager } returns attributesManager
+            
+            interceptor.process(input)
+            
+            sessionAttributes shouldContainKey UserProfileInterceptor.USER_SESSION_KEY
+            
+            val storedUser = sessionAttributes[UserProfileInterceptor.USER_SESSION_KEY] as kjd.golfcanada.client.model.User
+            storedUser.id shouldBe 1538533L
+            storedUser.username shouldBe "KENJDAVIDSON"
+            storedUser.firstName shouldBe "Ken"
+        }
+
         it("should handle invalid JWT gracefully without throwing exception") {
             val sessionAttributes = mutableMapOf<String, Any>()
             
