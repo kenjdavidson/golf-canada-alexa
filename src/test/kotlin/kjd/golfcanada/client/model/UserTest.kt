@@ -24,8 +24,12 @@ class UserTest : DescribeSpec({
                 termsAndConditionsDate = "2024-01-01T00:00:00",
                 username = "test_user_1",
                 scoreDefaults = ScoreDefaults(
-                    "Golf and Country Club",
-                    "RGNA"
+                    facilityName = "Golf and Country Club",
+                    facilityId = 20598,
+                    courseId = 20599,
+                    teeId = 83281,
+                    nationalAssociation = "RGNA",
+                    postHoleByHole = true
                 )
             )
         }
