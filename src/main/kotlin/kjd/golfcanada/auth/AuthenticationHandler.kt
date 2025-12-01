@@ -11,7 +11,6 @@ import kjd.golfcanada.auth.impl.TokenRepositoryMapImpl
 import kjd.golfcanada.client.api.AuthApi
 import kjd.golfcanada.client.model.AuthToken
 import kjd.golfcanada.client.model.code
-import kjd.golfcanada.client.model.extractAccessToken
 import kjd.golfcanada.client.model.toJson
 import kjd.golfcanada.client.model.withConcatenatedToken
 import org.openapitools.client.infrastructure.ClientException
@@ -318,15 +317,11 @@ class AuthenticationHandler internal constructor(
         val refreshToken = parameters.assertValue("refresh_token") {
             invalidAuthenticationRequest(ErrorCode.INVALID_REFRESH_TOKEN) }
 
-        // If the refresh token contains the delimiter (e.g., was accidentally passed as concatenated access_token),
-        // extract only the actual access token part before the delimiter
-        val actualRefreshToken = refreshToken.extractAccessToken()
-
         return try {
             val authToken = authApi.getAuthToken(
                 AuthApi.GrantTypeGetAuthToken.REFRESH_TOKEN,
                 DEFAULT_SCOPES,
-                refreshToken = actualRefreshToken
+                refreshToken = refreshToken
             )
             authTokenResponse(authToken)
         } catch (exception: Exception) {

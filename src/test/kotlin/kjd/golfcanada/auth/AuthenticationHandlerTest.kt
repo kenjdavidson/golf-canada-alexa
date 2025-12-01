@@ -707,50 +707,6 @@ class AuthenticationHandlerTest : DescribeSpec({
                     )
                 }
             }
-
-            it("should extract access token from concatenated refresh_token before refreshing") {
-                val handler = AuthenticationHandler(
-                    authApi,
-                    clientId,
-                    clientSecret,
-                    tokenRepository
-                )
-
-                val authToken = authToken()
-                val concatenatedRefreshToken = "${authToken.refreshToken}#someIdToken"
-                
-                every {
-                    authApi.getAuthToken(
-                        AuthApi.GrantTypeGetAuthToken.REFRESH_TOKEN,
-                        DEFAULT_SCOPES,
-                        refreshToken = authToken.refreshToken
-                    )
-                } returns authToken
-
-                val event = apiGatewayHttpEventBuilder("POST", "/authToken", clientId)
-                    .withBody(buildBody(mapOf(
-                        "client_id" to clientId,
-                        "client_secret" to clientSecret,
-                        "grant_type" to "refresh_token",
-                        "refresh_token" to concatenatedRefreshToken
-                    )))
-                    .build()
-                val response = handler.handleRequest(event, TestContext())
-
-                response shouldNotBe null
-                response.statusCode shouldBe 200
-                response.body shouldBe authToken.withConcatenatedToken().toJson()
-
-                verify(exactly = 1) {
-                    authApi.getAuthToken(
-                        AuthApi.GrantTypeGetAuthToken.REFRESH_TOKEN,
-                        DEFAULT_SCOPES,
-                        null,
-                        null,
-                        authToken.refreshToken
-                    )
-                }
-            }
         }
 
         describe("invalid requests") {
