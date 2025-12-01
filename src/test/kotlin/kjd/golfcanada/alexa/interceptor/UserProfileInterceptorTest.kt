@@ -68,6 +68,9 @@ class UserProfileInterceptorTest : DescribeSpec({
                 "http://schemas.golfnet.com/clubmanagementgroupid" to "8",
                 "http://schemas.golfnet.com/allowscoreposting" to "True",
                 "http://schemas.golfnet.com/defaultfacilityname" to "Blue Springs Golf Club",
+                "http://schemas.golfnet.com/defaultfacilityid" to "20598",
+                "http://schemas.golfnet.com/defaultcourseid" to "20599",
+                "http://schemas.golfnet.com/defaultteeid" to "83281",
                 "http://schemas.golfnet.com/defaultnationalassociation" to "RCGA",
                 "http://schemas.golfnet.com/postholebyhole" to "True"
             )
@@ -89,6 +92,9 @@ class UserProfileInterceptorTest : DescribeSpec({
             user.allowScorePosting shouldBe true
             user.scoreDefaults shouldNotBe null
             user.scoreDefaults?.facilityName shouldBe "Blue Springs Golf Club"
+            user.scoreDefaults?.facilityId shouldBe 20598
+            user.scoreDefaults?.courseId shouldBe 20599
+            user.scoreDefaults?.teeId shouldBe 83281
             user.scoreDefaults?.nationalAssociation shouldBe "RCGA"
             user.scoreDefaults?.postHoleByHole shouldBe true
         }
