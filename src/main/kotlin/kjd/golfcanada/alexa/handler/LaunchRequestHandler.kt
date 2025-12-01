@@ -19,7 +19,6 @@ class LaunchRequestHandler : com.amazon.ask.dispatcher.request.handler.impl.Laun
         true
 
     override fun handle(input: HandlerInput?, request: LaunchRequest?): Optional<Response> {
-        return input?.generateTemplateResponse("LaunchRequestResponse", emptyMap())
-            ?: Optional.empty()
+        return input!!.generateTemplateResponse("LaunchRequestResponse", emptyMap())
     }
 }
