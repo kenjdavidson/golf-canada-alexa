@@ -88,6 +88,7 @@ class PlayerProfileMembershipIntentHandlerTest : DescribeSpec({
                 golfCanadaCardId = "12345678",
                 expirationDate = "2/1/2026 12:00:00 AM",
                 scoreDefaults = kjd.golfcanada.client.model.ScoreDefaults(
+                    facilityName = "Blue Springs Golf Club",
                     postHoleByHole = true
                 )
             )
@@ -110,6 +111,7 @@ class PlayerProfileMembershipIntentHandlerTest : DescribeSpec({
                         "Your membership level is ${dataModel["membershipLevel"]}. " +
                         "Your membership expires on ${dataModel["expirationDate"]}. " +
                         "Your Golf Canada card ID is ${dataModel["golfCanadaCardId"]}. " +
+                        "Your default scoring is set to ${dataModel["facilityName"]}. " +
                         "Hole by hole scoring is $postHoleByHoleText."
                 val response = com.amazon.ask.model.Response.builder()
                     .withOutputSpeech(PlainTextOutputSpeech.builder().withText(text).build())
@@ -129,6 +131,7 @@ class PlayerProfileMembershipIntentHandlerTest : DescribeSpec({
             outputSpeech.text shouldContain "Gold"
             outputSpeech.text shouldContain "12345678"
             outputSpeech.text shouldContain "2/1/2026"
+            outputSpeech.text shouldContain "Blue Springs Golf Club"
             outputSpeech.text shouldContain "required"
         }
 
@@ -140,6 +143,7 @@ class PlayerProfileMembershipIntentHandlerTest : DescribeSpec({
                 golfCanadaCardId = "87654321",
                 expirationDate = "1/3/2025 12:00:00 AM",
                 scoreDefaults = kjd.golfcanada.client.model.ScoreDefaults(
+                    facilityName = "Club de Golf Vert",
                     postHoleByHole = false
                 )
             )
@@ -163,6 +167,7 @@ class PlayerProfileMembershipIntentHandlerTest : DescribeSpec({
                         "Votre niveau d'adhésion est ${dataModel["membershipLevel"]}. " +
                         "Votre adhésion expire le ${dataModel["expirationDate"]}. " +
                         "Votre numéro de carte Golf Canada est ${dataModel["golfCanadaCardId"]}. " +
+                        "Votre score par défaut est défini à ${dataModel["facilityName"]}. " +
                         "La saisie trou par trou est $postHoleByHoleText."
                 val response = com.amazon.ask.model.Response.builder()
                     .withOutputSpeech(PlainTextOutputSpeech.builder().withText(text).build())
@@ -182,6 +187,7 @@ class PlayerProfileMembershipIntentHandlerTest : DescribeSpec({
             outputSpeech.text shouldContain "Argent"
             outputSpeech.text shouldContain "87654321"
             outputSpeech.text shouldContain "1/3/2025"
+            outputSpeech.text shouldContain "Club de Golf Vert"
             outputSpeech.text shouldContain "non obligatoire"
         }
     }
