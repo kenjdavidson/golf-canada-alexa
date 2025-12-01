@@ -237,20 +237,14 @@ class UserProfileInterceptorTest : DescribeSpec({
             sessionAttributes[UserProfileInterceptor.USER_SESSION_KEY] shouldBe existingProfile
         }
 
-        it("should store user profile in session attributes when valid JWT provided") {
+        it("should skip user profile extraction when access token has no delimiter") {
             val sessionAttributes = mutableMapOf<String, Any>()
-            val capturedAttributes = slot<MutableMap<String, Any>>()
             
             val attributesManager = mockk<AttributesManager>(relaxed = true)
             every { attributesManager.sessionAttributes } returns sessionAttributes
-            every { attributesManager.sessionAttributes = capture(capturedAttributes) } answers { }
             
-            val claims = mapOf(
-                "sub" to "1538533",
-                "name" to "KENJDAVIDSON",
-                "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname" to "Ken"
-            )
-            val jwt = createJwt(claims)
+            // Plain access token without delimiter (not a JWT, just a string)
+            val plainAccessToken = "someAccessTokenString"
             
             val input = mockk<HandlerInput>(relaxed = true)
             every { input.requestEnvelope } returns RequestEnvelope.builder()
@@ -259,7 +253,7 @@ class UserProfileInterceptorTest : DescribeSpec({
                     Context.builder()
                         .withSystem(
                             SystemState.builder()
-                                .withUser(User.builder().withAccessToken(jwt).build())
+                                .withUser(User.builder().withAccessToken(plainAccessToken).build())
                                 .build()
                         )
                         .build()
@@ -269,12 +263,8 @@ class UserProfileInterceptorTest : DescribeSpec({
             
             interceptor.process(input)
             
-            sessionAttributes shouldContainKey UserProfileInterceptor.USER_SESSION_KEY
-            
-            val storedUser = sessionAttributes[UserProfileInterceptor.USER_SESSION_KEY] as kjd.golfcanada.client.model.User
-            storedUser.id shouldBe 1538533L
-            storedUser.username shouldBe "KENJDAVIDSON"
-            storedUser.firstName shouldBe "Ken"
+            // User profile should NOT be stored because there's no id_token
+            sessionAttributes.containsKey(UserProfileInterceptor.USER_SESSION_KEY) shouldBe false
         }
 
         it("should extract id_token from concatenated access token and parse user profile") {
