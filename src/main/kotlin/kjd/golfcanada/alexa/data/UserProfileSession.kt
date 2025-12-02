@@ -27,9 +27,9 @@ data class UserProfileSession(
      * Converts the user profile to a map suitable for template response data.
      * Only includes non-null values.
      *
-     * @return A mutable map containing the non-null profile fields
+     * @return A map containing the non-null profile fields
      */
-    fun toResponseData(): MutableMap<String, Any> {
+    fun toResponseData(): Map<String, Any> {
         val dataModel = mutableMapOf<String, Any>()
         firstName?.let { dataModel["firstName"] = it }
         lastName?.let { dataModel["lastName"] = it }
