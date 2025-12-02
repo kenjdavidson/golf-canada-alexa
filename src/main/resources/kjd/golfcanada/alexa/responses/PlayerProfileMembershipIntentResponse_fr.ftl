@@ -1,7 +1,7 @@
 {
     "outputSpeech": {
         "type": "PlainText",
-        "text": "Vos informations d'adhésion ne sont pas encore disponibles. Cette fonctionnalité est en cours de développement."
+        "text": "<#if firstName?? && lastName??>Bonjour ${firstName} ${lastName}. </#if><#if membershipLevel??>Votre niveau d'adhésion est ${membershipLevel}. </#if><#if expirationDate??>Votre adhésion expire le ${expirationDate}. </#if><#if golfCanadaCardId??>Votre numéro de carte Golf Canada est ${golfCanadaCardId}. </#if><#if facilityName??>Votre score par défaut est défini à ${facilityName}. </#if><#if postHoleByHole??>La saisie trou par trou est <#if postHoleByHole>obligatoire<#else>non obligatoire</#if>.</#if>"
     },
     "shouldEndSession": "false"
 }
