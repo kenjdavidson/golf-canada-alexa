@@ -34,6 +34,11 @@ class HandicapIntentFuzzyMatchingTest : DescribeSpec({
     /**
      * Helper function that simulates the findMatchingFriends logic
      * for testing purposes. This mirrors the actual implementation.
+     * 
+     * Note: This duplicates the logic from HandicapIntentRequestHandler.findMatchingFriends()
+     * since that method is private. If the actual implementation changes, this test helper
+     * must be updated accordingly. Consider extracting to a shared utility class in the future
+     * if fuzzy matching is needed in multiple places.
      */
     fun findMatchingFriends(friends: List<Friend>, query: String): List<Friend> {
         if (query.isBlank()) return emptyList()
