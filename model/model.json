@@ -44,7 +44,12 @@
         },
         {
           "name": "GOLFCANADA.HandicapIntent",
-          "slots": [],
+          "slots": [
+            {
+              "name": "Friend",
+              "type": "AMAZON.NUMBER"
+            }
+          ],
           "samples": [
             "what is my handicap index",
             "what is my handicap high index",
@@ -53,7 +58,12 @@
             "how does my handicap look",
             "give me information about my handicap",
             "tell me about my handicap",
-            "what is my handicap"
+            "what is my handicap",
+            "what is {Friend} handicap",
+            "what is player {Friend} handicap",
+            "get handicap for player {Friend}",
+            "tell me {Friend} handicap",
+            "what is the handicap for {Friend}"
           ]
         },
         {
