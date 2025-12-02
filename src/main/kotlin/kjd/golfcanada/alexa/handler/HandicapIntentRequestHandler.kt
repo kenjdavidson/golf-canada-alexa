@@ -5,6 +5,7 @@ import com.amazon.ask.dispatcher.request.handler.RequestHandler
 import com.amazon.ask.model.IntentRequest
 import com.amazon.ask.model.Response
 import com.amazon.ask.request.Predicates.intentName
+import kjd.golfcanada.alexa.exception.AccountLinkingException
 import kjd.golfcanada.alexa.interceptor.HandicapLookupInterceptor
 import kjd.golfcanada.alexa.model.HandicapSummaryData
 import kjd.golfcanada.client.api.ScoresApi
@@ -83,10 +84,7 @@ class HandicapIntentRequestHandler : RequestHandler {
 
         if (accessToken.isNullOrBlank()) {
             logger.warn("No access token available for fetching friend handicap")
-            val dataModel = mapOf(
-                "error" to "Unable to authenticate your request."
-            )
-            return input.generateTemplateResponse("HandicapIntentErrorResponse", dataModel)
+            throw AccountLinkingException()
         }
 
         try {
