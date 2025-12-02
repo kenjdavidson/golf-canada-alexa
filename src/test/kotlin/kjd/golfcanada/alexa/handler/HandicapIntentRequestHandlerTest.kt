@@ -167,13 +167,13 @@ class HandicapIntentRequestHandlerTest : DescribeSpec({
     }
 
     context("handle - friend handicap") {
-        it("should throw AccountLinkingException when no access token") {
+        it("should throw AccountLinkingException when no access token with FriendName") {
             val attributesManager = mockk<AttributesManager>(relaxed = true)
             every { attributesManager.requestAttributes } returns mutableMapOf()
 
             val friendSlot = Slot.builder()
-                .withName("Friend")
-                .withValue("1538533")
+                .withName("FriendName")
+                .withValue("John Smith")
                 .build()
 
             val input = mockk<HandlerInput>(relaxed = true)
@@ -181,7 +181,34 @@ class HandicapIntentRequestHandlerTest : DescribeSpec({
                 .withRequest(IntentRequest.builder()
                     .withIntent(Intent.builder()
                         .withName("GOLFCANADA.HandicapIntent")
-                        .withSlots(mapOf("Friend" to friendSlot))
+                        .withSlots(mapOf("FriendName" to friendSlot))
+                        .build())
+                    .build())
+                .build()
+            every { input.attributesManager } returns attributesManager
+
+            val handler = HandicapIntentRequestHandler()
+
+            shouldThrow<AccountLinkingException> {
+                handler.handle(input)
+            }
+        }
+
+        it("should throw AccountLinkingException when no access token with FirstName") {
+            val attributesManager = mockk<AttributesManager>(relaxed = true)
+            every { attributesManager.requestAttributes } returns mutableMapOf()
+
+            val friendSlot = Slot.builder()
+                .withName("FirstName")
+                .withValue("John")
+                .build()
+
+            val input = mockk<HandlerInput>(relaxed = true)
+            every { input.requestEnvelope } returns RequestEnvelope.builder()
+                .withRequest(IntentRequest.builder()
+                    .withIntent(Intent.builder()
+                        .withName("GOLFCANADA.HandicapIntent")
+                        .withSlots(mapOf("FirstName" to friendSlot))
                         .build())
                     .build())
                 .build()

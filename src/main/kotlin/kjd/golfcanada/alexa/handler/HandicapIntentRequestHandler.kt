@@ -39,11 +39,13 @@ class HandicapIntentRequestHandler : RequestHandler {
         val request = input.requestEnvelope.request as IntentRequest
         val slots = request.intent?.slots
 
-        val friendSlot = slots?.get("Friend")
-        val friendId = friendSlot?.value?.toLongOrNull()
+        val friendFullNameSlot = slots?.get("FriendName")
+        val firstNameSlot = slots?.get("FirstName")
+        
+        val friendName = friendFullNameSlot?.value ?: firstNameSlot?.value
 
-        return if (friendId != null) {
-            handleFriendHandicap(input, friendId)
+        return if (friendName != null) {
+            handleFriendHandicap(input, friendName)
         } else {
             handleOwnHandicap(input)
         }
@@ -75,11 +77,14 @@ class HandicapIntentRequestHandler : RequestHandler {
     /**
      * Handles the request for a friend's handicap by making a live API call.
      * 
+     * NOTE: This currently requires a name-to-ID resolution mechanism which is not yet implemented.
+     * A future enhancement would need to add a service/API to map friend names to individualIds.
+     * 
      * @param input The handler input
-     * @param friendId The unique identifier of the friend
+     * @param friendName The name of the friend
      * @return Response with the friend's handicap information
      */
-    private fun handleFriendHandicap(input: HandlerInput, friendId: Long): Optional<Response> {
+    private fun handleFriendHandicap(input: HandlerInput, friendName: String): Optional<Response> {
         val accessToken = input.requestEnvelope.context?.system?.user?.accessToken
 
         if (accessToken.isNullOrBlank()) {
@@ -87,28 +92,18 @@ class HandicapIntentRequestHandler : RequestHandler {
             throw AccountLinkingException()
         }
 
-        try {
-            logger.info("Fetching handicap for friend ID: $friendId")
-            val actualAccessToken = accessToken.extractAccessToken()
-            
-            org.openapitools.client.infrastructure.ApiClient.accessToken = actualAccessToken
-            val scoresApi = ScoresApi()
-
-            val handicapCalculation = scoresApi.getHandicapCalculation(friendId)
-            val handicapSummary = HandicapSummaryData.fromDTO(handicapCalculation)
-
-            logger.info("Successfully fetched handicap for friend: ${handicapSummary.name}")
-
-            val dataModel = handicapSummary.toResponseData().toMutableMap()
-            dataModel["isFriend"] = true
-
-            return input.generateTemplateResponse("HandicapIntentFriendResponse", dataModel)
-        } catch (e: Exception) {
-            logger.error("Failed to fetch handicap for friend $friendId: ${e.message}", e)
-            val dataModel = mapOf(
-                "error" to "Unable to retrieve handicap information for that player."
-            )
-            return input.generateTemplateResponse("HandicapIntentErrorResponse", dataModel)
-        }
+        logger.info("Friend handicap requested for: $friendName")
+        
+        // TODO: Implement name-to-ID resolution
+        // This would typically involve:
+        // 1. Calling a Golf Canada API to search for members by name
+        // 2. Disambiguating if multiple matches are found
+        // 3. Using the resolved individualId to fetch handicap data
+        
+        // For now, return an error indicating this feature is not yet available
+        val dataModel = mapOf(
+            "error" to "Friend handicap lookup by name is not yet available. Please check back later."
+        )
+        return input.generateTemplateResponse("HandicapIntentErrorResponse", dataModel)
     }
 }
