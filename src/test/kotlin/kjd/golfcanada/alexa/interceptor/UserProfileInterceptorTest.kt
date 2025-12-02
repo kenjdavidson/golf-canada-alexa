@@ -11,10 +11,12 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.maps.shouldContainKey
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
+import kjd.golfcanada.alexa.data.UserProfileSession
 import java.util.Base64
 
 class UserProfileInterceptorTest : DescribeSpec({
@@ -165,6 +167,54 @@ class UserProfileInterceptorTest : DescribeSpec({
         }
     }
 
+    context("mapUserToSession") {
+        it("should map User to UserProfileSession with only relevant fields") {
+            val user = kjd.golfcanada.client.model.User(
+                id = 1538533L,
+                username = "KENJDAVIDSON",
+                firstName = "Ken",
+                lastName = "Davidson",
+                membershipLevel = "Gold",
+                golfCanadaCardId = "5200043264",
+                expirationDate = "2024-12-31T00:00:00",
+                email = "ken.j.davidson@live.ca",
+                handicap = "8.9",
+                scoreDefaults = kjd.golfcanada.client.model.ScoreDefaults(
+                    facilityName = "Blue Springs Golf Club",
+                    facilityId = 20598,
+                    postHoleByHole = true
+                )
+            )
+            
+            val session = interceptor.mapUserToSession(user)
+            
+            session.firstName shouldBe "Ken"
+            session.lastName shouldBe "Davidson"
+            session.membershipLevel shouldBe "Gold"
+            session.golfCanadaCardId shouldBe "5200043264"
+            session.expirationDate shouldBe "2024-12-31T00:00:00"
+            session.facilityName shouldBe "Blue Springs Golf Club"
+            session.postHoleByHole shouldBe true
+        }
+
+        it("should handle null fields gracefully") {
+            val user = kjd.golfcanada.client.model.User(
+                id = 1538533L,
+                username = "TESTUSER"
+            )
+            
+            val session = interceptor.mapUserToSession(user)
+            
+            session.firstName shouldBe null
+            session.lastName shouldBe null
+            session.membershipLevel shouldBe null
+            session.golfCanadaCardId shouldBe null
+            session.expirationDate shouldBe null
+            session.facilityName shouldBe null
+            session.postHoleByHole shouldBe null
+        }
+    }
+
     context("process") {
         it("should not process when access token is null") {
             val attributesManager = mockk<AttributesManager>(relaxed = true)
@@ -211,7 +261,7 @@ class UserProfileInterceptorTest : DescribeSpec({
         }
 
         it("should skip when user profile already exists in session") {
-            val existingProfile = kjd.golfcanada.client.model.User(id = 123L)
+            val existingProfile = UserProfileSession(firstName = "Existing", lastName = "User")
             val sessionAttributes = mutableMapOf<String, Any>(
                 UserProfileInterceptor.USER_SESSION_KEY to existingProfile
             )
@@ -284,7 +334,12 @@ class UserProfileInterceptorTest : DescribeSpec({
             val claims = mapOf(
                 "sub" to "1538533",
                 "name" to "KENJDAVIDSON",
-                "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname" to "Ken"
+                "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname" to "Ken",
+                "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname" to "Davidson",
+                "http://schemas.golfnet.com/membershiplevel" to "Gold",
+                "http://schemas.golfnet.com/golfcanadacardid" to "5200043264",
+                "http://schemas.golfnet.com/defaultfacilityname" to "Blue Springs Golf Club",
+                "http://schemas.golfnet.com/postholebyhole" to "True"
             )
             val idToken = createJwt(claims)
             
@@ -310,10 +365,14 @@ class UserProfileInterceptorTest : DescribeSpec({
             
             sessionAttributes shouldContainKey UserProfileInterceptor.USER_SESSION_KEY
             
-            val storedUser = sessionAttributes[UserProfileInterceptor.USER_SESSION_KEY] as kjd.golfcanada.client.model.User
-            storedUser.id shouldBe 1538533L
-            storedUser.username shouldBe "KENJDAVIDSON"
-            storedUser.firstName shouldBe "Ken"
+            val storedProfile = sessionAttributes[UserProfileInterceptor.USER_SESSION_KEY]
+            storedProfile.shouldBeInstanceOf<UserProfileSession>()
+            storedProfile.firstName shouldBe "Ken"
+            storedProfile.lastName shouldBe "Davidson"
+            storedProfile.membershipLevel shouldBe "Gold"
+            storedProfile.golfCanadaCardId shouldBe "5200043264"
+            storedProfile.facilityName shouldBe "Blue Springs Golf Club"
+            storedProfile.postHoleByHole shouldBe true
         }
 
         it("should handle invalid JWT gracefully without throwing exception") {

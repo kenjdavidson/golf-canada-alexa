@@ -2,6 +2,7 @@ package kjd.golfcanada.alexa.interceptor
 
 import com.amazon.ask.dispatcher.request.handler.HandlerInput
 import com.amazon.ask.dispatcher.request.interceptor.RequestInterceptor
+import kjd.golfcanada.alexa.data.UserProfileSession
 import kjd.golfcanada.client.model.ScoreDefaults
 import kjd.golfcanada.client.model.User
 import kjd.golfcanada.client.model.extractIdToken
@@ -11,10 +12,10 @@ import java.util.Base64
 /**
  * Request interceptor that parses the access token as a JWT and extracts user profile information.
  *
- * This interceptor decodes the JWT access token and maps the claims to a [User] object,
+ * This interceptor decodes the JWT access token and maps the claims to a [UserProfileSession] object,
  * which is then stored in the session attributes for use by handlers.
  *
- * The JWT payload contains claims that are mapped to the User model properties.
+ * The JWT payload contains claims that are mapped to the UserProfileSession model properties.
  */
 class UserProfileInterceptor : RequestInterceptor {
 
@@ -56,7 +57,8 @@ class UserProfileInterceptor : RequestInterceptor {
             }
             
             val user = parseJwtToUser(idToken)
-            sessionAttributes[USER_SESSION_KEY] = user
+            val userProfileSession = mapUserToSession(user)
+            sessionAttributes[USER_SESSION_KEY] = userProfileSession
             input.attributesManager.sessionAttributes = sessionAttributes
             logger.info("User profile extracted from JWT and stored in session")
         } catch (e: Exception) {
@@ -130,6 +132,25 @@ class UserProfileInterceptor : RequestInterceptor {
             termsAndConditionsDate = claims[CLAIM_TERMS_AND_CONDITIONS_DATE]?.toString(),
             expirationDate = claims[CLAIM_EXPIRATION_DATE]?.toString(),
             scoreDefaults = scoreDefaults
+        )
+    }
+
+    /**
+     * Maps a [User] object to a [UserProfileSession] object containing only the fields
+     * that are actively used by handlers.
+     *
+     * @param user The full User object parsed from JWT claims
+     * @return A [UserProfileSession] with only the relevant user information
+     */
+    internal fun mapUserToSession(user: User): UserProfileSession {
+        return UserProfileSession(
+            firstName = user.firstName,
+            lastName = user.lastName,
+            membershipLevel = user.membershipLevel,
+            golfCanadaCardId = user.golfCanadaCardId,
+            expirationDate = user.expirationDate,
+            facilityName = user.scoreDefaults?.facilityName,
+            postHoleByHole = user.scoreDefaults?.postHoleByHole
         )
     }
 
