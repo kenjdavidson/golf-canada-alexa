@@ -23,6 +23,20 @@ data class HandicapSummaryData(
     val averageDifferential: Double?,
     val cachedAt: Long = System.currentTimeMillis()
 ) {
+    /**
+     * Converts this HandicapSummaryData to a response data map for template rendering.
+     * 
+     * @return A map containing non-null fields for use in response templates
+     */
+    fun toResponseData(): Map<String, Any> {
+        val dataModel = mutableMapOf<String, Any>()
+        name?.let { dataModel["name"] = it }
+        handicap?.let { dataModel["handicap"] = it }
+        lowValue?.let { dataModel["lowValue"] = it }
+        averageDifferential?.let { dataModel["averageDifferential"] = it }
+        return dataModel
+    }
+
     companion object {
         /**
          * Creates a HandicapSummaryData instance from a HandicapCalculation DTO.

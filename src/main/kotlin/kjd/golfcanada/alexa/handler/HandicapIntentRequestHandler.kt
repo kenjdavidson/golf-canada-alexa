@@ -32,21 +32,18 @@ class HandicapIntentRequestHandler : RequestHandler {
     private val logger = LoggerFactory.getLogger(HandicapIntentRequestHandler::class.java)
 
     override fun canHandle(input: HandlerInput): Boolean =
-        input.matches(intentName("HandicapIntent"))
+        input.matches(intentName("GOLFCANADA.HandicapIntent"))
 
     override fun handle(input: HandlerInput): Optional<Response> {
         val request = input.requestEnvelope.request as IntentRequest
         val slots = request.intent?.slots
 
-        // Check if user is asking for a friend's handicap
         val friendSlot = slots?.get("Friend")
         val friendId = friendSlot?.value?.toLongOrNull()
 
         return if (friendId != null) {
-            // Fetch friend's handicap on the fly (no caching)
             handleFriendHandicap(input, friendId)
         } else {
-            // Use cached own handicap from request attributes
             handleOwnHandicap(input)
         }
     }
@@ -63,7 +60,6 @@ class HandicapIntentRequestHandler : RequestHandler {
 
         if (handicapSummary == null) {
             logger.warn("No handicap data available in request attributes")
-            // Return error response
             val dataModel = mapOf(
                 "error" to "Unable to retrieve your handicap information at this time."
             )
@@ -72,14 +68,7 @@ class HandicapIntentRequestHandler : RequestHandler {
 
         logger.info("Returning own handicap: ${handicapSummary.handicap}")
 
-        // Prepare data model for the template
-        val dataModel = mutableMapOf<String, Any>()
-        handicapSummary.name?.let { dataModel["name"] = it }
-        handicapSummary.handicap?.let { dataModel["handicap"] = it }
-        handicapSummary.lowValue?.let { dataModel["lowValue"] = it }
-        handicapSummary.averageDifferential?.let { dataModel["averageDifferential"] = it }
-
-        return input.generateTemplateResponse("HandicapIntentResponse", dataModel)
+        return input.generateTemplateResponse("HandicapIntentResponse", handicapSummary.toResponseData())
     }
 
     /**
@@ -104,7 +93,6 @@ class HandicapIntentRequestHandler : RequestHandler {
             logger.info("Fetching handicap for friend ID: $friendId")
             val actualAccessToken = accessToken.extractAccessToken()
             
-            // Set access token on ApiClient companion object (thread-safe for single request)
             org.openapitools.client.infrastructure.ApiClient.accessToken = actualAccessToken
             val scoresApi = ScoresApi()
 
@@ -113,12 +101,7 @@ class HandicapIntentRequestHandler : RequestHandler {
 
             logger.info("Successfully fetched handicap for friend: ${handicapSummary.name}")
 
-            // Prepare data model for the template
-            val dataModel = mutableMapOf<String, Any>()
-            handicapSummary.name?.let { dataModel["name"] = it }
-            handicapSummary.handicap?.let { dataModel["handicap"] = it }
-            handicapSummary.lowValue?.let { dataModel["lowValue"] = it }
-            handicapSummary.averageDifferential?.let { dataModel["averageDifferential"] = it }
+            val dataModel = handicapSummary.toResponseData().toMutableMap()
             dataModel["isFriend"] = true
 
             return input.generateTemplateResponse("HandicapIntentFriendResponse", dataModel)
