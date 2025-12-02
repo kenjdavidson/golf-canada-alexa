@@ -43,7 +43,7 @@
           "samples": []
         },
         {
-          "name": "PlayerProfileHandicapIntent",
+          "name": "GOLFCANADA.HandicapIntent",
           "slots": [],
           "samples": [
             "what is my handicap index",
