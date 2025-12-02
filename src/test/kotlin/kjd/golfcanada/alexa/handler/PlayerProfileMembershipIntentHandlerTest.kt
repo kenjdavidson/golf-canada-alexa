@@ -12,10 +12,10 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.mockk.every
 import io.mockk.mockk
+import kjd.golfcanada.alexa.data.UserProfileSession
 import kjd.golfcanada.alexa.exception.NoUserDetailsException
 import kjd.golfcanada.alexa.interceptor.UserProfileInterceptor
 import kjd.golfcanada.alexa.util.TemplateFactoryUtil
-import kjd.golfcanada.client.model.User
 
 class PlayerProfileMembershipIntentHandlerTest : DescribeSpec({
     context("canHandle") {
@@ -81,21 +81,19 @@ class PlayerProfileMembershipIntentHandlerTest : DescribeSpec({
         }
 
         it("should return response with user membership information") {
-            val user = User(
+            val userProfile = UserProfileSession(
                 firstName = "John",
                 lastName = "Doe",
                 membershipLevel = "Gold",
                 golfCanadaCardId = "12345678",
                 expirationDate = "2/1/2026 12:00:00 AM",
-                scoreDefaults = kjd.golfcanada.client.model.ScoreDefaults(
-                    facilityName = "Blue Springs Golf Club",
-                    postHoleByHole = true
-                )
+                facilityName = "Blue Springs Golf Club",
+                postHoleByHole = true
             )
             
             val attributesManager = mockk<AttributesManager>(relaxed = true)
             val sessionAttributes: MutableMap<String, Any> = mutableMapOf(
-                UserProfileInterceptor.USER_SESSION_KEY to user
+                UserProfileInterceptor.USER_SESSION_KEY to userProfile
             )
             every { attributesManager.sessionAttributes } returns sessionAttributes
             
@@ -136,21 +134,19 @@ class PlayerProfileMembershipIntentHandlerTest : DescribeSpec({
         }
 
         it("should return fr response with user membership information") {
-            val user = User(
+            val userProfile = UserProfileSession(
                 firstName = "Jean",
                 lastName = "Dupont",
                 membershipLevel = "Argent",
                 golfCanadaCardId = "87654321",
                 expirationDate = "1/3/2025 12:00:00 AM",
-                scoreDefaults = kjd.golfcanada.client.model.ScoreDefaults(
-                    facilityName = "Club de Golf Vert",
-                    postHoleByHole = false
-                )
+                facilityName = "Club de Golf Vert",
+                postHoleByHole = false
             )
             
             val attributesManager = mockk<AttributesManager>(relaxed = true)
             val sessionAttributes: MutableMap<String, Any> = mutableMapOf(
-                UserProfileInterceptor.USER_SESSION_KEY to user
+                UserProfileInterceptor.USER_SESSION_KEY to userProfile
             )
             every { attributesManager.sessionAttributes } returns sessionAttributes
             
