@@ -46,11 +46,19 @@
           "name": "GOLFCANADA.HandicapIntent",
           "slots": [
             {
-              "name": "Friend",
-              "type": "AMAZON.NUMBER"
+              "name": "FriendName",
+              "type": "FriendFullName"
+            },
+            {
+              "name": "FirstName",
+              "type": "AMAZON.US_FIRST_NAME"
             }
           ],
           "samples": [
+            "what is my handicap",
+            "tell me my handicap",
+            "what's my handicap index",
+            "get my current handicap",
             "what is my handicap index",
             "what is my handicap high index",
             "what is my handicap low index",
@@ -58,12 +66,14 @@
             "how does my handicap look",
             "give me information about my handicap",
             "tell me about my handicap",
-            "what is my handicap",
-            "what is {Friend} handicap",
-            "what is player {Friend} handicap",
-            "get handicap for player {Friend}",
-            "tell me {Friend} handicap",
-            "what is the handicap for {Friend}"
+            "what is {FriendName}'s handicap",
+            "what is the handicap for {FriendName}",
+            "tell me the handicap for {FriendName}",
+            "I want the handicap for {FriendName}",
+            "what's {FriendName} handicap",
+            "what is {FirstName}'s handicap",
+            "tell me {FirstName}'s handicap",
+            "get the handicap for {FirstName}"
           ]
         },
         {
@@ -138,7 +148,28 @@
           "samples": []
         }
       ],
-      "types": []
+      "types": [
+        {
+          "name": "FriendFullName",
+          "values": [
+            {
+              "name": {
+                "value": "Dean Ellis"
+              }
+            },
+            {
+              "name": {
+                "value": "Jane Smith"
+              }
+            },
+            {
+              "name": {
+                "value": "Bob Johnson"
+              }
+            }
+          ]
+        }
+      ]
     }
   }
 }
