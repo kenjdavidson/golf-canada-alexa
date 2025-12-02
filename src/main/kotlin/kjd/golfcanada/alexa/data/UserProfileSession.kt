@@ -22,4 +22,22 @@ data class UserProfileSession(
     val expirationDate: String? = null,
     val facilityName: String? = null,
     val postHoleByHole: Boolean? = null
-)
+) {
+    /**
+     * Converts the user profile to a map suitable for template response data.
+     * Only includes non-null values.
+     *
+     * @return A mutable map containing the non-null profile fields
+     */
+    fun toResponseData(): MutableMap<String, Any> {
+        val dataModel = mutableMapOf<String, Any>()
+        firstName?.let { dataModel["firstName"] = it }
+        lastName?.let { dataModel["lastName"] = it }
+        membershipLevel?.let { dataModel["membershipLevel"] = it }
+        golfCanadaCardId?.let { dataModel["golfCanadaCardId"] = it }
+        expirationDate?.let { dataModel["expirationDate"] = it }
+        postHoleByHole?.let { dataModel["postHoleByHole"] = it }
+        facilityName?.let { dataModel["facilityName"] = it }
+        return dataModel
+    }
+}
