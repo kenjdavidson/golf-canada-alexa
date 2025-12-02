@@ -3,6 +3,7 @@ package kjd.golfcanada.alexa.data
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.maps.shouldContainExactly
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 
 class UserProfileSessionTest : DescribeSpec({
     context("toResponseData") {
@@ -69,6 +70,21 @@ class UserProfileSessionTest : DescribeSpec({
                 "firstName" to "Test",
                 "postHoleByHole" to false
             )
+        }
+
+        it("should return a new map instance on each call") {
+            val userProfile = UserProfileSession(
+                firstName = "John",
+                lastName = "Doe"
+            )
+
+            val responseData1 = userProfile.toResponseData()
+            val responseData2 = userProfile.toResponseData()
+            
+            // Verify that each call returns a new instance (not the same reference)
+            (responseData1 === responseData2) shouldBe false
+            // But with the same content
+            responseData1 shouldContainExactly responseData2
         }
     }
 })
