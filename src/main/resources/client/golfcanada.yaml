@@ -59,6 +59,30 @@ paths:
           description: Not Authorized
         404:
           description: Member Not Found
+          
+  /api/members/{userId}/getFriends:
+    get:
+      summary: Retrieve member friends list
+      tags: ["Members"]
+      operationId: getFriends
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: The unique identifier of the member
+          description: Friends list retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Friend"
+        401:
+          description: Not Authorized
+        404:
+          description: Member Not Found
 
   /api/scores/getHandicapCalculation:
     get:
@@ -404,3 +428,26 @@ components:
           type: integer
         scaleTypeId:
           type: string
+          
+    Friend:
+      type: object
+      properties:
+        individualId:
+          type: identifier
+        name:
+          type: string
+        club:
+          type: string
+        region:
+          type: string
+        handicap:
+          type: string
+        cardId:
+          type: string
+        gender:
+          type: string
+        level:
+          type: string
+        expiresOn:
+          type: string
+          pattern: "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?"
