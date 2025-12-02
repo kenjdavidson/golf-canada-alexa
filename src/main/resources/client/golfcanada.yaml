@@ -72,6 +72,11 @@ paths:
           in: path
           required: true
           description: The unique identifier of the member
+          schema:
+            type: integer
+            format: int64
+      responses:
+        200:
           description: Friends list retrieved successfully
           content:
             application/json:
