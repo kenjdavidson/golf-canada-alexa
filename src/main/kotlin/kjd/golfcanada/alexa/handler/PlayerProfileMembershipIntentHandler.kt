@@ -24,14 +24,7 @@ class PlayerProfileMembershipIntentHandler : RequestHandler {
             ?: throw NoUserDetailsException()
         
         // Prepare data model for the template
-        val dataModel = mutableMapOf<String, Any>()
-        userProfile.firstName?.let { dataModel["firstName"] = it }
-        userProfile.lastName?.let { dataModel["lastName"] = it }
-        userProfile.membershipLevel?.let { dataModel["membershipLevel"] = it }
-        userProfile.golfCanadaCardId?.let { dataModel["golfCanadaCardId"] = it }
-        userProfile.expirationDate?.let { dataModel["expirationDate"] = it }
-        userProfile.postHoleByHole?.let { dataModel["postHoleByHole"] = it }
-        userProfile.facilityName?.let { dataModel["facilityName"] = it }
+        val dataModel = userProfile.toResponseData()
         
         return input.generateTemplateResponse("PlayerProfileMembershipIntentResponse", dataModel)
     }
