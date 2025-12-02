@@ -7,11 +7,13 @@ import com.amazon.ask.model.IntentRequest
 import com.amazon.ask.model.RequestEnvelope
 import com.amazon.ask.model.Slot
 import com.amazon.ask.model.ui.PlainTextOutputSpeech
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.mockk.every
 import io.mockk.mockk
+import kjd.golfcanada.alexa.exception.AccountLinkingException
 import kjd.golfcanada.alexa.interceptor.HandicapLookupInterceptor
 import kjd.golfcanada.alexa.model.HandicapSummaryData
 import kjd.golfcanada.alexa.util.TemplateFactoryUtil
@@ -165,7 +167,7 @@ class HandicapIntentRequestHandlerTest : DescribeSpec({
     }
 
     context("handle - friend handicap") {
-        it("should handle friend slot when provided") {
+        it("should throw AccountLinkingException when no access token") {
             val attributesManager = mockk<AttributesManager>(relaxed = true)
             every { attributesManager.requestAttributes } returns mutableMapOf()
 
@@ -184,27 +186,12 @@ class HandicapIntentRequestHandlerTest : DescribeSpec({
                     .build())
                 .build()
             every { input.attributesManager } returns attributesManager
-            every { input.generateTemplateResponse(any(), any()) } answers {
-                val templateName = firstArg<String>()
-                
-                // When fetching friend handicap without proper auth, it will error
-                // In a real scenario with proper mocking, this would return friend data
-                templateName shouldBe "HandicapIntentErrorResponse"
-                
-                val response = com.amazon.ask.model.Response.builder()
-                    .withOutputSpeech(PlainTextOutputSpeech.builder()
-                        .withText("Unable to authenticate your request.")
-                        .build())
-                    .withShouldEndSession(false)
-                    .build()
-                java.util.Optional.of(response)
-            }
 
             val handler = HandicapIntentRequestHandler()
-            val response = handler.handle(input).get()
 
-            // Since we don't have a valid access token in the mock, it should error
-            response.shouldEndSession shouldBe false
+            shouldThrow<AccountLinkingException> {
+                handler.handle(input)
+            }
         }
     }
 })
