@@ -167,12 +167,12 @@ class HandicapIntentRequestHandlerTest : DescribeSpec({
     }
 
     context("handle - friend handicap") {
-        it("should throw AccountLinkingException when no access token with FriendSearchQuery") {
+        it("should throw AccountLinkingException when no access token with FriendName") {
             val attributesManager = mockk<AttributesManager>(relaxed = true)
             every { attributesManager.requestAttributes } returns mutableMapOf()
 
             val friendSlot = Slot.builder()
-                .withName("FriendSearchQuery")
+                .withName("FriendName")
                 .withValue("John Smith")
                 .build()
 
@@ -181,7 +181,7 @@ class HandicapIntentRequestHandlerTest : DescribeSpec({
                 .withRequest(IntentRequest.builder()
                     .withIntent(Intent.builder()
                         .withName("GOLFCANADA.HandicapIntent")
-                        .withSlots(mapOf("FriendSearchQuery" to friendSlot))
+                        .withSlots(mapOf("FriendName" to friendSlot))
                         .build())
                     .build())
                 .build()
