@@ -13,6 +13,7 @@ import io.mockk.every
 import io.mockk.mockk
 import kjd.golfcanada.alexa.model.HandicapSummaryData
 import kjd.golfcanada.client.model.User
+import kjd.golfcanada.client.provider.ApiClientProvider
 
 class HandicapLookupInterceptorTest : DescribeSpec({
     describe("HandicapLookupInterceptor") {
@@ -29,7 +30,8 @@ class HandicapLookupInterceptorTest : DescribeSpec({
                         .build())
                     .build()
 
-                val interceptor = HandicapLookupInterceptor()
+                val apiClientProvider = mockk<ApiClientProvider>(relaxed = true)
+                val interceptor = HandicapLookupInterceptor(apiClientProvider)
                 interceptor.process(input)
 
                 // Should not throw and should skip processing
@@ -52,7 +54,8 @@ class HandicapLookupInterceptorTest : DescribeSpec({
                     .build()
                 every { input.attributesManager } returns attributesManager
 
-                val interceptor = HandicapLookupInterceptor()
+                val apiClientProvider = mockk<ApiClientProvider>(relaxed = true)
+                val interceptor = HandicapLookupInterceptor(apiClientProvider)
                 interceptor.process(input)
 
                 // Should not throw and should skip processing
@@ -96,7 +99,8 @@ class HandicapLookupInterceptorTest : DescribeSpec({
                     .build()
                 every { input.attributesManager } returns attributesManager
 
-                val interceptor = HandicapLookupInterceptor()
+                val apiClientProvider = mockk<ApiClientProvider>(relaxed = true)
+                val interceptor = HandicapLookupInterceptor(apiClientProvider)
                 interceptor.process(input)
 
                 // Should have placed cached handicap in request attributes
@@ -146,7 +150,8 @@ class HandicapLookupInterceptorTest : DescribeSpec({
                     .build()
                 every { input.attributesManager } returns attributesManager
 
-                val interceptor = HandicapLookupInterceptor()
+                val apiClientProvider = mockk<ApiClientProvider>(relaxed = true)
+                val interceptor = HandicapLookupInterceptor(apiClientProvider)
                 interceptor.process(input)
 
                 // In this test, we can't easily verify the API call was made without more complex mocking

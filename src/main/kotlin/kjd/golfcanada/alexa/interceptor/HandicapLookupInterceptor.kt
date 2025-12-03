@@ -3,9 +3,9 @@ package kjd.golfcanada.alexa.interceptor
 import com.amazon.ask.dispatcher.request.handler.HandlerInput
 import com.amazon.ask.dispatcher.request.interceptor.RequestInterceptor
 import kjd.golfcanada.alexa.model.HandicapSummaryData
-import kjd.golfcanada.client.api.ScoresApi
 import kjd.golfcanada.client.model.User
 import kjd.golfcanada.client.model.extractAccessToken
+import kjd.golfcanada.client.provider.ApiClientProvider
 import org.slf4j.LoggerFactory
 
 /**
@@ -19,8 +19,12 @@ import org.slf4j.LoggerFactory
  * 
  * The cached data is stored in Session Attributes for persistence across multiple turns
  * in the same session, while Request Attributes are used for the current request only.
+ * 
+ * @param apiClientProvider The API client provider for creating authenticated API clients
  */
-class HandicapLookupInterceptor : RequestInterceptor {
+class HandicapLookupInterceptor(
+    private val apiClientProvider: ApiClientProvider
+) : RequestInterceptor {
 
     private val logger = LoggerFactory.getLogger(HandicapLookupInterceptor::class.java)
 
@@ -63,11 +67,10 @@ class HandicapLookupInterceptor : RequestInterceptor {
         try {
             val actualAccessToken = accessToken.extractAccessToken()
             
-            // Set access token on ApiClient companion object (thread-safe for single request)
-            org.openapitools.client.infrastructure.ApiClient.accessToken = actualAccessToken
-            val scoresApi = ScoresApi()
+            // Get authenticated API client from provider
+            val clientWrapper = apiClientProvider.getClient(actualAccessToken)
             
-            val handicapCalculation = scoresApi.getHandicapCalculation(user.id)
+            val handicapCalculation = clientWrapper.scores.getHandicapCalculation(user.id)
             val handicapSummary = HandicapSummaryData.fromDTO(handicapCalculation)
 
             // Store in session attributes for future requests
