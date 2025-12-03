@@ -19,8 +19,12 @@ import org.slf4j.LoggerFactory
  * 
  * The cached data is stored in Session Attributes for persistence across multiple turns
  * in the same session, while Request Attributes are used for the current request only.
+ * 
+ * @param apiClientProvider The API client provider for creating authenticated API clients
  */
-class HandicapLookupInterceptor : RequestInterceptor {
+class HandicapLookupInterceptor(
+    private val apiClientProvider: ApiClientProvider
+) : RequestInterceptor {
 
     private val logger = LoggerFactory.getLogger(HandicapLookupInterceptor::class.java)
 
@@ -64,7 +68,7 @@ class HandicapLookupInterceptor : RequestInterceptor {
             val actualAccessToken = accessToken.extractAccessToken()
             
             // Get authenticated API client from provider
-            val clientWrapper = ApiClientProvider.getInstance().getClient(actualAccessToken)
+            val clientWrapper = apiClientProvider.getClient(actualAccessToken)
             val scoresApi = clientWrapper.createScoresApi()
             
             val handicapCalculation = scoresApi.getHandicapCalculation(user.id)

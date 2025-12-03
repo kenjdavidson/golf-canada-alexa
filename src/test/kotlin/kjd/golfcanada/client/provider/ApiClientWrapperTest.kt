@@ -69,7 +69,7 @@ class ApiClientWrapperTest : DescribeSpec({
     describe("ApiClientWrapper with authenticated client") {
         
         it("should create APIs that share authenticated HTTP client") {
-            val provider = ApiClientProvider.getInstance()
+            val provider = ApiClientProvider()
             val token = "test-token-456"
             val wrapper = provider.getClient(token)
             

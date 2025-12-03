@@ -15,50 +15,16 @@ import java.util.concurrent.TimeUnit
  * Unit tests for ApiClientProvider.
  * 
  * These tests verify:
- * 1. Thread-safe singleton initialization
- * 2. Proper isolation of user-specific tokens
- * 3. Reuse of base HTTP client resources
- * 4. Per-request authentication via interceptor
+ * 1. Proper isolation of user-specific tokens
+ * 2. Reuse of base HTTP client resources
+ * 3. Per-request authentication via interceptor
  */
 class ApiClientProviderTest : DescribeSpec({
-    
-    describe("ApiClientProvider singleton") {
-        
-        it("should return the same instance on multiple calls") {
-            val instance1 = ApiClientProvider.getInstance()
-            val instance2 = ApiClientProvider.getInstance()
-            
-            instance1 shouldBeSameInstanceAs instance2
-        }
-        
-        it("should be thread-safe during concurrent access") {
-            val instanceCount = 10
-            val instances = mutableListOf<ApiClientProvider>()
-            val latch = CountDownLatch(instanceCount)
-            val executor = Executors.newFixedThreadPool(instanceCount)
-            
-            repeat(instanceCount) {
-                executor.submit {
-                    instances.add(ApiClientProvider.getInstance())
-                    latch.countDown()
-                }
-            }
-            
-            latch.await(5, TimeUnit.SECONDS) shouldBe true
-            executor.shutdown()
-            
-            // All instances should be the same
-            val firstInstance = instances.first()
-            instances.forEach { instance ->
-                instance shouldBeSameInstanceAs firstInstance
-            }
-        }
-    }
     
     describe("ApiClientProvider.getClient") {
         
         it("should return a new ApiClientWrapper for each call") {
-            val provider = ApiClientProvider.getInstance()
+            val provider = ApiClientProvider()
             
             val wrapper1 = provider.getClient("token1")
             val wrapper2 = provider.getClient("token2")
@@ -77,7 +43,7 @@ class ApiClientProviderTest : DescribeSpec({
                 // Set the base URL to use the mock server
                 System.setProperty("org.openapitools.client.baseUrl", mockServer.url("/").toString())
                 
-                val provider = ApiClientProvider.getInstance()
+                val provider = ApiClientProvider()
                 val accessToken = "test-access-token-123"
                 val wrapper = provider.getClient(accessToken)
                 
@@ -104,7 +70,7 @@ class ApiClientProviderTest : DescribeSpec({
         }
         
         it("should create wrappers with different tokens independently") {
-            val provider = ApiClientProvider.getInstance()
+            val provider = ApiClientProvider()
             
             val token1 = "user-token-1"
             val token2 = "user-token-2"
@@ -124,7 +90,7 @@ class ApiClientProviderTest : DescribeSpec({
         }
         
         it("should handle concurrent getClient calls safely") {
-            val provider = ApiClientProvider.getInstance()
+            val provider = ApiClientProvider()
             val callCount = 20
             val wrappers = mutableListOf<ApiClientWrapper>()
             val latch = CountDownLatch(callCount)

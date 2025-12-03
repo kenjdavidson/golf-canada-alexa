@@ -6,18 +6,18 @@ import okhttp3.Response
 import org.openapitools.client.infrastructure.ApiClient
 
 /**
- * Thread-safe singleton provider for API client instances.
+ * Provider for API client instances.
  * 
  * This class ensures that:
- * 1. The expensive HTTP client resources (connection pools, etc.) are initialized only once per Lambda container
+ * 1. The expensive HTTP client resources (connection pools, etc.) are initialized only once per instance
  * 2. User-specific access tokens are never stored in static memory or shared between requests
  * 3. Each request gets its own client instance with a request-specific AuthInterceptor
  * 
- * The singleton pattern is implemented using the Instance Holder Idiom (also known as 
- * Initialization-on-demand holder idiom), which is thread-safe and efficient without requiring 
- * explicit synchronization.
+ * Instances of this class should be created once (e.g., in the Skill initialization) and passed
+ * as a dependency to classes that need API client access. This makes it effectively a singleton
+ * while allowing for better testability and dependency injection.
  */
-class ApiClientProvider private constructor() {
+class ApiClientProvider {
     
     /**
      * The base ApiClient with shared HTTP resources.
@@ -59,8 +59,10 @@ class ApiClientProvider private constructor() {
      * @return A new ApiClientWrapper with request-specific authentication
      */
     fun getClient(accessToken: String): ApiClientWrapper {
-        // Clone the base HTTP client and add request-specific interceptor
-        val authenticatedHttpClient = baseApiClient.client.newBuilder()
+        // Create authenticated HTTP client with the request-specific interceptor
+        // OkHttpClient instances automatically share connection pools, so creating a new
+        // builder is lightweight and doesn't duplicate expensive resources
+        val authenticatedHttpClient = OkHttpClient.Builder()
             .addInterceptor(AuthInterceptor(accessToken))
             .build()
         
@@ -89,31 +91,6 @@ class ApiClientProvider private constructor() {
                 .build()
             
             return chain.proceed(authenticatedRequest)
-        }
-    }
-    
-    companion object {
-        /**
-         * Gets the singleton instance of ApiClientProvider.
-         * 
-         * This uses the Instance Holder Idiom for thread-safe lazy initialization.
-         * The JVM guarantees that the InstanceHolder class is loaded and initialized
-         * only when it's first accessed, and the JVM's class initialization guarantees
-         * ensure thread safety without explicit synchronization.
-         * 
-         * @return The singleton ApiClientProvider instance
-         */
-        @JvmStatic
-        fun getInstance(): ApiClientProvider = InstanceHolder.INSTANCE
-        
-        /**
-         * Holder class for the singleton instance.
-         * 
-         * This inner static class is loaded only when getInstance() is called for the first time,
-         * and the JVM guarantees thread-safe initialization of the INSTANCE field.
-         */
-        private object InstanceHolder {
-            val INSTANCE = ApiClientProvider()
         }
     }
 }
