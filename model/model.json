@@ -46,11 +46,11 @@
           "name": "GOLFCANADA.HandicapIntent",
           "slots": [
             {
-              "name": "FriendName",
-              "type": "FriendFullName"
+              "name": "FriendFullName",
+              "type": "AMAZON.SearchQuery"
             },
             {
-              "name": "FirstName",
+              "name": "FriendFirstName",
               "type": "AMAZON.US_FIRST_NAME"
             }
           ],
@@ -66,14 +66,14 @@
             "how does my handicap look",
             "give me information about my handicap",
             "tell me about my handicap",
-            "what is {FriendName}'s handicap",
-            "what is the handicap for {FriendName}",
-            "tell me the handicap for {FriendName}",
-            "I want the handicap for {FriendName}",
-            "what's {FriendName} handicap",
-            "what is {FirstName}'s handicap",
-            "tell me {FirstName}'s handicap",
-            "get the handicap for {FirstName}"
+            "what is {FriendFullName}'s handicap",
+            "what is the handicap for {FriendFullName}",
+            "tell me the handicap for {FriendFullName}",
+            "I want the handicap for {FriendFullName}",
+            "what's {FriendFullName} handicap",
+            "what is {FriendFirstName}'s handicap",
+            "tell me {FriendFirstName}'s handicap",
+            "get the handicap for {FriendFirstName}"
           ]
         },
         {
@@ -148,123 +148,7 @@
           "samples": []
         }
       ],
-      "types": [
-        {
-          "name": "FriendFullName",
-          "values": [
-            {
-              "name": {
-                "value": "Dean Ellis"
-              }
-            },
-            {
-              "name": {
-                "value": "Jane Smith"
-              }
-            },
-            {
-              "name": {
-                "value": "Bob Johnson"
-              }
-            },
-            {
-              "name": {
-                "value": "Michael Williams"
-              }
-            },
-            {
-              "name": {
-                "value": "Sarah Davis"
-              }
-            },
-            {
-              "name": {
-                "value": "David Miller"
-              }
-            },
-            {
-              "name": {
-                "value": "Jennifer Brown"
-              }
-            },
-            {
-              "name": {
-                "value": "Robert Anderson"
-              }
-            },
-            {
-              "name": {
-                "value": "Emily Wilson"
-              }
-            },
-            {
-              "name": {
-                "value": "James Taylor"
-              }
-            },
-            {
-              "name": {
-                "value": "Lisa Martinez"
-              }
-            },
-            {
-              "name": {
-                "value": "Christopher Garcia"
-              }
-            },
-            {
-              "name": {
-                "value": "Mary Rodriguez"
-              }
-            },
-            {
-              "name": {
-                "value": "Daniel Lee"
-              }
-            },
-            {
-              "name": {
-                "value": "Patricia Thompson"
-              }
-            },
-            {
-              "name": {
-                "value": "Matthew White"
-              }
-            },
-            {
-              "name": {
-                "value": "Linda Harris"
-              }
-            },
-            {
-              "name": {
-                "value": "Andrew Clark"
-              }
-            },
-            {
-              "name": {
-                "value": "Elizabeth Walker"
-              }
-            },
-            {
-              "name": {
-                "value": "Kevin Hall"
-              }
-            },
-            {
-              "name": {
-                "value": "Susan Young"
-              }
-            },
-            {
-              "name": {
-                "value": "Thomas Allen"
-              }
-            }
-          ]
-        }
-      ]
+      "types": []
     }
   }
 }

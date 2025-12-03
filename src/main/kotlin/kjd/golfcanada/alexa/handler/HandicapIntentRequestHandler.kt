@@ -6,9 +6,15 @@ import com.amazon.ask.model.IntentRequest
 import com.amazon.ask.model.Response
 import com.amazon.ask.request.Predicates.intentName
 import kjd.golfcanada.alexa.exception.AccountLinkingException
+import kjd.golfcanada.alexa.exception.GolfCanadaApiException
+import kjd.golfcanada.alexa.exception.NoUserDetailsException
 import kjd.golfcanada.alexa.interceptor.HandicapLookupInterceptor
+import kjd.golfcanada.alexa.interceptor.UserProfileInterceptor
 import kjd.golfcanada.alexa.model.HandicapSummaryData
+import kjd.golfcanada.alexa.util.FriendNameMatcher
+import kjd.golfcanada.client.api.MembersApi
 import kjd.golfcanada.client.api.ScoresApi
+import kjd.golfcanada.client.model.User
 import kjd.golfcanada.client.model.extractAccessToken
 import org.slf4j.LoggerFactory
 import java.util.*
@@ -39,13 +45,13 @@ class HandicapIntentRequestHandler : RequestHandler {
         val request = input.requestEnvelope.request as IntentRequest
         val slots = request.intent?.slots
 
-        val friendFullNameSlot = slots?.get("FriendName")
-        val firstNameSlot = slots?.get("FirstName")
+        val friendFullNameSlot = slots?.get("FriendFullName")
+        val friendFirstNameSlot = slots?.get("FriendFirstName")
         
-        val friendName = friendFullNameSlot?.value ?: firstNameSlot?.value
+        val friendQuery = friendFullNameSlot?.value ?: friendFirstNameSlot?.value
 
-        return if (friendName != null) {
-            handleFriendHandicap(input, friendName)
+        return if (friendQuery != null) {
+            handleFriendHandicap(input, friendQuery)
         } else {
             handleOwnHandicap(input)
         }
@@ -77,14 +83,17 @@ class HandicapIntentRequestHandler : RequestHandler {
     /**
      * Handles the request for a friend's handicap by making a live API call.
      * 
-     * NOTE: This currently requires a name-to-ID resolution mechanism which is not yet implemented.
-     * A future enhancement would need to add a service/API to map friend names to individualIds.
+     * This method:
+     * 1. Retrieves the user's friends list from the Golf Canada API
+     * 2. Performs fuzzy matching on the raw search query against friend names
+     * 3. Handles ambiguity if multiple matches are found
+     * 4. Fetches and returns the friend's handicap information
      * 
      * @param input The handler input
-     * @param friendName The name of the friend
+     * @param friendQuery The raw search query from the user (e.g., "Dean Ellis" or "Deano")
      * @return Response with the friend's handicap information
      */
-    private fun handleFriendHandicap(input: HandlerInput, friendName: String): Optional<Response> {
+    private fun handleFriendHandicap(input: HandlerInput, friendQuery: String): Optional<Response> {
         val accessToken = input.requestEnvelope.context?.system?.user?.accessToken
 
         if (accessToken.isNullOrBlank()) {
@@ -92,18 +101,66 @@ class HandicapIntentRequestHandler : RequestHandler {
             throw AccountLinkingException()
         }
 
-        logger.info("Friend handicap requested for: $friendName")
+        logger.info("Friend handicap requested for: $friendQuery")
         
-        // TODO: Implement name-to-ID resolution
-        // This would typically involve:
-        // 1. Calling a Golf Canada API to search for members by name
-        // 2. Disambiguating if multiple matches are found
-        // 3. Using the resolved individualId to fetch handicap data
-        
-        // For now, return an error indicating this feature is not yet available
-        val dataModel = mapOf(
-            "error" to "Friend handicap lookup by name is not yet available. Please check back later."
-        )
-        return input.generateTemplateResponse("HandicapIntentErrorResponse", dataModel)
+        try {
+            val actualAccessToken = accessToken.extractAccessToken()
+            
+            // Get user profile from session
+            val sessionAttributes = input.attributesManager.sessionAttributes
+            val user = sessionAttributes[UserProfileInterceptor.USER_SESSION_KEY] as? User
+            if (user?.id == null) {
+                logger.warn("No user profile available for fetching friends list")
+                throw NoUserDetailsException()
+            }
+            
+            // Set access token on ApiClient companion object
+            org.openapitools.client.infrastructure.ApiClient.accessToken = actualAccessToken
+            val membersApi = MembersApi()
+            
+            // Get friends list
+            val friends = membersApi.getFriends(user.id)
+            
+            if (friends.isEmpty()) {
+                logger.info("No friends found for user ${user.id}")
+                return input.generateTemplateResponse("HandicapIntentNoFriendsResponse", emptyMap())
+            }
+            
+            // Perform fuzzy matching using FriendNameMatcher
+            val matches = FriendNameMatcher.findMatches(friends, friendQuery)
+            
+            when {
+                matches.isEmpty() -> {
+                    logger.info("No matching friend found for query: $friendQuery")
+                    val dataModel = mapOf(
+                        "query" to friendQuery
+                    )
+                    return input.generateTemplateResponse("HandicapIntentNoMatchingFriendResponse", dataModel)
+                }
+                matches.size > 1 -> {
+                    logger.info("Multiple matches found for query: $friendQuery")
+                    val dataModel = mapOf(
+                        "count" to matches.size,
+                        "query" to friendQuery,
+                        "friends" to matches
+                    )
+                    return input.generateTemplateResponse("HandicapIntentMultipleFriendsResponse", dataModel)
+                }
+                else -> {
+                    val friend = matches.first()
+                    logger.info("Found matching friend: ${friend.name} (ID: ${friend.individualId})")
+                    
+                    // Return friend's handicap information
+                    val dataModel = mutableMapOf<String, Any>()
+                    friend.name?.let { dataModel["name"] = it }
+                    friend.handicap?.let { dataModel["handicap"] = it }
+                    
+                    return input.generateTemplateResponse("HandicapIntentFriendResponse", dataModel)
+                }
+            }
+        } catch (e: Exception) {
+            logger.error("Failed to fetch friend handicap for query '$friendQuery': ${e.message}", e)
+            throw GolfCanadaApiException("Error fetching friend handicap", e)
+        }
     }
 }

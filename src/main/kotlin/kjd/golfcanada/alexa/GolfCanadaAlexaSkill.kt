@@ -8,6 +8,7 @@ import kjd.golfcanada.alexa.handler.AddScorecardIntentHandler
 import kjd.golfcanada.alexa.handler.CancelAndStopIntentHandler
 import kjd.golfcanada.alexa.handler.FallbackIntentHandler
 import kjd.golfcanada.alexa.handler.FavoritePlayerHistoryIntentHandler
+import kjd.golfcanada.alexa.handler.GolfCanadaApiExceptionHandler
 import kjd.golfcanada.alexa.handler.HandicapIntentRequestHandler
 import kjd.golfcanada.alexa.handler.HelpIntentHandler
 import kjd.golfcanada.alexa.handler.LaunchRequestHandler
@@ -43,6 +44,7 @@ class GolfCanadaAlexaSkill: SkillStreamHandler(getSkills()) {
                 .addRequestInterceptor(HandicapLookupInterceptor())
                 .addExceptionHandler(AccountLinkingExceptionHandler())
                 .addExceptionHandler(NoUserDetailsExceptionHandler())
+                .addExceptionHandler(GolfCanadaApiExceptionHandler())
                 .build()
         }
     }
