@@ -46,11 +46,11 @@
           "name": "GOLFCANADA.HandicapIntent",
           "slots": [
             {
-              "name": "FriendName",
+              "name": "FriendFullName",
               "type": "AMAZON.SearchQuery"
             },
             {
-              "name": "FirstName",
+              "name": "FriendFirstName",
               "type": "AMAZON.US_FIRST_NAME"
             }
           ],
@@ -66,14 +66,14 @@
             "how does my handicap look",
             "give me information about my handicap",
             "tell me about my handicap",
-            "what is {FriendName}'s handicap",
-            "what is the handicap for {FriendName}",
-            "tell me the handicap for {FriendName}",
-            "I want the handicap for {FriendName}",
-            "what's {FriendName} handicap",
-            "what is {FirstName}'s handicap",
-            "tell me {FirstName}'s handicap",
-            "get the handicap for {FirstName}"
+            "what is {FriendFullName}'s handicap",
+            "what is the handicap for {FriendFullName}",
+            "tell me the handicap for {FriendFullName}",
+            "I want the handicap for {FriendFullName}",
+            "what's {FriendFullName} handicap",
+            "what is {FriendFirstName}'s handicap",
+            "tell me {FriendFirstName}'s handicap",
+            "get the handicap for {FriendFirstName}"
           ]
         },
         {

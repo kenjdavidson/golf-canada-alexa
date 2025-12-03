@@ -43,10 +43,10 @@ class HandicapIntentRequestHandler : RequestHandler {
         val request = input.requestEnvelope.request as IntentRequest
         val slots = request.intent?.slots
 
-        val friendNameSlot = slots?.get("FriendName")
-        val firstNameSlot = slots?.get("FirstName")
+        val friendFullNameSlot = slots?.get("FriendFullName")
+        val friendFirstNameSlot = slots?.get("FriendFirstName")
         
-        val friendQuery = friendNameSlot?.value ?: firstNameSlot?.value
+        val friendQuery = friendFullNameSlot?.value ?: friendFirstNameSlot?.value
 
         return if (friendQuery != null) {
             handleFriendHandicap(input, friendQuery)
@@ -124,10 +124,7 @@ class HandicapIntentRequestHandler : RequestHandler {
             
             if (friends.isEmpty()) {
                 logger.info("No friends found for user ${user.id}")
-                val dataModel = mapOf(
-                    "error" to "You don't have any friends in your list yet."
-                )
-                return input.generateTemplateResponse("HandicapIntentErrorResponse", dataModel)
+                return input.generateTemplateResponse("HandicapIntentNoFriendsResponse", emptyMap())
             }
             
             // Perform fuzzy matching
@@ -137,17 +134,18 @@ class HandicapIntentRequestHandler : RequestHandler {
                 matches.isEmpty() -> {
                     logger.info("No matching friend found for query: $friendQuery")
                     val dataModel = mapOf(
-                        "error" to "I couldn't find a friend matching '$friendQuery' in your list."
+                        "query" to friendQuery
                     )
-                    return input.generateTemplateResponse("HandicapIntentErrorResponse", dataModel)
+                    return input.generateTemplateResponse("HandicapIntentNoMatchingFriendResponse", dataModel)
                 }
                 matches.size > 1 -> {
                     logger.info("Multiple matches found for query: $friendQuery")
-                    val friendNames = matches.joinToString(", ") { it.name ?: "Unknown" }
                     val dataModel = mapOf(
-                        "error" to "I found multiple friends matching '$friendQuery': $friendNames. Please be more specific."
+                        "count" to matches.size,
+                        "query" to friendQuery,
+                        "friends" to matches
                     )
-                    return input.generateTemplateResponse("HandicapIntentErrorResponse", dataModel)
+                    return input.generateTemplateResponse("HandicapIntentMultipleFriendsResponse", dataModel)
                 }
                 else -> {
                     val friend = matches.first()
@@ -158,7 +156,7 @@ class HandicapIntentRequestHandler : RequestHandler {
                     friend.name?.let { dataModel["name"] = it }
                     friend.handicap?.let { dataModel["handicap"] = it }
                     
-                    return input.generateTemplateResponse("HandicapIntentResponse", dataModel)
+                    return input.generateTemplateResponse("HandicapIntentFriendResponse", dataModel)
                 }
             }
         } catch (e: Exception) {
