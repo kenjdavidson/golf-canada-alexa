@@ -11,13 +11,13 @@ import kjd.golfcanada.alexa.util.TemplateFactoryUtil
 
 class PlayerProfileHistoryIntentHandlerTest : DescribeSpec({
     context("canHandle") {
-        it("should return true for PlayerProfileHistoryIntent") {
+        it("should return true for GOLFCANADA.PlayerProfileHistoryIntent") {
             val templateFactory = TemplateFactoryUtil.getTemplateFactory()
             val input = HandlerInput.builder()
                 .withRequestEnvelope(RequestEnvelope.builder()
                     .withRequest(IntentRequest.builder()
                         .withIntent(Intent.builder()
-                            .withName("PlayerProfileHistoryIntent")
+                            .withName("GOLFCANADA.PlayerProfileHistoryIntent")
                             .build()
                         ).build()
                     )
