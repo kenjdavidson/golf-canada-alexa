@@ -49,7 +49,7 @@ class ApiClientProviderTest : DescribeSpec({
                 
                 // Try to make a request (this will fail but we can check the recorded request)
                 try {
-                    wrapper.createScoresApi()
+                    wrapper.scores
                     // We don't need this to succeed, just need to trigger the interceptor
                 } catch (e: Exception) {
                     // Expected - the mock response may not match the expected format

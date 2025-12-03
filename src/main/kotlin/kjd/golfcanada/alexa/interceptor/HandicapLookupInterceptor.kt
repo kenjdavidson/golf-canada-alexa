@@ -69,9 +69,8 @@ class HandicapLookupInterceptor(
             
             // Get authenticated API client from provider
             val clientWrapper = apiClientProvider.getClient(actualAccessToken)
-            val scoresApi = clientWrapper.createScoresApi()
             
-            val handicapCalculation = scoresApi.getHandicapCalculation(user.id)
+            val handicapCalculation = clientWrapper.scores.getHandicapCalculation(user.id)
             val handicapSummary = HandicapSummaryData.fromDTO(handicapCalculation)
 
             // Store in session attributes for future requests

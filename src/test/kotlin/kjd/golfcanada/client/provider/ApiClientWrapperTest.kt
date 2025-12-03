@@ -14,46 +14,54 @@ import org.openapitools.client.infrastructure.ApiClient
  * Unit tests for ApiClientWrapper.
  * 
  * These tests verify:
- * 1. API factory methods return correct API types
- * 2. All APIs share the same underlying HTTP client
- * 3. API instances are properly configured
+ * 1. Lazy-loaded API properties return correct API types
+ * 2. API properties are cached after first access
+ * 3. All APIs share the same underlying HTTP client
+ * 4. API instances are properly configured
+ * 5. Deprecated factory methods still work for backward compatibility
  */
 class ApiClientWrapperTest : DescribeSpec({
     
-    describe("ApiClientWrapper factory methods") {
+    describe("ApiClientWrapper fluent API properties") {
         
         val mockApiClient = ApiClient("https://test.example.com", OkHttpClient())
         val wrapper = ApiClientWrapper(mockApiClient)
         
-        it("should create AuthApi instance") {
-            val authApi = wrapper.createAuthApi()
+        it("should provide AuthApi via auth property") {
+            val authApi = wrapper.auth
             
             authApi shouldNotBe null
             authApi.shouldBeInstanceOf<AuthApi>()
         }
         
-        it("should create MembersApi instance") {
-            val membersApi = wrapper.createMembersApi()
+        it("should provide MembersApi via members property") {
+            val membersApi = wrapper.members
             
             membersApi shouldNotBe null
             membersApi.shouldBeInstanceOf<MembersApi>()
         }
         
-        it("should create ScoresApi instance") {
-            val scoresApi = wrapper.createScoresApi()
+        it("should provide ScoresApi via scores property") {
+            val scoresApi = wrapper.scores
             
             scoresApi shouldNotBe null
             scoresApi.shouldBeInstanceOf<ScoresApi>()
         }
         
-        it("should share the same base URL across API instances") {
-            val authApi = wrapper.createAuthApi()
-            val membersApi = wrapper.createMembersApi()
-            val scoresApi = wrapper.createScoresApi()
+        it("should cache API instances - same instance on multiple accesses") {
+            val authApi1 = wrapper.auth
+            val authApi2 = wrapper.auth
             
-            // All APIs should use the same base URL from the wrapped ApiClient
-            // Note: We can't easily access baseUrl from the API classes directly,
-            // but we can verify they all use the same client
+            authApi1 shouldBe authApi2
+        }
+        
+        it("should allow fluent API calls") {
+            // Verify the fluent API pattern works
+            val authApi = wrapper.auth
+            val membersApi = wrapper.members
+            val scoresApi = wrapper.scores
+            
+            // All APIs should be created successfully
             authApi shouldNotBe null
             membersApi shouldNotBe null
             scoresApi shouldNotBe null
@@ -66,6 +74,36 @@ class ApiClientWrapperTest : DescribeSpec({
         }
     }
     
+    describe("ApiClientWrapper deprecated factory methods") {
+        
+        val mockApiClient = ApiClient("https://test.example.com", OkHttpClient())
+        val wrapper = ApiClientWrapper(mockApiClient)
+        
+        it("should still support createAuthApi for backward compatibility") {
+            @Suppress("DEPRECATION")
+            val authApi = wrapper.createAuthApi()
+            
+            authApi shouldNotBe null
+            authApi.shouldBeInstanceOf<AuthApi>()
+        }
+        
+        it("should still support createMembersApi for backward compatibility") {
+            @Suppress("DEPRECATION")
+            val membersApi = wrapper.createMembersApi()
+            
+            membersApi shouldNotBe null
+            membersApi.shouldBeInstanceOf<MembersApi>()
+        }
+        
+        it("should still support createScoresApi for backward compatibility") {
+            @Suppress("DEPRECATION")
+            val scoresApi = wrapper.createScoresApi()
+            
+            scoresApi shouldNotBe null
+            scoresApi.shouldBeInstanceOf<ScoresApi>()
+        }
+    }
+    
     describe("ApiClientWrapper with authenticated client") {
         
         it("should create APIs that share authenticated HTTP client") {
@@ -73,8 +111,8 @@ class ApiClientWrapperTest : DescribeSpec({
             val token = "test-token-456"
             val wrapper = provider.getClient(token)
             
-            val authApi = wrapper.createAuthApi()
-            val scoresApi = wrapper.createScoresApi()
+            val authApi = wrapper.auth
+            val scoresApi = wrapper.scores
             
             // Both APIs should be created successfully
             authApi shouldNotBe null

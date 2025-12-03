@@ -6,6 +6,31 @@ import okhttp3.Response
 import org.openapitools.client.infrastructure.ApiClient
 
 /**
+ * Extension function to create a new ApiClient builder based on an existing ApiClient.
+ * This allows cloning the ApiClient with the same base URL and HTTP client configuration.
+ */
+private fun ApiClient.newBuilder(): ApiClientBuilder {
+    return ApiClientBuilder(this.baseUrl, this.client.newBuilder())
+}
+
+/**
+ * Builder for creating new ApiClient instances based on an existing client.
+ */
+private class ApiClientBuilder(
+    private val baseUrl: String,
+    private val httpClientBuilder: OkHttpClient.Builder
+) {
+    fun addInterceptor(interceptor: Interceptor): ApiClientBuilder {
+        httpClientBuilder.addInterceptor(interceptor)
+        return this
+    }
+    
+    fun build(): ApiClient {
+        return ApiClient(baseUrl, httpClientBuilder.build())
+    }
+}
+
+/**
  * Provider for API client instances.
  * 
  * This class ensures that:
@@ -59,14 +84,12 @@ class ApiClientProvider {
      * @return A new ApiClientWrapper with request-specific authentication
      */
     fun getClient(accessToken: String): ApiClientWrapper {
-        // Create authenticated HTTP client by cloning the base client and adding the interceptor
-        // Using newBuilder() on the base client ensures we reuse the connection pool and configuration
-        val authenticatedHttpClient = baseApiClient.client.newBuilder()
+        // Create authenticated ApiClient by cloning the base client and adding the interceptor
+        // Using newBuilder() on the base ApiClient ensures we reuse the same base URL,
+        // connection pool, and configuration, while adding request-specific authentication
+        val authenticatedApiClient = baseApiClient.newBuilder()
             .addInterceptor(AuthInterceptor(accessToken))
             .build()
-        
-        // Create a new ApiClient with the authenticated HTTP client
-        val authenticatedApiClient = ApiClient(baseApiClient.baseUrl, authenticatedHttpClient)
         
         return ApiClientWrapper(authenticatedApiClient)
     }
