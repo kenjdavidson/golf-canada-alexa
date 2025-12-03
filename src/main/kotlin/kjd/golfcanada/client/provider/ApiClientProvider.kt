@@ -59,10 +59,9 @@ class ApiClientProvider {
      * @return A new ApiClientWrapper with request-specific authentication
      */
     fun getClient(accessToken: String): ApiClientWrapper {
-        // Create authenticated HTTP client with the request-specific interceptor
-        // OkHttpClient instances automatically share connection pools, so creating a new
-        // builder is lightweight and doesn't duplicate expensive resources
-        val authenticatedHttpClient = OkHttpClient.Builder()
+        // Create authenticated HTTP client by cloning the base client and adding the interceptor
+        // Using newBuilder() on the base client ensures we reuse the connection pool and configuration
+        val authenticatedHttpClient = baseApiClient.client.newBuilder()
             .addInterceptor(AuthInterceptor(accessToken))
             .build()
         
