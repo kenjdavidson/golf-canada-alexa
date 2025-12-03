@@ -160,10 +160,38 @@ golf-canada-alexa/
 ### Adding a New Intent Handler
 
 1. Create handler class in `src/main/kotlin/kjd/golfcanada/alexa/handler/`
-2. Implement `RequestHandler` interface
-3. Add response templates in `src/main/resources/kjd/golfcanada/alexa/responses/`
-4. Register handler in `GolfCanadaAlexaSkill.kt`
+2. Implement `RequestHandler` interface with `canHandle()` and `handle()` methods
+3. Add response templates (both English and French) in `src/main/resources/kjd/golfcanada/alexa/responses/`
+   - Format: `YourIntentResponse.ftl` and `YourIntentResponse_fr.ftl`
+4. Register handler in `GolfCanadaAlexaSkill.kt` using `addRequestHandlers()` varargs method:
+   ```kotlin
+   .addRequestHandlers(
+       // ... existing handlers ...
+       YourNewIntentHandler(),
+       // ... other handlers ...
+   )
+   ```
+5. Add comprehensive unit tests using Kotest and MockK
+6. Update the interaction model in `model/model.json` if adding new intents or slots
+
+### Adding a New Request Interceptor
+
+Request interceptors run before intent handlers and can pre-load data or validate requests.
+
+1. Create interceptor class in `src/main/kotlin/kjd/golfcanada/alexa/interceptor/`
+2. Implement `RequestInterceptor` interface with `process()` method
+3. Register interceptor in `GolfCanadaAlexaSkill.kt` using `addRequestInterceptors()` varargs method:
+   ```kotlin
+   .addRequestInterceptors(
+       // ... existing interceptors ...
+       YourNewInterceptor(),
+       // ... other interceptors ...
+   )
+   ```
+4. Consider caching strategy - use Session Attributes for data that should persist across turns
 5. Add unit tests
+
+**Note:** Interceptors run in the order they are registered.
 
 ### Updating the Golf Canada API Client
 
