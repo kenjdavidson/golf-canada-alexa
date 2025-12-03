@@ -44,12 +44,16 @@ class GolfCanadaAlexaSkill: SkillStreamHandler(getSkills()) {
                     AddScorecardIntentHandler(),
                     SessionEndedRequestHandler()
                 )
-                .addRequestInterceptor(AuthenticationRequestInterceptor())
-                .addRequestInterceptor(UserProfileInterceptor())
-                .addRequestInterceptor(HandicapLookupInterceptor(apiClientProvider))
-                .addExceptionHandler(AccountLinkingExceptionHandler())
-                .addExceptionHandler(NoUserDetailsExceptionHandler())
-                .addExceptionHandler(GolfCanadaApiExceptionHandler())
+                .addRequestInterceptors(
+                    AuthenticationRequestInterceptor(),
+                    UserProfileInterceptor(),
+                    HandicapLookupInterceptor(apiClientProvider)
+                )
+                .addExceptionHandlers(
+                    AccountLinkingExceptionHandler(),
+                    NoUserDetailsExceptionHandler(),
+                    GolfCanadaApiExceptionHandler()
+                )
                 .build()
         }
     }
