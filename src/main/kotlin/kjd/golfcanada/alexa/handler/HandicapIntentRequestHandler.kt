@@ -43,10 +43,10 @@ class HandicapIntentRequestHandler : RequestHandler {
         val request = input.requestEnvelope.request as IntentRequest
         val slots = request.intent?.slots
 
-        val friendSearchQuerySlot = slots?.get("FriendSearchQuery")
+        val friendNameSlot = slots?.get("FriendName")
         val firstNameSlot = slots?.get("FirstName")
         
-        val friendQuery = friendSearchQuerySlot?.value ?: firstNameSlot?.value
+        val friendQuery = friendNameSlot?.value ?: firstNameSlot?.value
 
         return if (friendQuery != null) {
             handleFriendHandicap(input, friendQuery)
