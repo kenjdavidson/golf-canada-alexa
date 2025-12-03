@@ -5,17 +5,16 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import kjd.golfcanada.alexa.util.FriendNameMatcher
 import kjd.golfcanada.client.model.Friend
 
 /**
- * Tests for the fuzzy matching behavior in HandicapIntentRequestHandler.
+ * Tests for the fuzzy matching behavior using the FriendNameMatcher utility.
  * 
- * Since the findMatchingFriends method is private, these tests document
- * the expected behavior through the public interface. The actual fuzzy
- * matching logic is tested indirectly through integration tests or 
- * through the handler's behavior with different friend query inputs.
+ * These tests verify that the FriendNameMatcher utility correctly implements
+ * the fuzzy matching algorithm used for friend name lookups.
  * 
- * These tests serve as documentation of the fuzzy matching algorithm:
+ * The matching algorithm uses a 4-tier approach:
  * 1. Exact match (case-insensitive)
  * 2. Starts with query (case-insensitive)
  * 3. Contains query (case-insensitive)
@@ -32,45 +31,11 @@ class HandicapIntentFuzzyMatchingTest : DescribeSpec({
     )
     
     /**
-     * Helper function that simulates the findMatchingFriends logic
-     * for testing purposes. This mirrors the actual implementation.
-     * 
-     * Note: This duplicates the logic from HandicapIntentRequestHandler.findMatchingFriends()
-     * since that method is private. If the actual implementation changes, this test helper
-     * must be updated accordingly. Consider extracting to a shared utility class in the future
-     * if fuzzy matching is needed in multiple places.
+     * Helper function that uses the FriendNameMatcher utility for testing.
+     * This ensures tests use the same logic as the actual implementation.
      */
     fun findMatchingFriends(friends: List<Friend>, query: String): List<Friend> {
-        if (query.isBlank()) return emptyList()
-        
-        val normalizedQuery = query.trim().lowercase()
-        
-        // Try exact match first
-        val exactMatches = friends.filter { friend ->
-            friend.name?.lowercase()?.trim() == normalizedQuery
-        }
-        if (exactMatches.isNotEmpty()) return exactMatches
-        
-        // Try starts with
-        val startsWithMatches = friends.filter { friend ->
-            friend.name?.lowercase()?.trim()?.startsWith(normalizedQuery) == true
-        }
-        if (startsWithMatches.isNotEmpty()) return startsWithMatches
-        
-        // Try contains query
-        val containsMatches = friends.filter { friend ->
-            friend.name?.lowercase()?.trim()?.contains(normalizedQuery) == true
-        }
-        if (containsMatches.isNotEmpty()) return containsMatches
-        
-        // Try query contains any part of friend's name (for nicknames or partial names)
-        val queryContainsPart = friends.filter { friend ->
-            val nameParts = friend.name?.lowercase()?.trim()?.split(" ") ?: emptyList()
-            nameParts.any { part -> normalizedQuery.contains(part) && part.length > 2 }
-        }
-        if (queryContainsPart.isNotEmpty()) return queryContainsPart
-        
-        return emptyList()
+        return FriendNameMatcher.findMatches(friends, query)
     }
     
     describe("Fuzzy matching algorithm") {

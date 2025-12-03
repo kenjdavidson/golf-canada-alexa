@@ -6,12 +6,13 @@ import com.amazon.ask.model.IntentRequest
 import com.amazon.ask.model.Response
 import com.amazon.ask.request.Predicates.intentName
 import kjd.golfcanada.alexa.exception.AccountLinkingException
+import kjd.golfcanada.alexa.exception.GolfCanadaApiException
 import kjd.golfcanada.alexa.interceptor.HandicapLookupInterceptor
 import kjd.golfcanada.alexa.interceptor.UserProfileInterceptor
 import kjd.golfcanada.alexa.model.HandicapSummaryData
+import kjd.golfcanada.alexa.util.FriendNameMatcher
 import kjd.golfcanada.client.api.MembersApi
 import kjd.golfcanada.client.api.ScoresApi
-import kjd.golfcanada.client.model.Friend
 import kjd.golfcanada.client.model.User
 import kjd.golfcanada.client.model.extractAccessToken
 import org.slf4j.LoggerFactory
@@ -127,8 +128,8 @@ class HandicapIntentRequestHandler : RequestHandler {
                 return input.generateTemplateResponse("HandicapIntentNoFriendsResponse", emptyMap())
             }
             
-            // Perform fuzzy matching
-            val matches = findMatchingFriends(friends, friendQuery)
+            // Perform fuzzy matching using FriendNameMatcher
+            val matches = FriendNameMatcher.findMatches(friends, friendQuery)
             
             when {
                 matches.isEmpty() -> {
@@ -161,56 +162,7 @@ class HandicapIntentRequestHandler : RequestHandler {
             }
         } catch (e: Exception) {
             logger.error("Failed to fetch friend handicap for query '$friendQuery': ${e.message}", e)
-            val dataModel = mapOf(
-                "error" to "I encountered an error while looking up your friend's handicap. Please try again later."
-            )
-            return input.generateTemplateResponse("HandicapIntentErrorResponse", dataModel)
+            throw GolfCanadaApiException("Error fetching friend handicap", e)
         }
-    }
-    
-    /**
-     * Performs fuzzy matching to find friends whose names match the search query.
-     * 
-     * Matching logic:
-     * 1. Exact match (case-insensitive)
-     * 2. Starts with query (case-insensitive)
-     * 3. Contains query (case-insensitive)
-     * 4. Query contains any part of the friend's name (case-insensitive)
-     * 
-     * @param friends List of friends to search
-     * @param query The search query
-     * @return List of matching friends
-     */
-    private fun findMatchingFriends(friends: List<Friend>, query: String): List<Friend> {
-        if (query.isBlank()) return emptyList()
-        
-        val normalizedQuery = query.trim().lowercase()
-        
-        // Try exact match first
-        val exactMatches = friends.filter { friend ->
-            friend.name?.lowercase()?.trim() == normalizedQuery
-        }
-        if (exactMatches.isNotEmpty()) return exactMatches
-        
-        // Try starts with
-        val startsWithMatches = friends.filter { friend ->
-            friend.name?.lowercase()?.trim()?.startsWith(normalizedQuery) == true
-        }
-        if (startsWithMatches.isNotEmpty()) return startsWithMatches
-        
-        // Try contains query
-        val containsMatches = friends.filter { friend ->
-            friend.name?.lowercase()?.trim()?.contains(normalizedQuery) == true
-        }
-        if (containsMatches.isNotEmpty()) return containsMatches
-        
-        // Try query contains any part of friend's name (for nicknames or partial names)
-        val queryContainsPart = friends.filter { friend ->
-            val nameParts = friend.name?.lowercase()?.trim()?.split(" ") ?: emptyList()
-            nameParts.any { part -> normalizedQuery.contains(part) && part.length > 2 }
-        }
-        if (queryContainsPart.isNotEmpty()) return queryContainsPart
-        
-        return emptyList()
     }
 }
