@@ -167,12 +167,12 @@ class HandicapIntentRequestHandlerTest : DescribeSpec({
     }
 
     context("handle - friend handicap") {
-        it("should throw AccountLinkingException when no access token with FriendName") {
+        it("should throw AccountLinkingException when no access token with FriendFullName") {
             val attributesManager = mockk<AttributesManager>(relaxed = true)
             every { attributesManager.requestAttributes } returns mutableMapOf()
 
             val friendSlot = Slot.builder()
-                .withName("FriendName")
+                .withName("FriendFullName")
                 .withValue("John Smith")
                 .build()
 
@@ -181,7 +181,7 @@ class HandicapIntentRequestHandlerTest : DescribeSpec({
                 .withRequest(IntentRequest.builder()
                     .withIntent(Intent.builder()
                         .withName("GOLFCANADA.HandicapIntent")
-                        .withSlots(mapOf("FriendName" to friendSlot))
+                        .withSlots(mapOf("FriendFullName" to friendSlot))
                         .build())
                     .build())
                 .build()
@@ -194,12 +194,12 @@ class HandicapIntentRequestHandlerTest : DescribeSpec({
             }
         }
 
-        it("should throw AccountLinkingException when no access token with FirstName") {
+        it("should throw AccountLinkingException when no access token with FriendFirstName") {
             val attributesManager = mockk<AttributesManager>(relaxed = true)
             every { attributesManager.requestAttributes } returns mutableMapOf()
 
             val friendSlot = Slot.builder()
-                .withName("FirstName")
+                .withName("FriendFirstName")
                 .withValue("John")
                 .build()
 
@@ -208,7 +208,7 @@ class HandicapIntentRequestHandlerTest : DescribeSpec({
                 .withRequest(IntentRequest.builder()
                     .withIntent(Intent.builder()
                         .withName("GOLFCANADA.HandicapIntent")
-                        .withSlots(mapOf("FirstName" to friendSlot))
+                        .withSlots(mapOf("FriendFirstName" to friendSlot))
                         .build())
                     .build())
                 .build()
