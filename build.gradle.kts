@@ -16,6 +16,7 @@ dependencies {
     testImplementation(kotlin("test"))
     testImplementation("io.kotest:kotest-runner-junit5:5.7.2")
     testImplementation("io.mockk:mockk:1.13.13")
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
 
     implementation("com.amazon.alexa:ask-sdk:2.86.0")
     implementation("com.amazon.alexa:ask-sdk-apache-client:2.86.0")

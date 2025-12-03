@@ -20,10 +20,15 @@ import kjd.golfcanada.alexa.handler.SessionEndedRequestHandler
 import kjd.golfcanada.alexa.interceptor.AuthenticationRequestInterceptor
 import kjd.golfcanada.alexa.interceptor.HandicapLookupInterceptor
 import kjd.golfcanada.alexa.interceptor.UserProfileInterceptor
+import kjd.golfcanada.client.provider.ApiClientProvider
 
 class GolfCanadaAlexaSkill: SkillStreamHandler(getSkills()) {
     companion object {
         fun getSkills(): Skill {
+            // Create a single instance of ApiClientProvider to be shared across all requests
+            // This ensures HTTP client resources are reused while keeping tokens isolated per request
+            val apiClientProvider = ApiClientProvider()
+            
             return Skills.custom()
                 .withSkillId(System.getenv("SKILL_ID") ?: "ERROR - No SKILL_ID provided!!!")
                 .addRequestHandlers(
@@ -41,7 +46,7 @@ class GolfCanadaAlexaSkill: SkillStreamHandler(getSkills()) {
                 )
                 .addRequestInterceptor(AuthenticationRequestInterceptor())
                 .addRequestInterceptor(UserProfileInterceptor())
-                .addRequestInterceptor(HandicapLookupInterceptor())
+                .addRequestInterceptor(HandicapLookupInterceptor(apiClientProvider))
                 .addExceptionHandler(AccountLinkingExceptionHandler())
                 .addExceptionHandler(NoUserDetailsExceptionHandler())
                 .addExceptionHandler(GolfCanadaApiExceptionHandler())
