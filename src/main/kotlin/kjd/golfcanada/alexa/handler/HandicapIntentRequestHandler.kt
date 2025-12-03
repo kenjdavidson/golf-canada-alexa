@@ -7,6 +7,7 @@ import com.amazon.ask.model.Response
 import com.amazon.ask.request.Predicates.intentName
 import kjd.golfcanada.alexa.exception.AccountLinkingException
 import kjd.golfcanada.alexa.exception.GolfCanadaApiException
+import kjd.golfcanada.alexa.exception.NoUserDetailsException
 import kjd.golfcanada.alexa.interceptor.HandicapLookupInterceptor
 import kjd.golfcanada.alexa.interceptor.UserProfileInterceptor
 import kjd.golfcanada.alexa.model.HandicapSummaryData
@@ -110,10 +111,7 @@ class HandicapIntentRequestHandler : RequestHandler {
             val user = sessionAttributes[UserProfileInterceptor.USER_SESSION_KEY] as? User
             if (user?.id == null) {
                 logger.warn("No user profile available for fetching friends list")
-                val dataModel = mapOf(
-                    "error" to "Unable to retrieve your profile information."
-                )
-                return input.generateTemplateResponse("HandicapIntentErrorResponse", dataModel)
+                throw NoUserDetailsException()
             }
             
             // Set access token on ApiClient companion object

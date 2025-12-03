@@ -38,7 +38,7 @@ class GolfCanadaApiExceptionHandler : ExceptionHandler {
      * @return A response with error message
      */
     override fun handle(input: HandlerInput, throwable: Throwable): Optional<Response> {
-        logger.info("Handling GolfCanadaApiException: ${throwable.message}")
+        logger.error("Handling GolfCanadaApiException: ${throwable.message}", throwable)
 
         return input.generateTemplateResponse("GolfCanadaApiErrorResponse", emptyMap())
     }
