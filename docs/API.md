@@ -222,29 +222,102 @@ Authenticates with Golf Canada and retrieves tokens.
 }
 ```
 
-### Planned API Endpoints
+### Golf Canada API Endpoints
 
-The following endpoints are planned for implementation:
+The following Golf Canada API endpoints are implemented in the OpenAPI specification:
 
-#### Player Information
-- `GET /api/player/profile` - Get player profile and membership
-- `GET /api/player/handicap` - Get handicap index details
+#### Authentication (Implemented ✅)
+- `POST /connect/token` - Authenticate and get access token
+- `POST /connect/token` (refresh_token grant) - Refresh access token
 
-#### Round History
-- `GET /api/player/rounds` - Get round history
-- `GET /api/player/rounds/{year}` - Get rounds for specific year
+#### Player Information (Implemented ✅)
+- `GET /api/v2/members/{memberId}/players` - Get player profile and membership
+- `GET /api/v2/members/{memberId}/handicap-history` - Get handicap index details and history
 
-#### Favorites
-- `GET /api/player/favorites` - Get friends/favorites list
-- `GET /api/player/favorites/{id}/handicap` - Get friend's handicap
+#### Round History (Implemented ✅)
+- `GET /api/v2/members/{memberId}/scores` - Get round history
+- Query parameters support filtering by year, date range, etc.
 
-#### Courses
+#### Favorites (Implemented ✅)
+- `GET /api/v2/members/{memberId}/friends` - Get friends/favorites list
+- `GET /api/v2/members/{friendId}/handicap-history` - Get friend's handicap
+
+#### Courses (Planned 📋)
 - `GET /api/courses/search` - Search for courses
 - `GET /api/courses/{id}` - Get course details
 
-#### Score Posting
+#### Score Posting (Planned 📋)
 - `POST /api/scores` - Post a new score
 - `GET /api/scores/draft` - Get draft scores
+
+---
+
+## Alexa Skill Handler API
+
+The Alexa Skill Handler receives requests from the Alexa service and returns voice responses. It uses the Alexa Skills SDK and is deployed as a Lambda function.
+
+### Supported Intents
+
+#### Standard Alexa Intents
+
+| Intent | Handler | Description |
+|--------|---------|-------------|
+| `LaunchRequest` | `LaunchRequestHandler` | Handles skill launch |
+| `AMAZON.HelpIntent` | `HelpIntentHandler` | Provides help information |
+| `AMAZON.CancelIntent` | `CancelAndStopIntentHandler` | Cancels current action |
+| `AMAZON.StopIntent` | `CancelAndStopIntentHandler` | Stops the skill |
+| `AMAZON.NavigateHomeIntent` | `NavigateHomeIntentHandler` | Returns to home |
+| `AMAZON.FallbackIntent` | `FallbackIntentHandler` | Handles unrecognized requests |
+| `SessionEndedRequest` | `SessionEndedRequestHandler` | Cleans up on session end |
+
+#### Custom Golf Canada Intents
+
+| Intent | Handler | Slots | Description |
+|--------|---------|-------|-------------|
+| `GOLFCANADA.HandicapIntent` | `HandicapIntentRequestHandler` | `FriendFullName`, `FriendFirstName` | Get handicap for self or friend |
+| `PlayerProfileMembershipIntent` | `PlayerProfileMembershipIntentHandler` | None | Get membership information |
+| `PlayerProfileHistoryIntent` | `PlayerProfileHistoryIntentHandler` | `numberOfRounds`, `year` | Get score history |
+| `FavoritePlayerHistoryIntent` | `FavoritePlayerHistoryIntentHandler` | `playerName`, `numberOfRounds` | Get friend's score history |
+| `AddScorecardIntent` | `AddScorecardIntentHandler` | None | Add a new score (stub) |
+
+### Request Interceptors
+
+Request interceptors run before intent handlers and prepare data:
+
+1. **AuthenticationRequestInterceptor** - Validates access token presence
+2. **UserProfileInterceptor** - Loads user profile and caches in session (1 API call per session)
+3. **HandicapLookupInterceptor** - Pre-loads handicap data with 10-minute TTL cache
+
+### Exception Handlers
+
+Custom exception handlers provide user-friendly error messages:
+
+- **AccountLinkingExceptionHandler** - Prompts user to link account
+- **NoUserDetailsExceptionHandler** - Handles missing user profile
+- **GolfCanadaApiExceptionHandler** - Handles Golf Canada API errors
+
+### Response Templating
+
+All responses use FreeMarker templates with locale support:
+- Templates located in `src/main/resources/kjd/golfcanada/alexa/responses/`
+- English templates: `*Response.ftl`
+- French templates: `*Response_fr.ftl`
+
+### Caching Strategy
+
+**Handicap Data Caching:**
+```kotlin
+// Cached for 10 minutes in session attributes
+data class CachedHandicap(
+    val data: HandicapSummaryData,
+    val timestamp: Long,
+    val ttlMillis: Long = 600_000  // 10 minutes
+)
+```
+
+**User Profile Caching:**
+- Stored in session attributes for entire session duration
+- No TTL (refreshes on new session)
 
 ---
 

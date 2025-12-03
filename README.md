@@ -22,8 +22,8 @@ Provides basic Golf Canada membership functionality through an Amazon Alexa skil
 
 This project is an Alexa skill that connects to Golf Canada for the purpose of looking up and adding scoring information. The project consists of two main components:
 
-1. **Authentication Function** - An AWS Lambda function that proxies Golf Canada OAuth services to enable Alexa Account Linking. This component is completed and deployed to AWS.
-2. **Skill Handlers** - The Alexa skill handlers that process voice commands for handicap lookup, score history, and other Golf Canada features. This component is still under development.
+1. **Authentication Function** - An AWS Lambda function that proxies Golf Canada OAuth services to enable Alexa Account Linking. ✅ Completed and deployed to AWS.
+2. **Skill Handlers** - The Alexa skill handlers that process voice commands for handicap lookup, score history, and other Golf Canada features. ✅ Core functionality implemented and tested.
 
 ## Architecture
 
@@ -52,26 +52,40 @@ For detailed architecture documentation, see [docs/ARCHITECTURE.md](docs/ARCHITE
 
 The following interactions are currently available:
 
-- Account linking with Golf Canada credentials
+### Authentication & Account Management
+- **Account Linking** - Link your Golf Canada credentials through the Alexa app
+- **Launch** - Start the skill with "Alexa, open Golf Canada"
+- **Help** - Get information about available commands
 
-## Future Interactions
+### Handicap Information
+- **Your Handicap** - "What's my handicap?" or "Tell me my handicap index"
+- **Friend's Handicap** - "What is [friend name]'s handicap?"
+  - Supports both full names and first names
+  - Searches your Golf Canada friends list
 
-The following interactions are under development or review. More advanced requests may be available; eventually this list will be removed from the README and contained within the project issues.
+### Membership Information
+- **Membership Status** - "What's my membership?" or "When does my membership expire?"
+  - View your membership level and expiration date
+  - Check if your membership is active
 
-- [X] Logging in with your Golf Canada account
-- [X] Terms of Use and Privacy Policy
+### Score History
+- **Your Recent Rounds** - "Tell me about my last round" or "How did I play last?"
+- **Friend's Recent Rounds** - "What was [friend name]'s last score?"
 
-> Note that this application is hosted on AWS and gains access to your Golf Canada
+> **Privacy Note**: This application is hosted on AWS and gains access to your Golf Canada
 > account through Account Linking, which you can read about here:
 > https://developer.amazon.com/en-US/docs/alexa/account-linking/add-account-linking.html
 > No information is stored outside the Authentication information required by
 > Alexa in order to facilitate account linking.
 
-- [ ] Getting information regarding your handicap
-- [ ] Getting information regarding your recent/yearly rounds
-- [ ] Getting information about your friends/favorites handicap
-- [ ] Getting information about your friends/favorites recent/yearly rounds
-- [ ] Adding/saving new rounds
+## Future Interactions
+
+The following interactions are planned for future development:
+
+- [ ] Year-specific score history ("How did I play in 2024?")
+- [ ] Multiple rounds statistics ("Tell me about my last 5 rounds")
+- [ ] Adding/saving new rounds through voice
+- [ ] More detailed score breakdowns
 
 For detailed planning on future work, see [docs/ROADMAP.md](docs/ROADMAP.md).
 
@@ -131,14 +145,21 @@ golf-canada-alexa/
 │   │   ├── kotlin/kjd/golfcanada/
 │   │   │   ├── auth/          # Authentication Lambda handler
 │   │   │   ├── alexa/         # Alexa skill handlers
+│   │   │   │   ├── handler/   # Intent and request handlers
+│   │   │   │   ├── interceptor/ # Request/response interceptors
+│   │   │   │   ├── data/      # Session data models
+│   │   │   │   ├── exception/ # Custom exception classes
+│   │   │   │   ├── model/     # Response data models
+│   │   │   │   └── util/      # Utility classes (e.g., FriendNameMatcher)
 │   │   │   ├── client/        # Golf Canada API client
+│   │   │   │   └── provider/  # API client provider with token management
 │   │   │   └── util/          # Utility functions
 │   │   └── resources/
 │   │       ├── client/        # OpenAPI spec for Golf Canada
 │   │       └── kjd/golfcanada/
 │   │           ├── auth/      # Login page HTML
-│   │           └── alexa/     # Response templates
-│   └── test/
+│   │           └── alexa/     # Response templates (FreeMarker)
+│   └── test/                  # Comprehensive unit tests
 ├── layers/                    # Lambda layers (SSL certificates)
 ├── model/                     # Alexa interaction model
 ├── events/                    # Test events for Lambda
