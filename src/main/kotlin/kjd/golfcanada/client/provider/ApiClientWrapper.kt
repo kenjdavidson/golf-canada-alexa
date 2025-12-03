@@ -54,39 +54,6 @@ class ApiClientWrapper internal constructor(private val apiClient: ApiClient) {
     }
     
     /**
-     * Creates a new AuthApi instance using the wrapped ApiClient.
-     * 
-     * @deprecated Use the `auth` property for fluent API access
-     * @return A new AuthApi instance configured with user-specific authentication
-     */
-    @Deprecated("Use the 'auth' property instead", ReplaceWith("auth"))
-    fun createAuthApi(): AuthApi {
-        return AuthApi(apiClient.baseUrl, apiClient.client)
-    }
-    
-    /**
-     * Creates a new MembersApi instance using the wrapped ApiClient.
-     * 
-     * @deprecated Use the `members` property for fluent API access
-     * @return A new MembersApi instance configured with user-specific authentication
-     */
-    @Deprecated("Use the 'members' property instead", ReplaceWith("members"))
-    fun createMembersApi(): MembersApi {
-        return MembersApi(apiClient.baseUrl, apiClient.client)
-    }
-    
-    /**
-     * Creates a new ScoresApi instance using the wrapped ApiClient.
-     * 
-     * @deprecated Use the `scores` property for fluent API access
-     * @return A new ScoresApi instance configured with user-specific authentication
-     */
-    @Deprecated("Use the 'scores' property instead", ReplaceWith("scores"))
-    fun createScoresApi(): ScoresApi {
-        return ScoresApi(apiClient.baseUrl, apiClient.client)
-    }
-    
-    /**
      * Gets the underlying ApiClient instance.
      * 
      * This method is provided for advanced use cases where direct access to the

@@ -18,7 +18,6 @@ import org.openapitools.client.infrastructure.ApiClient
  * 2. API properties are cached after first access
  * 3. All APIs share the same underlying HTTP client
  * 4. API instances are properly configured
- * 5. Deprecated factory methods still work for backward compatibility
  */
 class ApiClientWrapperTest : DescribeSpec({
     
@@ -71,36 +70,6 @@ class ApiClientWrapperTest : DescribeSpec({
             val apiClient = wrapper.getApiClient()
             
             apiClient shouldBe mockApiClient
-        }
-    }
-    
-    describe("ApiClientWrapper deprecated factory methods") {
-        
-        val mockApiClient = ApiClient("https://test.example.com", OkHttpClient())
-        val wrapper = ApiClientWrapper(mockApiClient)
-        
-        it("should still support createAuthApi for backward compatibility") {
-            @Suppress("DEPRECATION")
-            val authApi = wrapper.createAuthApi()
-            
-            authApi shouldNotBe null
-            authApi.shouldBeInstanceOf<AuthApi>()
-        }
-        
-        it("should still support createMembersApi for backward compatibility") {
-            @Suppress("DEPRECATION")
-            val membersApi = wrapper.createMembersApi()
-            
-            membersApi shouldNotBe null
-            membersApi.shouldBeInstanceOf<MembersApi>()
-        }
-        
-        it("should still support createScoresApi for backward compatibility") {
-            @Suppress("DEPRECATION")
-            val scoresApi = wrapper.createScoresApi()
-            
-            scoresApi shouldNotBe null
-            scoresApi.shouldBeInstanceOf<ScoresApi>()
         }
     }
     
