@@ -142,10 +142,20 @@ Some tests in this project make real network calls to the Golf Canada API for in
 
 **Running integration tests locally:**
 ```shell
+# Option 1: Set environment variables directly (will be in shell history)
 export TEST_USERNAME="your-golf-canada-username"
 export TEST_PASSWORD="your-golf-canada-password"
 ./gradlew test
+
+# Option 2: Use a .env file (recommended to avoid shell history exposure)
+# Create a .env file (ensure it's in .gitignore):
+echo "export TEST_USERNAME='your-username'" >> .env
+echo "export TEST_PASSWORD='your-password'" >> .env
+source .env
+./gradlew test
 ```
+
+> **Security Note**: Be careful not to commit your credentials. If using a .env file, ensure it's listed in `.gitignore`.
 
 **GitHub Actions integration:**
 
@@ -157,7 +167,11 @@ If these secrets are not configured, the integration tests will be skipped, and 
 
 To add these secrets:
 1. Go to your repository Settings → Secrets and variables → Actions
-2. Add `TEST_USERNAME` and `TEST_PASSWORD` as repository secrets
+2. Click "New repository secret"
+3. Add `TEST_USERNAME` with your Golf Canada username as the value
+4. Add `TEST_PASSWORD` with your Golf Canada password as the value
+
+> **Note**: These credentials should be valid Golf Canada account credentials used only for testing purposes.
 
 ### Project Structure
 
