@@ -241,13 +241,36 @@ golf-canada-alexa/
 
 ## AWS Deployment
 
-### Prerequisites
+The project supports both automated deployment via GitHub Actions and manual deployment via AWS SAM CLI.
+
+### Automated Deployment with GitHub Actions
+
+The recommended approach is to use the automated GitHub Actions workflow that triggers on git tags:
+
+- **Deploy both functions**: Push a tag like `v1.0.0`
+- **Deploy authentication only**: Push a tag like `auth-v1.0.0`
+- **Deploy skill only**: Push a tag like `skill-v1.0.0`
+
+**Required GitHub Secrets:**
+- `AWS_ROLE_ARN` - IAM role ARN for GitHub Actions to assume
+- `AWS_REGION` - Target AWS region (e.g., `us-east-1`)
+- `STACK_NAME` - CloudFormation stack name
+- `GOLF_CANADA_CLIENT_ID` - OAuth Client ID
+- `GOLF_CANADA_CLIENT_SECRET` - OAuth Client Secret
+- `ALEXA_SKILL_ID` - Your Alexa Skill ID
+
+For complete setup instructions, required secrets, and tag-based deployment strategies, see **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**.
+
+### Manual Deployment
+
+For manual deployment or local testing:
+
+#### Prerequisites
 
 - **AWS CLI** configured with appropriate credentials
 - **AWS SAM CLI**
-- **An S3 bucket** for deployment artifacts
 
-### Deploying Both Functions
+#### Deploying Both Functions
 
 The project includes two Lambda functions that are deployed together:
 1. **GolfCanadaAuthenticationFunction** - OAuth wrapper for account linking (with Function URL)
@@ -271,8 +294,6 @@ The project includes two Lambda functions that are deployed together:
    - **Parameter ClientSecret**: Your OAuth Client Secret for Golf Canada authentication
    - **Parameter SkillId**: Your Alexa Skill ID from the Alexa Developer Console
    - Allow SAM to create IAM roles
-
-   > **Note**: The parameters (ClientId, ClientSecret, SkillId) are now configured during deployment via SAM parameters instead of manual environment variable updates. These values can also be updated from GitHub Secrets in CI/CD pipelines.
 
 3. **Note the Function URL:**
    After deployment, the outputs will display:
@@ -332,6 +353,7 @@ At this point I'm unsure whether the Wiki or Discussions will be available for t
 - [Architecture Documentation](docs/ARCHITECTURE.md)
 - [Development Roadmap](docs/ROADMAP.md)
 - [API Documentation](docs/API.md)
+- [Deployment Guide](docs/DEPLOYMENT.md)
 - [Contribution Guidelines](CONTRIBUTION.md)
 - [Privacy Policy](PRIVACY_POLICY.md)
 - [Terms of Service](TERMS_OF_SERVICE.md)
