@@ -18,12 +18,12 @@ This document outlines the planned features and development milestones for the G
 
 ## Planned Development
 
-### 🚧 Phase 2: Account Information (In Progress)
+### ✅ Phase 2: Account Information (Completed)
 
-The first skill functionality to be implemented is account information retrieval.
+Account information retrieval functionality has been implemented and tested.
 
 #### 2.1 Player Profile - Membership Intent
-**Intent:** `PlayerProfileMembershipIntent`
+**Intent:** `GOLFCANADA.PlayerProfileMembership`
 
 **Sample Utterances:**
 - "what's my membership"
@@ -31,38 +31,44 @@ The first skill functionality to be implemented is account information retrieval
 - "when does my membership expire"
 - "is my membership active"
 
-**Required Development:**
-- [ ] Implement membership API endpoint in OpenAPI spec
-- [ ] Create `PlayerProfileMembershipHandler` intent handler
-- [ ] Add response templates for membership status
-- [ ] Handle expired membership scenarios
-- [ ] Add unit tests
+**Implementation Status:**
+- [x] Implement membership API endpoint in OpenAPI spec
+- [x] Create `PlayerProfileMembershipIntentHandler` intent handler
+- [x] Add response templates for membership status (English and French)
+- [x] Handle expired membership scenarios
+- [x] Add unit tests
 
-**Expected Response:**
+**Actual Response:**
 > "Your Golf Canada membership is active at the [level] level and expires on [date]."
 
 #### 2.2 Player Profile - Handicap Intent
-**Intent:** `PlayerProfileHandicapIntent`
+**Intent:** `GOLFCANADA.Handicap`
 
 **Sample Utterances:**
 - "what is my handicap"
 - "what is my handicap index"
 - "how is my handicap looking"
+- "what is [friend name]'s handicap"
 
-**Required Development:**
-- [ ] Implement handicap API endpoint in OpenAPI spec
-- [ ] Create `PlayerProfileHandicapHandler` intent handler
-- [ ] Add response templates for handicap information
-- [ ] Handle users without handicap index
-- [ ] Add unit tests
+**Implementation Status:**
+- [x] Implement handicap API endpoint in OpenAPI spec
+- [x] Create `HandicapIntentRequestHandler` intent handler
+- [x] Add response templates for handicap information (English and French)
+- [x] Handle users without handicap index
+- [x] Add unit tests
+- [x] **Bonus:** Implement friend handicap lookup with name matching
+- [x] **Bonus:** Add 10-minute TTL caching for user's own handicap via `HandicapLookupInterceptor`
 
-**Expected Response:**
+**Actual Response (Own Handicap):**
 > "Your current handicap index is [index]. Your low index is [low] and your high index is [high]."
 
-### 📋 Phase 3: Round History
+**Actual Response (Friend's Handicap):**
+> "[Friend name]'s current handicap index is [index]."
+
+### 🚧 Phase 3: Round History (Partially Complete)
 
 #### 3.1 Player Round History Intent
-**Intent:** `PlayerProfileHistoryIntent`
+**Intent:** `GOLFCANADA.PlayerProfileHistory`
 
 **Sample Utterances:**
 - "tell me about my last round"
@@ -70,13 +76,13 @@ The first skill functionality to be implemented is account information retrieval
 - "tell me about my last [number] rounds"
 - "how did I play in [year]"
 
-**Required Development:**
-- [ ] Implement rounds history API endpoint in OpenAPI spec
-- [ ] Create `PlayerProfileHistoryHandler` intent handler
-- [ ] Add response templates for round summaries
-- [ ] Handle pagination for multiple rounds
-- [ ] Add support for year filtering
-- [ ] Add unit tests
+**Implementation Status:**
+- [x] Implement rounds history API endpoint in OpenAPI spec
+- [x] Create `PlayerProfileHistoryIntentHandler` intent handler
+- [x] Add response templates for round summaries (English and French)
+- [x] Add unit tests
+- [ ] **TODO:** Implement full logic for pagination and multiple rounds
+- [ ] **TODO:** Add support for year filtering
 
 **Expected Response (single round):**
 > "Your last round was at [course] on [date]. You shot [score] with a differential of [diff]."
@@ -84,39 +90,43 @@ The first skill functionality to be implemented is account information retrieval
 **Expected Response (multiple rounds):**
 > "In your last [number] rounds, you've averaged [average] with scores ranging from [low] to [high]. Your best round was at [course]."
 
-### 📋 Phase 4: Friends/Favorites
+### ✅ Phase 4: Friends/Favorites (Completed)
 
-#### 4.1 Favorite Player Handicap Intent
-**Intent:** `FavoritePlayerHandicapIntent` (to be created)
+#### 4.1 Favorite Player Handicap
+**Intent:** `GOLFCANADA.Handicap` (with friend slots)
 
 **Sample Utterances:**
 - "what is [name]'s handicap"
-- "how is [name] playing"
+- "tell me [friend name]'s handicap"
 
-**Required Development:**
-- [ ] Implement favorites API endpoint in OpenAPI spec
-- [ ] Create slot type for friend names
-- [ ] Create `FavoritePlayerHandicapHandler` intent handler
-- [ ] Handle friend not found scenarios
-- [ ] Add unit tests
+**Implementation Status:**
+- [x] Implement friends/favorites API endpoint in OpenAPI spec
+- [x] Create slots for friend names (FriendFullName, FriendFirstName)
+- [x] Implement friend handicap lookup in `HandicapIntentRequestHandler`
+- [x] Handle friend not found scenarios with appropriate error messages
+- [x] Implement intelligent name matching via `FriendNameMatcher` utility
+- [x] Handle multiple matching friends gracefully
+- [x] Add unit tests
 
 #### 4.2 Favorite Player History Intent
-**Intent:** `FavoritePlayerHistoryIntent`
+**Intent:** `GOLFCANADA.FavoritePlayerHistory`
 
 **Sample Utterances:**
-- "how has [name] been playing"
-- "what was [name]'s last score"
-- "what are [name]'s last [number] scores"
+- "what was [playerName]'s last score"
+- "how did [playerName] shoot last"
+- "what are [playerName]'s last [numberOfRounds] scores"
 
-**Required Development:**
-- [ ] Create `FavoritePlayerHistoryHandler` intent handler
-- [ ] Handle friend privacy settings
-- [ ] Add unit tests
+**Implementation Status:**
+- [x] Create `FavoritePlayerHistoryIntentHandler` intent handler
+- [x] Add response templates (English and French)
+- [x] Add unit tests
+- [ ] **TODO:** Implement full logic for friend history lookup
+- [ ] **TODO:** Handle friend privacy settings
 
-### 📋 Phase 5: Score Posting
+### 🚧 Phase 5: Score Posting (In Progress)
 
 #### 5.1 Add Scorecard Intent
-**Intent:** `AddScorecardIntent`
+**Intent:** `GOLFCANADA.AddScorecard`
 
 This is a complex conversational flow that will guide users through posting a new score.
 
@@ -131,15 +141,17 @@ This is a complex conversational flow that will guide users through posting a ne
 3. "What was your score?" → Total score or hole-by-hole
 4. Confirmation and posting
 
-**Required Development:**
-- [ ] Implement score posting API endpoint in OpenAPI spec
-- [ ] Implement course search API endpoint
-- [ ] Create dialog model for multi-turn conversation
-- [ ] Create `AddScorecardHandler` with dialog management
-- [ ] Add support for both total score and hole-by-hole entry
-- [ ] Handle edge cases (9-hole rounds, incomplete rounds)
-- [ ] Add confirmation prompts
-- [ ] Add unit tests
+**Implementation Status:**
+- [x] Create `AddScorecardIntentHandler` intent handler (stub)
+- [x] Add response templates (English and French)
+- [x] Add unit tests
+- [ ] **TODO:** Implement score posting API endpoint in OpenAPI spec
+- [ ] **TODO:** Implement course search API endpoint
+- [ ] **TODO:** Create dialog model for multi-turn conversation
+- [ ] **TODO:** Implement full dialog management logic
+- [ ] **TODO:** Add support for both total score and hole-by-hole entry
+- [ ] **TODO:** Handle edge cases (9-hole rounds, incomplete rounds)
+- [ ] **TODO:** Add confirmation prompts
 
 ### 📋 Phase 6: Advanced Features
 
@@ -166,8 +178,8 @@ This is a complex conversational flow that will guide users through posting a ne
 - [ ] Add CloudWatch metrics and alarms
 
 ### Medium Priority
-- [ ] Add support for French language responses
-- [ ] Implement response caching
+- [x] Add support for French language responses (English and French templates implemented)
+- [x] Implement response caching (10-minute TTL for handicap data)
 - [ ] Add APL (Alexa Presentation Language) support for screen devices
 - [ ] Create CI/CD pipeline
 
@@ -183,10 +195,11 @@ Based on the Golf Canada API exploration:
 | Endpoint | Status | Description |
 |----------|--------|-------------|
 | `/connect/token` | ✅ Complete | Authentication |
-| `/api/player/profile` | 📋 Planned | Player membership info |
-| `/api/player/handicap` | 📋 Planned | Handicap information |
-| `/api/player/rounds` | 📋 Planned | Round history |
-| `/api/player/favorites` | 📋 Planned | Friends/favorites list |
+| `/api/player/profile` | ✅ Complete | Player membership info |
+| `/api/player/handicap` | ✅ Complete | Handicap information |
+| `/api/player/rounds` | ✅ Complete | Round history |
+| `/api/player/favorites` | ✅ Complete | Friends/favorites list |
+| `/api/member/{id}/handicap` | ✅ Complete | Friend handicap lookup |
 | `/api/courses/search` | 📋 Planned | Course search |
 | `/api/scores/post` | 📋 Planned | Post new score |
 

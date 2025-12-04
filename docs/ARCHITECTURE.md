@@ -26,11 +26,21 @@ The skill handlers process voice commands and return appropriate responses.
 **Location:** `src/main/kotlin/kjd/golfcanada/alexa/`
 
 **Components:**
-- `GolfCanadaAlexaSkill.kt` - Main skill entry point
-- `handler/` - Intent handlers
-- `interceptor/` - Request/response interceptors
+- `GolfCanadaAlexaSkill.kt` - Main skill entry point using Alexa Skills SDK
+- `handler/` - Intent handlers for all supported voice commands
+- `interceptor/` - Request/response interceptors for auth, user profile, and handicap caching
+- `data/` - Session data models
+- `exception/` - Custom exceptions for error handling
+- `model/` - Response data models
+- `util/` - Utility classes (e.g., friend name matching)
 
-**Status:** 🚧 In development
+**Status:** ✅ Core functionality implemented and tested
+
+**Key Features:**
+- **Skill Builder Configuration** - Uses varargs methods (`addRequestHandlers`, `addRequestInterceptors`, `addExceptionHandlers`) for clean, maintainable configuration
+- **Request Interceptors** - Pre-process requests to handle authentication, load user profiles, and cache handicap data with TTL
+- **Exception Handlers** - Gracefully handle account linking issues, API errors, and missing user details
+- **Template-based Responses** - FreeMarker templates for all responses with English and French localization
 
 ### 3. Golf Canada API Client
 
@@ -39,6 +49,17 @@ Generated client code for interacting with Golf Canada's API.
 **Location:** `src/main/kotlin/kjd/golfcanada/client/` and `build/generated/openapi/`
 
 **OpenAPI Spec:** `src/main/resources/client/golfcanada.yaml`
+
+**Key Components:**
+- **ApiClientProvider** - Manages API client instances with shared OkHttp client for connection pooling
+- **ApiClientWrapper** - Wraps API clients with authentication token management
+- **Token Management** - Automatically extracts and manages Golf Canada access tokens from Alexa account linking
+- **API Endpoints** - Generated from OpenAPI spec including:
+  - Authentication (token exchange)
+  - Members API (profile, handicap, scores)
+  - User management
+
+**Status:** ✅ Implemented with connection pooling and token management
 
 ## Architecture Diagram
 
@@ -58,19 +79,31 @@ Generated client code for interacting with Golf Canada's API.
                      ▼                                                          ▼
 ┌────────────────────────────────────────┐    ┌────────────────────────────────────────┐
 │       AWS Lambda (Authentication)       │    │       AWS Lambda (Skill Handler)       │
-│                                        │    │              (Planned)                  │
+│                                        │    │                                        │
 │  ┌──────────────────────────────────┐  │    │  ┌──────────────────────────────────┐  │
 │  │    AuthenticationHandler         │  │    │  │    GolfCanadaAlexaSkill          │  │
 │  │                                  │  │    │  │                                  │  │
-│  │  /login  → Show login form       │  │    │  │  LaunchRequestHandler            │  │
-│  │  /code   → Authenticate user     │  │    │  │  HelpIntentHandler               │  │
-│  │  /token  → Exchange/refresh      │  │    │  │  PlayerProfileHandicapHandler    │  │
-│  └──────────────────────────────────┘  │    │  │  (and more...)                   │  │
+│  │  /login  → Show login form       │  │    │  │  Request Handlers:               │  │
+│  │  /code   → Authenticate user     │  │    │  │  - LaunchRequestHandler          │  │
+│  │  /token  → Exchange/refresh      │  │    │  │  - HandicapIntentRequestHandler  │  │
+│  └──────────────────────────────────┘  │    │  │  - PlayerProfileMembershipHandler│  │
+│                                        │    │  │  - PlayerProfileHistoryHandler   │  │
+│  ┌──────────────────────────────────┐  │    │  │  - FavoritePlayerHistoryHandler  │  │
+│  │    TokenRepository (in-memory)   │  │    │  │  - (+ standard Alexa handlers)   │  │
+│  │    Stores temp auth codes        │  │    │  └──────────────────────────────────┘  │
+│  └──────────────────────────────────┘  │    │                                        │
+│                                        │    │  ┌──────────────────────────────────┐  │
+│                                        │    │  │  Request Interceptors:           │  │
+│                                        │    │  │  - AuthenticationInterceptor     │  │
+│                                        │    │  │  - UserProfileInterceptor        │  │
+│                                        │    │  │  - HandicapLookupInterceptor     │  │
+│                                        │    │  │    (with 10-min TTL cache)       │  │
 │                                        │    │  └──────────────────────────────────┘  │
-│  ┌──────────────────────────────────┐  │    │                                        │
-│  │    TokenRepository (in-memory)   │  │    │  ┌──────────────────────────────────┐  │
-│  │    Stores temp auth codes        │  │    │  │    AuthenticationInterceptor     │  │
-│  └──────────────────────────────────┘  │    │  │    Sets auth context per request │  │
+│                                        │    │                                        │
+│                                        │    │  ┌──────────────────────────────────┐  │
+│                                        │    │  │  ApiClientProvider               │  │
+│                                        │    │  │  - Shared OkHttp client          │  │
+│                                        │    │  │  - Token management per request  │  │
 │                                        │    │  └──────────────────────────────────┘  │
 └────────────────────────────────────────┘    └────────────────────────────────────────┘
                      │                                           │
@@ -148,7 +181,7 @@ Layers:
   - GolfCanadaAuthenticationCertLayer (SSL certificates)
 ```
 
-### Skill Handler Function (Planned)
+### Skill Handler Function
 
 ```yaml
 Runtime: java21
@@ -158,7 +191,16 @@ Handler: kjd.golfcanada.alexa.GolfCanadaAlexaSkill
 
 Environment Variables:
   - SKILL_ID: Alexa skill ID
+
+Configuration:
+  - Uses Alexa Skills SDK with custom skill builder
+  - Varargs-based configuration for handlers and interceptors
+  - Shared ApiClientProvider instance for HTTP client reuse
+  - FreeMarker templates for response generation
+  - Supports English and French localization
 ```
+
+**Status:** ✅ Implemented (deployment configuration to be added to template.yaml)
 
 ## Security Considerations
 
@@ -185,13 +227,37 @@ Golf Canada's SSL certificate requires a custom trust store due to Java's certif
 
 ## Data Flow
 
-### Request Processing
+### Authentication Request Processing
 
 1. **Request arrives** at Lambda Function URL
 2. **Route matching** in `AuthenticationHandler.handleRequest()`
 3. **Validation** of parameters using extension functions
 4. **Business logic** execution
 5. **Response building** with appropriate status and headers
+
+### Skill Request Processing
+
+1. **Alexa request arrives** at Skill Handler Lambda
+2. **Request Interceptors** run in order:
+   - **AuthenticationRequestInterceptor** - Validates access token is present
+   - **UserProfileInterceptor** - Loads user profile and stores in session (with caching)
+   - **HandicapLookupInterceptor** - Pre-loads user's handicap data with 10-minute TTL cache
+3. **Intent Handler** processes the request using cached data from request attributes
+4. **Response Generation** using FreeMarker templates with locale support
+5. **Response returned** to Alexa
+
+### Caching Strategy
+
+**User Profile Caching:**
+- Stored in Session Attributes for the duration of the session
+- Loaded once per session to minimize API calls
+- Contains: user ID, name, email, membership info
+
+**Handicap Data Caching:**
+- Stored in Session Attributes with 10-minute TTL
+- Only cached for the current user (not for friend lookups)
+- Reduces API calls for repeated handicap queries
+- Automatically refreshed when TTL expires
 
 ### Error Handling
 
