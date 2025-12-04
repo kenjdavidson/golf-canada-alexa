@@ -11,7 +11,7 @@ import kjd.golfcanada.alexa.exception.GolfCanadaApiException
 import kjd.golfcanada.alexa.exception.NoUserDetailsException
 import kjd.golfcanada.alexa.interceptor.HandicapLookupInterceptor
 import kjd.golfcanada.alexa.interceptor.UserProfileInterceptor
-import kjd.golfcanada.alexa.model.HandicapSummaryData
+import kjd.golfcanada.alexa.data.HandicapSummaryData
 import kjd.golfcanada.alexa.util.FriendNameMatcher
 import kjd.golfcanada.client.api.MembersApi
 import kjd.golfcanada.client.api.ScoresApi

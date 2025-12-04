@@ -1,4 +1,4 @@
-package kjd.golfcanada.alexa.model
+package kjd.golfcanada.alexa.data
 
 import kjd.golfcanada.client.model.HandicapCalculation
 
@@ -26,7 +26,7 @@ data class HandicapSummaryData(
     /**
      * Converts this HandicapSummaryData to a response data map for template rendering.
      * 
-     * @return A map containing non-null fields for use in response templates
+     * @return An immutable map containing non-null fields for use in response templates
      */
     fun toResponseData(): Map<String, Any> {
         val dataModel = mutableMapOf<String, Any>()
@@ -34,7 +34,7 @@ data class HandicapSummaryData(
         handicap?.let { dataModel["handicap"] = it }
         lowValue?.let { dataModel["lowValue"] = it }
         averageDifferential?.let { dataModel["averageDifferential"] = it }
-        return dataModel
+        return dataModel.toMap()
     }
 
     companion object {

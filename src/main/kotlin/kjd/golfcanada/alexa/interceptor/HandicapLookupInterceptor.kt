@@ -2,7 +2,7 @@ package kjd.golfcanada.alexa.interceptor
 
 import com.amazon.ask.dispatcher.request.handler.HandlerInput
 import com.amazon.ask.dispatcher.request.interceptor.RequestInterceptor
-import kjd.golfcanada.alexa.model.HandicapSummaryData
+import kjd.golfcanada.alexa.data.HandicapSummaryData
 import kjd.golfcanada.client.model.User
 import kjd.golfcanada.client.model.extractAccessToken
 import kjd.golfcanada.client.provider.ApiClientProvider
