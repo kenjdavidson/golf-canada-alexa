@@ -1,4 +1,4 @@
-package kjd.golfcanada.alexa.model
+package kjd.golfcanada.alexa.data
 
 import kjd.golfcanada.client.model.HandicapCalculation
 
