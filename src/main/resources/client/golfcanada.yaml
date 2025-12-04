@@ -150,6 +150,45 @@ paths:
         404:
           description: Handicap calculation not found
 
+  /api/gameTracker/getSummary:
+    get:
+      summary: Retrieve game tracker summary for an individual
+      tags: ["GameTracker"]
+      operationId: getGameTrackerSummary
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: courseId
+          in: query
+          required: true
+          description: The unique identifier of the course
+          schema:
+            type: integer
+            format: int64
+        - name: individualId
+          in: query
+          required: true
+          description: The unique identifier of the individual
+          schema:
+            type: identifier
+        - name: range
+          in: query
+          required: true
+          description: The range of data to retrieve (e.g., YTD, Last20, or a specific year like 2025)
+          schema:
+            type: string
+      responses:
+        200:
+          description: Game tracker summary retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameTrackerSummary"
+        401:
+          description: Not Authorized
+        404:
+          description: Game tracker summary not found
+
 components:
   securitySchemes:
     bearerAuth:
@@ -504,3 +543,164 @@ components:
         lowHandicap:
           type: number
           format: double
+
+        
+    GameTrackerSummary:
+      type: object
+      properties:
+        albatross:
+          type: integer
+        albatrossPercent:
+          type: number
+          format: double
+        eagles:
+          type: integer
+        eaglePercent:
+          type: number
+          format: double
+        birdies:
+          type: integer
+        birdiePercent:
+          type: number
+          format: double
+        pars:
+          type: integer
+        parPercent:
+          type: number
+          format: double
+        bogeys:
+          type: integer
+        bogeyPercent:
+          type: number
+          format: double
+        doubles:
+          type: integer
+        doublePercent:
+          type: number
+          format: double
+        others:
+          type: integer
+        otherPercent:
+          type: number
+          format: double
+        totalPutts:
+          type: integer
+        puttsPerRound:
+          type: number
+          format: double
+        puttsPerHole:
+          type: number
+          format: double
+        proximity:
+          type: number
+          format: double
+          nullable: true
+        girHit:
+          type: integer
+        girOpportunities:
+          type: number
+          format: double
+        girPercent:
+          type: number
+          format: double
+        drivingAverage:
+          type: number
+          format: double
+          nullable: true
+        firHit:
+          type: integer
+        firMissedLeft:
+          type: integer
+        firMissedRight:
+          type: integer
+        firMissedLong:
+          type: integer
+        firMissedShort:
+          type: integer
+        firMissedOther:
+          type: integer
+        firOpportunities:
+          type: integer
+        firPercent:
+          type: number
+          format: double
+        scrambling:
+          type: number
+          format: double
+        upDown:
+          type: number
+          format: double
+        sandSave:
+          type: number
+          format: double
+        bounceBack:
+          type: number
+          format: double
+        par3:
+          type: number
+          format: double
+        par4:
+          type: number
+          format: double
+        par5:
+          type: number
+          format: double
+        scores:
+          type: array
+          items:
+            $ref: "#/components/schemas/SummaryScore"
+        holeStatistics:
+          type: array
+          items:
+            $ref: "#/components/schemas/HoleStatistic"
+
+    SummaryScore:
+      type: object
+      properties:
+        date:
+          type: string
+          pattern: "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
+        course:
+          type: string
+        gross:
+          type: integer
+        differential:
+          type: number
+          format: double
+        esc:
+          type: integer
+        slope:
+          type: integer
+        rating:
+          type: number
+          format: double
+
+    HoleStatistic:
+      type: object
+      properties:
+        number:
+          type: integer
+        par:
+          type: integer
+        averageScore:
+          type: number
+          format: double
+        averagePutts:
+          type: number
+          format: double
+        totalAlbatross:
+          type: integer
+        totalEagles:
+          type: integer
+        totalBirdies:
+          type: integer
+        totalPars:
+          type: integer
+        totalBogeys:
+          type: integer
+        totalDoubles:
+          type: integer
+        totalDoublesPlus:
+          type: integer
+        totalPenalties:
+          type: integer
