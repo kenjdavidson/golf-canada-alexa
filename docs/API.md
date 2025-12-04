@@ -222,34 +222,6 @@ Authenticates with Golf Canada and retrieves tokens.
 }
 ```
 
-### Golf Canada API Endpoints
-
-The following Golf Canada API endpoints are implemented in the OpenAPI specification:
-
-#### Authentication (Implemented ✅)
-- `POST /connect/token` - Authenticate and get access token
-- `POST /connect/token` (refresh_token grant) - Refresh access token
-
-#### Player Information (Implemented ✅)
-- `GET /api/v2/members/{memberId}/players` - Get player profile and membership
-- `GET /api/v2/members/{memberId}/handicap-history` - Get handicap index details and history
-
-#### Round History (Implemented ✅)
-- `GET /api/v2/members/{memberId}/scores` - Get round history
-- Query parameters support filtering by year, date range, etc.
-
-#### Favorites (Implemented ✅)
-- `GET /api/v2/members/{memberId}/friends` - Get friends/favorites list
-- `GET /api/v2/members/{friendId}/handicap-history` - Get friend's handicap
-
-#### Courses (Planned 📋)
-- `GET /api/courses/search` - Search for courses
-- `GET /api/courses/{id}` - Get course details
-
-#### Score Posting (Planned 📋)
-- `POST /api/scores` - Post a new score
-- `GET /api/scores/draft` - Get draft scores
-
 ---
 
 ## Alexa Skill Handler API
