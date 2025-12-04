@@ -136,6 +136,29 @@ For detailed planning on future work, see [docs/ROADMAP.md](docs/ROADMAP.md).
    ./gradlew test
    ```
 
+### Integration Tests
+
+Some tests in this project make real network calls to the Golf Canada API for integration testing. These tests are disabled by default and only run when both `TEST_USERNAME` and `TEST_PASSWORD` environment variables are set.
+
+**Running integration tests locally:**
+```shell
+export TEST_USERNAME="your-golf-canada-username"
+export TEST_PASSWORD="your-golf-canada-password"
+./gradlew test
+```
+
+**GitHub Actions integration:**
+
+The GitHub Actions workflow is configured to run integration tests if the following repository secrets are set:
+- `TEST_USERNAME`: Your Golf Canada username for testing
+- `TEST_PASSWORD`: Your Golf Canada password for testing
+
+If these secrets are not configured, the integration tests will be skipped, and only unit tests will run. This allows the CI pipeline to function without requiring access to the Golf Canada API.
+
+To add these secrets:
+1. Go to your repository Settings → Secrets and variables → Actions
+2. Add `TEST_USERNAME` and `TEST_PASSWORD` as repository secrets
+
 ### Project Structure
 
 ```
