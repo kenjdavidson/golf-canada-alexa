@@ -92,7 +92,7 @@ class ApiClientProviderTest : DescribeSpec({
         it("should handle concurrent getClient calls safely") {
             val provider = ApiClientProvider()
             val callCount = 20
-            val wrappers = mutableListOf<ApiClientWrapper>()
+            val wrappers = java.util.concurrent.ConcurrentHashMap.newKeySet<ApiClientWrapper>()
             val latch = CountDownLatch(callCount)
             val executor = Executors.newFixedThreadPool(10)
             
@@ -110,8 +110,9 @@ class ApiClientProviderTest : DescribeSpec({
             wrappers.size shouldBe callCount
             
             // Each wrapper should be a unique instance
-            wrappers.forEachIndexed { i, wrapper1 ->
-                wrappers.forEachIndexed { j, wrapper2 ->
+            val wrappersList = wrappers.toList()
+            wrappersList.forEachIndexed { i, wrapper1 ->
+                wrappersList.forEachIndexed { j, wrapper2 ->
                     if (i != j) {
                         wrapper1 shouldNotBeSameInstanceAs wrapper2
                     }
