@@ -5,6 +5,7 @@ import com.amazon.ask.dispatcher.request.handler.RequestHandler
 import com.amazon.ask.model.IntentRequest
 import com.amazon.ask.model.Response
 import com.amazon.ask.request.Predicates.intentName
+import kjd.golfcanada.alexa.IntentName
 import kjd.golfcanada.alexa.exception.AccountLinkingException
 import kjd.golfcanada.alexa.exception.GolfCanadaApiException
 import kjd.golfcanada.alexa.exception.NoUserDetailsException
@@ -39,7 +40,7 @@ class HandicapIntentRequestHandler : RequestHandler {
     private val logger = LoggerFactory.getLogger(HandicapIntentRequestHandler::class.java)
 
     override fun canHandle(input: HandlerInput): Boolean =
-        input.matches(intentName("GOLFCANADA.HandicapIntent"))
+        input.matches(intentName(IntentName.HANDICAP.value))
 
     override fun handle(input: HandlerInput): Optional<Response> {
         val request = input.requestEnvelope.request as IntentRequest

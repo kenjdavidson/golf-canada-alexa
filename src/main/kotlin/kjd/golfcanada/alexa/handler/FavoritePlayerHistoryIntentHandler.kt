@@ -4,6 +4,7 @@ import com.amazon.ask.dispatcher.request.handler.HandlerInput
 import com.amazon.ask.dispatcher.request.handler.RequestHandler
 import com.amazon.ask.model.Response
 import com.amazon.ask.request.Predicates.intentName
+import kjd.golfcanada.alexa.IntentName
 import java.util.*
 
 /**
@@ -11,7 +12,7 @@ import java.util.*
  */
 class FavoritePlayerHistoryIntentHandler : RequestHandler {
     override fun canHandle(input: HandlerInput): Boolean =
-        input.matches(intentName("FavoritePlayerHistoryIntent"))
+        input.matches(intentName(IntentName.FAVORITE_PLAYER_HISTORY.value))
 
     override fun handle(input: HandlerInput): Optional<Response> {
         return input.generateTemplateResponse("FavoritePlayerHistoryIntentResponse", emptyMap())

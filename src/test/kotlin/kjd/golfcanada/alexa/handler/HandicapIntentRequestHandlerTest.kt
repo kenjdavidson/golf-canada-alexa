@@ -20,13 +20,13 @@ import kjd.golfcanada.alexa.util.TemplateFactoryUtil
 
 class HandicapIntentRequestHandlerTest : DescribeSpec({
     context("canHandle") {
-        it("should return true for GOLFCANADA.HandicapIntent") {
+        it("should return true for GOLFCANADA.Handicap") {
             val templateFactory = TemplateFactoryUtil.getTemplateFactory()
             val input = HandlerInput.builder()
                 .withRequestEnvelope(RequestEnvelope.builder()
                     .withRequest(IntentRequest.builder()
                         .withIntent(Intent.builder()
-                            .withName("GOLFCANADA.HandicapIntent")
+                            .withName("GOLFCANADA.Handicap")
                             .build()
                         ).build()
                     )
@@ -84,7 +84,7 @@ class HandicapIntentRequestHandlerTest : DescribeSpec({
             every { input.requestEnvelope } returns RequestEnvelope.builder()
                 .withRequest(IntentRequest.builder()
                     .withIntent(Intent.builder()
-                        .withName("GOLFCANADA.HandicapIntent")
+                        .withName("GOLFCANADA.Handicap")
                         .build())
                     .build())
                 .build()
@@ -137,7 +137,7 @@ class HandicapIntentRequestHandlerTest : DescribeSpec({
             every { input.requestEnvelope } returns RequestEnvelope.builder()
                 .withRequest(IntentRequest.builder()
                     .withIntent(Intent.builder()
-                        .withName("GOLFCANADA.HandicapIntent")
+                        .withName("GOLFCANADA.Handicap")
                         .build())
                     .build())
                 .build()
@@ -180,7 +180,7 @@ class HandicapIntentRequestHandlerTest : DescribeSpec({
             every { input.requestEnvelope } returns RequestEnvelope.builder()
                 .withRequest(IntentRequest.builder()
                     .withIntent(Intent.builder()
-                        .withName("GOLFCANADA.HandicapIntent")
+                        .withName("GOLFCANADA.Handicap")
                         .withSlots(mapOf("FriendFullName" to friendSlot))
                         .build())
                     .build())
@@ -207,7 +207,7 @@ class HandicapIntentRequestHandlerTest : DescribeSpec({
             every { input.requestEnvelope } returns RequestEnvelope.builder()
                 .withRequest(IntentRequest.builder()
                     .withIntent(Intent.builder()
-                        .withName("GOLFCANADA.HandicapIntent")
+                        .withName("GOLFCANADA.Handicap")
                         .withSlots(mapOf("FriendFirstName" to friendSlot))
                         .build())
                     .build())

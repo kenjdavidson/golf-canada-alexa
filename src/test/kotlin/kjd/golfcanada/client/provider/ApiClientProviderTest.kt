@@ -7,6 +7,7 @@ import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.kotest.matchers.types.shouldNotBeSameInstanceAs
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -92,7 +93,7 @@ class ApiClientProviderTest : DescribeSpec({
         it("should handle concurrent getClient calls safely") {
             val provider = ApiClientProvider()
             val callCount = 20
-            val wrappers = mutableListOf<ApiClientWrapper>()
+            val wrappers = ConcurrentHashMap.newKeySet<ApiClientWrapper>()
             val latch = CountDownLatch(callCount)
             val executor = Executors.newFixedThreadPool(10)
             
@@ -110,8 +111,9 @@ class ApiClientProviderTest : DescribeSpec({
             wrappers.size shouldBe callCount
             
             // Each wrapper should be a unique instance
-            wrappers.forEachIndexed { i, wrapper1 ->
-                wrappers.forEachIndexed { j, wrapper2 ->
+            val wrappersList = wrappers.toList()
+            wrappersList.forEachIndexed { i, wrapper1 ->
+                wrappersList.forEachIndexed { j, wrapper2 ->
                     if (i != j) {
                         wrapper1 shouldNotBeSameInstanceAs wrapper2
                     }
