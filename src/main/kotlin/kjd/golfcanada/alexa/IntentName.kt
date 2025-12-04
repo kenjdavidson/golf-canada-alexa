@@ -2,14 +2,14 @@ package kjd.golfcanada.alexa
 
 /**
  * Enum representing all custom Golf Canada Alexa skill intents.
- * These intent names follow the convention GOLFCANADA.IntentName to match the model.json.
+ * These intent names follow the convention GOLFCANADA.[Name] to match the model.json.
  */
 enum class IntentName(val value: String) {
-    HANDICAP("GOLFCANADA.HandicapIntent"),
-    PLAYER_PROFILE_MEMBERSHIP("GOLFCANADA.PlayerProfileMembershipIntent"),
-    PLAYER_PROFILE_HISTORY("GOLFCANADA.PlayerProfileHistoryIntent"),
-    FAVORITE_PLAYER_HISTORY("GOLFCANADA.FavoritePlayerHistoryIntent"),
-    ADD_SCORECARD("GOLFCANADA.AddScorecardIntent");
+    HANDICAP("GOLFCANADA.Handicap"),
+    PLAYER_PROFILE_MEMBERSHIP("GOLFCANADA.PlayerProfileMembership"),
+    PLAYER_PROFILE_HISTORY("GOLFCANADA.PlayerProfileHistory"),
+    FAVORITE_PLAYER_HISTORY("GOLFCANADA.FavoritePlayerHistory"),
+    ADD_SCORECARD("GOLFCANADA.AddScorecard");
     
     override fun toString(): String = value
 }

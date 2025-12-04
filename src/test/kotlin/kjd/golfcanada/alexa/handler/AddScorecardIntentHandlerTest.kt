@@ -11,13 +11,13 @@ import kjd.golfcanada.alexa.util.TemplateFactoryUtil
 
 class AddScorecardIntentHandlerTest : DescribeSpec({
     context("canHandle") {
-        it("should return true for GOLFCANADA.AddScorecardIntent") {
+        it("should return true for GOLFCANADA.AddScorecard") {
             val templateFactory = TemplateFactoryUtil.getTemplateFactory()
             val input = HandlerInput.builder()
                 .withRequestEnvelope(RequestEnvelope.builder()
                     .withRequest(IntentRequest.builder()
                         .withIntent(Intent.builder()
-                            .withName("GOLFCANADA.AddScorecardIntent")
+                            .withName("GOLFCANADA.AddScorecard")
                             .build()
                         ).build()
                     )
