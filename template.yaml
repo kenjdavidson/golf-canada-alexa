@@ -3,13 +3,28 @@ Transform: AWS::Serverless-2016-10-31
 Description: >
   golf-canada-alexa
 
-  Sample SAM Template for golf-canada-alexa
+  SAM Template for Golf Canada Alexa Skill with Authentication and Skill Handler functions
 
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
     Timeout: 20
     MemorySize: 512
+
+Parameters:
+  ClientId:
+    Type: String
+    Description: OAuth Client ID for Golf Canada authentication
+    NoEcho: true
+  
+  ClientSecret:
+    Type: String
+    Description: OAuth Client Secret for Golf Canada authentication
+    NoEcho: true
+  
+  SkillId:
+    Type: String
+    Description: Alexa Skill ID for the Golf Canada skill
 
 Resources:
   GolfCanadaAuthenticationFunction:
@@ -27,8 +42,8 @@ Resources:
         Size: 512
       Environment:
         Variables:
-          CLIENT_ID: _CLIENT_ID
-          CLIENT_SECRET: _CLIENT_SECRET
+          CLIENT_ID: !Ref ClientId
+          CLIENT_SECRET: !Ref ClientSecret
           JAVA_TOOL_OPTIONS: "-Djavax.net.ssl.trustStore=/opt/cacerts/cacertsclient_keystore_1.jks"
       EventInvokeConfig:
         MaximumEventAgeInSeconds: 21600
@@ -44,19 +59,60 @@ Resources:
             - Effect: Allow
               Action:
                 - logs:CreateLogGroup
-              Resource: arn:aws:logs:us-east-1:772896054063:*
+              Resource: !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*'
             - Effect: Allow
               Action:
                 - logs:CreateLogStream
                 - logs:PutLogEvents
               Resource:
-                - >-
-                  arn:aws:logs:us-east-1:772896054063:log-group:/aws/lambda/kjd_golfcanada_alexa_authentication:*
+                - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/kjd_golfcanada_alexa_authentication:*'
       SnapStart:
         ApplyOn: None
       Tags:
         application: golfcanada
         application_type: authentication
+      RuntimeManagementConfig:
+        UpdateRuntimeOn: Auto
+
+  GolfCanadaAlexaSkillFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Description: 'Alexa skill handler for Golf Canada voice interactions'
+      MemorySize: 512
+      Timeout: 20
+      Handler: kjd.golfcanada.alexa.GolfCanadaAlexaSkill::handleRequest
+      Runtime: java21
+      Architectures:
+        - x86_64
+      EphemeralStorage:
+        Size: 512
+      Environment:
+        Variables:
+          SKILL_ID: !Ref SkillId
+          CLIENT_ID: !Ref ClientId
+          CLIENT_SECRET: !Ref ClientSecret
+      EventInvokeConfig:
+        MaximumEventAgeInSeconds: 21600
+        MaximumRetryAttempts: 2
+      PackageType: Zip
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+              Resource: !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*'
+            - Effect: Allow
+              Action:
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource:
+                - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/kjd_golfcanada_alexa_skill:*'
+      SnapStart:
+        ApplyOn: None
+      Tags:
+        application: golfcanada
+        application_type: alexa_skill
       RuntimeManagementConfig:
         UpdateRuntimeOn: Auto
 
@@ -69,3 +125,16 @@ Resources:
       LayerName: GolfCanadaAuthenticationCertLayer
       CompatibleRuntimes:
         - java21
+
+Outputs:
+  GolfCanadaAuthenticationFunctionUrl:
+    Description: 'URL for the Golf Canada Authentication Function'
+    Value: !GetAtt GolfCanadaAuthenticationFunctionUrl.FunctionUrl
+    Export:
+      Name: !Sub '${AWS::StackName}-AuthFunctionUrl'
+  
+  GolfCanadaAlexaSkillFunctionArn:
+    Description: 'ARN of the Golf Canada Alexa Skill Function'
+    Value: !GetAtt GolfCanadaAlexaSkillFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-SkillFunctionArn'

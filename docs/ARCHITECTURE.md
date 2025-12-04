@@ -173,12 +173,16 @@ Timeout: 120 seconds
 Handler: kjd.golfcanada.auth.AuthenticationHandler::handleRequest
 
 Environment Variables:
-  - CLIENT_ID: Alexa account linking client ID
-  - CLIENT_SECRET: Alexa account linking client secret
+  - CLIENT_ID: !Ref ClientId (from SAM Parameters)
+  - CLIENT_SECRET: !Ref ClientSecret (from SAM Parameters)
   - JAVA_TOOL_OPTIONS: SSL trust store configuration
 
 Layers:
   - GolfCanadaAuthenticationCertLayer (SSL certificates)
+
+Function URL:
+  - AuthType: NONE (public endpoint for OAuth flow)
+  - InvokeMode: BUFFERED
 ```
 
 ### Skill Handler Function
@@ -187,10 +191,10 @@ Layers:
 Runtime: java21
 Memory: 512 MB
 Timeout: 20 seconds
-Handler: kjd.golfcanada.alexa.GolfCanadaAlexaSkill
+Handler: kjd.golfcanada.alexa.GolfCanadaAlexaSkill::handleRequest
 
 Environment Variables:
-  - SKILL_ID: Alexa skill ID
+  - SKILL_ID: !Ref SkillId (from SAM Parameters)
 
 Configuration:
   - Uses Alexa Skills SDK with custom skill builder
@@ -198,9 +202,13 @@ Configuration:
   - Shared ApiClientProvider instance for HTTP client reuse
   - FreeMarker templates for response generation
   - Supports English and French localization
+
+Invocation:
+  - Invoked by Alexa Skills Kit via Lambda ARN
+  - No public endpoint (secured by Alexa service)
 ```
 
-**Status:** ✅ Implemented (deployment configuration to be added to template.yaml)
+**Status:** ✅ Implemented and added to template.yaml
 
 ## Security Considerations
 
@@ -221,8 +229,10 @@ Golf Canada's SSL certificate requires a custom trust store due to Java's certif
 
 ### Client Credentials
 
-- `CLIENT_ID` and `CLIENT_SECRET` are stored as Lambda environment variables
-- These should be encrypted using AWS KMS in production
+- `CLIENT_ID`, `CLIENT_SECRET`, and `SKILL_ID` are now managed as SAM template Parameters
+- Parameters can be provided during deployment via `sam deploy --guided` or `--parameter-overrides`
+- In CI/CD pipelines, these can be sourced from GitHub Secrets and passed as parameters
+- Parameter values with `NoEcho: true` are not logged or displayed in CloudFormation console
 - Never commit these values to source control
 
 ## Data Flow

@@ -171,34 +171,35 @@ golf-canada-alexa/
 
 1. **Build the SAM application:**
    ```shell
-   # On Linux/Mac
-   sam build GolfCanadaAuthenticationFunction
+   # Build all functions
+   sam build
    
-   # On Windows PowerShell
-   $env:JAVA_HOME="/path/to/java21"
+   # Or build a specific function
    sam build GolfCanadaAuthenticationFunction
+   sam build GolfCanadaAlexaSkillFunction
    ```
 
 2. **Invoke locally with a test event:**
+   
+   For the Authentication Function:
    ```shell
    sam local invoke GolfCanadaAuthenticationFunction \
        -e events/AuthenticationLoginEvent.json \
-       --env-vars env.json
+       --parameter-overrides "ClientId=your-client-id ClientSecret=your-client-secret SkillId=your-skill-id"
    ```
    
-   Create an `env.json` file (do not commit):
-   ```json
-   {
-     "GolfCanadaAuthenticationFunction": {
-       "CLIENT_ID": "your-client-id",
-       "CLIENT_SECRET": "your-client-secret"
-     }
-   }
+   For the Alexa Skill Function (create a test event based on Alexa request format):
+   ```shell
+   sam local invoke GolfCanadaAlexaSkillFunction \
+       -e events/AlexaLaunchEvent.json \
+       --parameter-overrides "ClientId=your-client-id ClientSecret=your-client-secret SkillId=your-skill-id"
    ```
+   
+   > **Note**: With SAM parameters, you no longer need to create an `env.json` file. Parameters are passed directly via the `--parameter-overrides` flag.
 
 3. **Start a local API:**
    ```shell
-   sam local start-api
+   sam local start-api --parameter-overrides "ClientId=your-client-id ClientSecret=your-client-secret SkillId=your-skill-id"
    ```
 
 ## AWS Deployment
@@ -209,14 +210,16 @@ golf-canada-alexa/
 - **AWS SAM CLI**
 - **An S3 bucket** for deployment artifacts
 
-### Authentication Function Deployment
+### Deploying Both Functions
 
-The authentication function (`GolfCanadaAuthenticationFunction`) is deployed as an AWS Lambda with a Function URL.
+The project includes two Lambda functions that are deployed together:
+1. **GolfCanadaAuthenticationFunction** - OAuth wrapper for account linking (with Function URL)
+2. **GolfCanadaAlexaSkillFunction** - Alexa skill handler for voice interactions
 
 1. **Build the deployment package:**
    ```shell
    ./gradlew packageJar
-   sam build GolfCanadaAuthenticationFunction
+   sam build
    ```
 
 2. **Deploy to AWS:**
@@ -225,32 +228,42 @@ The authentication function (`GolfCanadaAuthenticationFunction`) is deployed as 
    ```
    
    Follow the prompts to configure:
-   - Stack name: `golf-canada-alexa`
-   - AWS Region: `us-east-1` (recommended for Alexa skills)
+   - **Stack name**: `golf-canada-alexa`
+   - **AWS Region**: `us-east-1` (recommended for Alexa skills)
+   - **Parameter ClientId**: Your OAuth Client ID for Golf Canada authentication
+   - **Parameter ClientSecret**: Your OAuth Client Secret for Golf Canada authentication
+   - **Parameter SkillId**: Your Alexa Skill ID from the Alexa Developer Console
    - Allow SAM to create IAM roles
 
-3. **Configure environment variables in AWS Console:**
-   - Navigate to the Lambda function
-   - Set `CLIENT_ID` and `CLIENT_SECRET` environment variables
-   - These credentials are used to validate Alexa account linking requests
+   > **Note**: The parameters (ClientId, ClientSecret, SkillId) are now configured during deployment via SAM parameters instead of manual environment variable updates. These values can also be updated from GitHub Secrets in CI/CD pipelines.
 
-4. **Note the Function URL:**
-   After deployment, the Lambda Function URL will be displayed. This URL is needed for Alexa skill configuration:
+3. **Note the Function URL:**
+   After deployment, the outputs will display:
+   - **GolfCanadaAuthenticationFunctionUrl**: The authentication function URL needed for Alexa skill configuration
+   - **GolfCanadaAlexaSkillFunctionArn**: The ARN to configure in the Alexa Developer Console as the skill endpoint
+   
+   Example:
    ```
    https://<function-id>.lambda-url.us-east-1.on.aws/
    ```
 
 ### Alexa Skill Configuration
 
-1. In the Alexa Developer Console, configure Account Linking:
-   - **Authorization URI**: `{function-url}/login`
-   - **Access Token URI**: `{function-url}/authToken`
-   - **Client ID**: Your configured `CLIENT_ID`
-   - **Client Secret**: Your configured `CLIENT_SECRET`
+1. **Configure the Skill Endpoint** in the Alexa Developer Console:
+   - Navigate to your skill's endpoint configuration
+   - Select **AWS Lambda ARN**
+   - Enter the **GolfCanadaAlexaSkillFunctionArn** from the deployment outputs
+   - For North America region, the ARN should look like: `arn:aws:lambda:us-east-1:ACCOUNT_ID:function:FUNCTION_NAME`
+
+2. **Configure Account Linking** in the Alexa Developer Console:
+   - **Authorization URI**: `{GolfCanadaAuthenticationFunctionUrl}/login`
+   - **Access Token URI**: `{GolfCanadaAuthenticationFunctionUrl}/authToken`
+   - **Client ID**: The same value you used for the `ClientId` parameter
+   - **Client Secret**: The same value you used for the `ClientSecret` parameter
    - **Client Authentication Scheme**: HTTP Basic
    - **Scope**: `address email offline_access openid phone profile roles`
 
-2. Upload the interaction model from `model/model.json`
+3. **Upload the interaction model** from `model/model.json`
 
 ### SSL Certificate Layer
 
