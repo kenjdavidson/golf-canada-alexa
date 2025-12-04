@@ -45,64 +45,29 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Determine deployment target
-        id: deployment-target
+      - name: Determine deployment type
+        id: deployment-type
         run: |
           TAG="${{ github.ref_name }}"
-          echo "Tag: $TAG"
+          echo "Triggered by tag: $TAG"
           
           if [[ "$TAG" == auth-v* ]]; then
-            echo "Deploying authentication function only"
-            echo "deploy_auth=true" >> $GITHUB_OUTPUT
-            echo "deploy_skill=false" >> $GITHUB_OUTPUT
-            echo "deploy_both=false" >> $GITHUB_OUTPUT
+            echo "Deployment type: Authentication-focused release"
+            echo "type=authentication" >> $GITHUB_OUTPUT
           elif [[ "$TAG" == skill-v* ]]; then
-            echo "Deploying skill function only"
-            echo "deploy_auth=false" >> $GITHUB_OUTPUT
-            echo "deploy_skill=true" >> $GITHUB_OUTPUT
-            echo "deploy_both=false" >> $GITHUB_OUTPUT
+            echo "Deployment type: Skill-focused release"
+            echo "type=skill" >> $GITHUB_OUTPUT
           else
-            echo "Deploying both functions"
-            echo "deploy_auth=false" >> $GITHUB_OUTPUT
-            echo "deploy_skill=false" >> $GITHUB_OUTPUT
-            echo "deploy_both=true" >> $GITHUB_OUTPUT
+            echo "Deployment type: Full release"
+            echo "type=full" >> $GITHUB_OUTPUT
           fi
+          
+          echo "Note: SAM will deploy the entire stack (both functions) regardless of tag type"
 
       - name: SAM Build
         run: sam build
 
-      - name: Deploy both functions
-        if: steps.deployment-target.outputs.deploy_both == 'true'
-        run: |
-          sam deploy \
-            --no-confirm-changeset \
-            --no-fail-on-empty-changeset \
-            --stack-name ${{ secrets.STACK_NAME }} \
-            --capabilities CAPABILITY_IAM \
-            --resolve-s3 \
-            --region ${{ secrets.AWS_REGION }} \
-            --parameter-overrides \
-              ClientId="${{ secrets.GOLF_CANADA_CLIENT_ID }}" \
-              ClientSecret="${{ secrets.GOLF_CANADA_CLIENT_SECRET }}" \
-              SkillId="${{ secrets.ALEXA_SKILL_ID }}"
-
-      - name: Deploy authentication function only
-        if: steps.deployment-target.outputs.deploy_auth == 'true'
-        run: |
-          sam deploy \
-            --no-confirm-changeset \
-            --no-fail-on-empty-changeset \
-            --stack-name ${{ secrets.STACK_NAME }} \
-            --capabilities CAPABILITY_IAM \
-            --resolve-s3 \
-            --region ${{ secrets.AWS_REGION }} \
-            --parameter-overrides \
-              ClientId="${{ secrets.GOLF_CANADA_CLIENT_ID }}" \
-              ClientSecret="${{ secrets.GOLF_CANADA_CLIENT_SECRET }}" \
-              SkillId="${{ secrets.ALEXA_SKILL_ID }}"
-
-      - name: Deploy skill function only
-        if: steps.deployment-target.outputs.deploy_skill == 'true'
+      - name: Deploy to AWS
         run: |
           sam deploy \
             --no-confirm-changeset \
@@ -118,7 +83,8 @@ jobs:
 
       - name: Output deployment information
         run: |
-          echo "Deployment completed successfully!"
-          echo "Tag: ${{ github.ref_name }}"
-          echo "Stack: ${{ secrets.STACK_NAME }}"
-          echo "Region: ${{ secrets.AWS_REGION }}"
+          echo "✅ Deployment completed successfully!"
+          echo "📦 Deployment type: ${{ steps.deployment-type.outputs.type }}"
+          echo "🏷️  Tag: ${{ github.ref_name }}"
+          echo "📚 Stack: ${{ secrets.STACK_NAME }}"
+          echo "🌍 Region: ${{ secrets.AWS_REGION }}"

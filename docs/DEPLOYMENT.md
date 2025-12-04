@@ -12,11 +12,21 @@ This document provides detailed instructions for deploying the Golf Canada Alexa
 
 ## Overview
 
-The project uses GitHub Actions to automatically deploy Lambda functions to AWS when tags are pushed to the repository. The deployment workflow supports:
+The project uses GitHub Actions to automatically deploy Lambda functions to AWS when tags are pushed to the repository. 
 
-1. **Full deployment** - Deploy both Authentication and Alexa Skill functions
-2. **Authentication function only** - Deploy only the OAuth authentication wrapper
-3. **Alexa Skill function only** - Deploy only the skill handler
+**Important Note:** Due to the nature of AWS SAM and CloudFormation, the deployment always updates the entire stack, which includes both Lambda functions. However, the tag-based naming strategy helps with:
+
+1. **Version tracking** - Identify which component triggered the deployment
+2. **Release management** - Organize releases by functional area
+3. **Change tracking** - Understand deployment history at a glance
+
+### Tag-Based Deployment Triggers
+
+The workflow supports three tag patterns:
+
+1. **General release tags** (e.g., `v1.0.0`) - For releases affecting both functions or major updates
+2. **Authentication-focused tags** (e.g., `auth-v1.0.0`) - For releases primarily affecting the authentication function
+3. **Skill-focused tags** (e.g., `skill-v1.0.0`) - For releases primarily affecting the Alexa skill function
 
 ## GitHub Actions Workflow
 
@@ -25,10 +35,11 @@ The deployment workflow is defined in `.github/workflows/deploy.yml` and is trig
 ### Workflow Features
 
 - **Automated builds** - Uses Gradle to build the Java/Kotlin application
-- **SAM deployment** - Leverages AWS SAM CLI for Lambda deployment
+- **SAM deployment** - Leverages AWS SAM CLI for Lambda deployment via CloudFormation
 - **Secure authentication** - Uses AWS OIDC for secure, credential-less authentication
-- **Flexible targeting** - Deploy one or both functions based on tag naming
+- **Tag-based versioning** - Organizes releases by component using tag prefixes
 - **Parameter management** - All sensitive configuration is stored in GitHub Secrets
+- **Full stack deployment** - Updates both Lambda functions with each deployment to maintain consistency
 
 ## Required GitHub Secrets
 
@@ -153,38 +164,40 @@ Ensure all required secrets listed above are configured in your GitHub repositor
 
 The deployment workflow is triggered by pushing tags to the repository. The tag name determines which functions will be deployed.
 
-#### Deploy Both Functions
+#### General Release (Both Functions)
 
-To deploy both the Authentication function and Alexa Skill function:
+For general releases, major updates, or changes affecting both functions:
 
 ```bash
 git tag v1.0.0
 git push origin v1.0.0
 ```
 
-Any tag starting with `v` (e.g., `v1.0.0`, `v1.1.0`, `v2.0.0-beta`) will trigger a full deployment.
+Any tag starting with `v` (e.g., `v1.0.0`, `v1.1.0`, `v2.0.0-beta`) will trigger a deployment.
 
-#### Deploy Authentication Function Only
+#### Authentication-Focused Release
 
-To deploy only the Authentication function:
+For releases primarily related to authentication function changes:
 
 ```bash
 git tag auth-v1.0.0
 git push origin auth-v1.0.0
 ```
 
-Tags starting with `auth-v` will deploy only the authentication function.
+Tags starting with `auth-v` indicate authentication-focused deployments (both functions are still deployed).
 
-#### Deploy Skill Function Only
+#### Skill-Focused Release
 
-To deploy only the Alexa Skill function:
+For releases primarily related to Alexa skill function changes:
 
 ```bash
 git tag skill-v1.0.0
 git push origin skill-v1.0.0
 ```
 
-Tags starting with `skill-v` will deploy only the skill handler function.
+Tags starting with `skill-v` indicate skill-focused deployments (both functions are still deployed).
+
+**Note:** Regardless of the tag pattern used, AWS SAM deploys the entire CloudFormation stack, which includes both Lambda functions. The tag naming convention helps with release organization and tracking which component was the primary focus of the release.
 
 ### Step 3: Monitor Deployment
 
@@ -211,13 +224,15 @@ After successful deployment, verify that your functions are working:
 
 ## Tag-Based Deployment Strategy
 
-The deployment workflow uses semantic versioning with prefixes to control deployment scope:
+The deployment workflow uses semantic versioning with prefixes to organize releases by their primary focus:
 
-| Tag Pattern | Example | Deploys |
-|-------------|---------|---------|
-| `v*` | `v1.0.0`, `v2.1.3` | Both functions |
-| `auth-v*` | `auth-v1.0.0` | Authentication function only |
-| `skill-v*` | `skill-v1.0.0` | Skill function only |
+| Tag Pattern | Example | Primary Focus | Actual Deployment |
+|-------------|---------|---------------|-------------------|
+| `v*` | `v1.0.0`, `v2.1.3` | General release | Both functions |
+| `auth-v*` | `auth-v1.0.0` | Authentication changes | Both functions |
+| `skill-v*` | `skill-v1.0.0` | Skill changes | Both functions |
+
+**Important:** All tag patterns deploy the complete stack (both Lambda functions). The tag prefix is organizational and helps track which component motivated the release.
 
 ### Recommended Versioning Strategy
 
@@ -232,21 +247,23 @@ The deployment workflow uses semantic versioning with prefixes to control deploy
 ```bash
 git tag v1.0.0
 git push origin v1.0.0
-# Deploys both authentication and skill functions
+# Deploys complete stack - both authentication and skill functions
 ```
 
-**Scenario 2: Hotfix for Authentication**
+**Scenario 2: Authentication Security Patch**
 ```bash
 git tag auth-v1.0.1
 git push origin auth-v1.0.1
-# Deploys only the authentication function, skill function unchanged
+# Deploys complete stack - focus is on authentication fixes
+# Both functions are updated to maintain stack consistency
 ```
 
 **Scenario 3: New Skill Feature**
 ```bash
 git tag skill-v1.1.0
 git push origin skill-v1.1.0
-# Deploys only the skill function with new features
+# Deploys complete stack - focus is on skill enhancements
+# Both functions are updated to maintain stack consistency
 ```
 
 ## Troubleshooting
