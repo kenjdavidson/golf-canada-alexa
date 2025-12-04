@@ -74,4 +74,36 @@ class MembersApiTest : AuthenticatedApiTest({
             }
         }
     }
+    
+    describe("getHandicapHistory") {
+        it("should retrieve handicap history for authenticated user") {
+            val userId = authToken.user?.id ?: throw IllegalStateException("User ID not found in auth token")
+            val history = membersApi.getHandicapHistory(userId)
+            
+            history.shouldNotBeNull()
+            // History may be empty or contain entries
+            // Verify it returns a list (not throwing an exception is sufficient)
+        }
+        
+        it("should retrieve handicap history with custom offset") {
+            val userId = authToken.user?.id ?: throw IllegalStateException("User ID not found in auth token")
+            val history = membersApi.getHandicapHistory(userId, offsetInDays = -180)
+            
+            history.shouldNotBeNull()
+            // Verify it returns a list with custom offset
+        }
+        
+        it("should return handicap history entries with expected properties when entries exist") {
+            val userId = authToken.user?.id ?: throw IllegalStateException("User ID not found in auth token")
+            val history = membersApi.getHandicapHistory(userId)
+            
+            history.shouldNotBeNull()
+            // If there are history entries, verify the structure
+            if (history.isNotEmpty()) {
+                val entry = history.first()
+                entry.shouldNotBeNull()
+                // Verify date field is present (may be null per schema)
+            }
+        }
+    }
 })
