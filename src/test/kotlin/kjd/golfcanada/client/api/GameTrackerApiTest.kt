@@ -18,10 +18,12 @@ class GameTrackerApiTest : AuthenticatedApiTest({
     
     lateinit var gameTrackerApi: GameTrackerApi
     lateinit var summary: GameTrackerSummary
+    var userId: Long = 0L
+    var courseId: Long = 0L
     
     beforeSpec {
-        val userId = authToken.user?.id ?: throw IllegalStateException("User ID not found in auth token")
-        val courseId = authToken.user?.scoreDefaults?.courseId?.toLong() 
+        userId = authToken.user?.id ?: throw IllegalStateException("User ID not found in auth token")
+        courseId = authToken.user?.scoreDefaults?.courseId?.toLong() 
             ?: throw IllegalStateException("Course ID not found in auth token")
         
         gameTrackerApi = GameTrackerApi(client = authenticatedClient)
@@ -104,10 +106,6 @@ class GameTrackerApiTest : AuthenticatedApiTest({
         }
         
         it("should support Last20 range") {
-            val userId = authToken.user?.id ?: throw IllegalStateException("User ID not found in auth token")
-            val courseId = authToken.user?.scoreDefaults?.courseId?.toLong() 
-                ?: throw IllegalStateException("Course ID not found in auth token")
-            
             val last20Summary = gameTrackerApi.getGameTrackerSummary(
                 courseId = courseId,
                 individualId = userId,
@@ -118,10 +116,6 @@ class GameTrackerApiTest : AuthenticatedApiTest({
         }
         
         it("should support year range (e.g., 2025)") {
-            val userId = authToken.user?.id ?: throw IllegalStateException("User ID not found in auth token")
-            val courseId = authToken.user?.scoreDefaults?.courseId?.toLong() 
-                ?: throw IllegalStateException("Course ID not found in auth token")
-            
             val yearSummary = gameTrackerApi.getGameTrackerSummary(
                 courseId = courseId,
                 individualId = userId,
