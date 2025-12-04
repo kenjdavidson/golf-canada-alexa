@@ -2,6 +2,8 @@
 
 This document provides detailed instructions for deploying the Golf Canada Alexa skill Lambda functions using GitHub Actions.
 
+> **Quick Start:** For a condensed setup guide, see [.github/DEPLOYMENT_QUICKSTART.md](../.github/DEPLOYMENT_QUICKSTART.md)
+
 ## Table of Contents
 
 - [Overview](#overview)
