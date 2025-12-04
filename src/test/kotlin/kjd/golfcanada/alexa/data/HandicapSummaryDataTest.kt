@@ -1,4 +1,4 @@
-package kjd.golfcanada.alexa.model
+package kjd.golfcanada.alexa.data
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
