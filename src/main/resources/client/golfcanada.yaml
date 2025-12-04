@@ -89,6 +89,41 @@ paths:
         404:
           description: Member Not Found
 
+  /api/members/{userId}/getHandicapHistory:
+    get:
+      summary: Retrieve member handicap history
+      tags: ["Members"]
+      operationId: getHandicapHistory
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: The unique identifier of the member
+          schema:
+            type: identifier
+        - name: offsetInDays
+          in: query
+          required: false
+          description: Offset in days from current date (use negative values for past dates)
+          schema:
+            type: integer
+            default: -365
+      responses:
+        200:
+          description: Handicap history retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HandicapHistoryEntry"
+        401:
+          description: Not Authorized
+        404:
+          description: Member Not Found
+
   /api/scores/getHandicapCalculation:
     get:
       summary: Retrieve handicap calculation for an individual
@@ -495,7 +530,21 @@ components:
         expiresOn:
           type: string
           pattern: "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?"
+          
+    HandicapHistoryEntry:
+      type: object
+      properties:
+        date:
+          type: string
+          pattern: "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
+        handicap:
+          type: number
+          format: double
+        lowHandicap:
+          type: number
+          format: double
 
+        
     GameTrackerSummary:
       type: object
       properties:
@@ -606,11 +655,6 @@ components:
             $ref: "#/components/schemas/HoleStatistic"
 
     SummaryScore:
-      type: object
-      properties:
-        date:
-          type: string
-          pattern: "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
         course:
           type: string
         gross:

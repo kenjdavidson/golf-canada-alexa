@@ -15,7 +15,7 @@ import io.mockk.every
 import io.mockk.mockk
 import kjd.golfcanada.alexa.exception.AccountLinkingException
 import kjd.golfcanada.alexa.interceptor.HandicapLookupInterceptor
-import kjd.golfcanada.alexa.model.HandicapSummaryData
+import kjd.golfcanada.alexa.data.HandicapSummaryData
 import kjd.golfcanada.alexa.util.TemplateFactoryUtil
 
 class HandicapIntentRequestHandlerTest : DescribeSpec({
