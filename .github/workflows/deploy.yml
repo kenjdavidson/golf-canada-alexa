@@ -3,9 +3,10 @@ name: Deploy to AWS Lambda
 on:
   push:
     tags:
-      - 'v*'           # Triggers on any tag starting with 'v' (e.g., v1.0.0, v1.1.0)
-      - 'auth-v*'      # Triggers on tags for authentication function only
-      - 'skill-v*'     # Triggers on tags for skill function only
+      - 'v*'           # Triggers on general release tags (e.g., v1.0.0, v1.1.0)
+      - 'auth-v*'      # Triggers on authentication-focused release tags
+      - 'skill-v*'     # Triggers on skill-focused release tags
+                       # Note: All tag patterns deploy the complete CloudFormation stack (both Lambda functions)
 
 permissions:
   contents: read

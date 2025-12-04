@@ -61,7 +61,38 @@ The ARN of the IAM role that GitHub Actions will assume for deployment.
 **Example:** `arn:aws:iam::123456789012:role/GitHubActionsDeploymentRole`
 
 **Setup Instructions:**
-1. Create an IAM role in AWS with the following trust policy to allow GitHub Actions OIDC authentication:
+
+**Step 1: Create GitHub OIDC Identity Provider in AWS**
+
+First, you need to add GitHub as an identity provider in AWS IAM (only needed once per AWS account):
+
+1. Go to AWS IAM Console → **Identity providers** → **Add provider**
+2. Select **OpenID Connect**
+3. Configure:
+   - **Provider URL**: `https://token.actions.githubusercontent.com`
+   - **Audience**: `sts.amazonaws.com`
+4. Click **Add provider**
+
+**Step 2: Create IAM Role for GitHub Actions**
+
+1. Go to AWS IAM Console → **Roles** → **Create role**
+2. Select **Web identity** as the trusted entity type
+3. Choose:
+   - **Identity provider**: `token.actions.githubusercontent.com`
+   - **Audience**: `sts.amazonaws.com`
+4. Click **Next** and attach the following managed policies:
+   - `AWSCloudFormationFullAccess` - For CloudFormation stack management
+   - `IAMFullAccess` - For creating Lambda execution roles
+   - `AWSLambda_FullAccess` - For Lambda function management
+   - `AmazonS3FullAccess` - For deployment artifact storage
+   
+   **Note:** In production, you should create a custom policy with least-privilege permissions instead of using full access policies.
+
+5. Name your role (e.g., `GitHubActionsDeploymentRole`) and create it
+
+**Step 3: Update Trust Policy**
+
+After creating the role, update its trust policy to restrict access to your specific repository:
 
 ```json
 {
@@ -78,7 +109,7 @@ The ARN of the IAM role that GitHub Actions will assume for deployment.
           "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
         },
         "StringLike": {
-          "token.actions.githubusercontent.com:sub": "repo:YOUR_GITHUB_USERNAME/golf-canada-alexa:*"
+          "token.actions.githubusercontent.com:sub": "repo:YOUR_GITHUB_OWNER/YOUR_REPO_NAME:*"
         }
       }
     }
@@ -86,15 +117,16 @@ The ARN of the IAM role that GitHub Actions will assume for deployment.
 }
 ```
 
-2. Attach the following AWS managed policies to the role:
-   - `AWSCloudFormationFullAccess` - For CloudFormation stack management
-   - `IAMFullAccess` - For creating Lambda execution roles
-   - `AWSLambda_FullAccess` - For Lambda function management
-   - `AmazonS3FullAccess` - For deployment artifact storage
-   
-   **Note:** In production, you should create a custom policy with least-privilege permissions instead of using full access policies.
+Replace:
+- `ACCOUNT_ID` with your AWS account ID
+- `YOUR_GITHUB_OWNER` with your GitHub username or organization name
+- `YOUR_REPO_NAME` with your repository name (e.g., `golf-canada-alexa`)
 
-3. For GitHub OIDC setup, see: [Configuring OpenID Connect in Amazon Web Services](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services)
+**Step 4: Copy the Role ARN**
+
+After creating the role, copy its ARN (e.g., `arn:aws:iam::123456789012:role/GitHubActionsDeploymentRole`) to use as the `AWS_ROLE_ARN` secret in GitHub.
+
+For more details, see: [Configuring OpenID Connect in Amazon Web Services](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services)
 
 #### `AWS_REGION` (Required)
 The AWS region where the Lambda functions will be deployed.
