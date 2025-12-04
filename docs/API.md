@@ -246,11 +246,11 @@ The Alexa Skill Handler receives requests from the Alexa service and returns voi
 
 | Intent | Handler | Slots | Description |
 |--------|---------|-------|-------------|
-| `GOLFCANADA.HandicapIntent` | `HandicapIntentRequestHandler` | `FriendFullName`, `FriendFirstName` | Get handicap for self or friend |
-| `PlayerProfileMembershipIntent` | `PlayerProfileMembershipIntentHandler` | None | Get membership information |
-| `PlayerProfileHistoryIntent` | `PlayerProfileHistoryIntentHandler` | `numberOfRounds`, `year` | Get score history |
-| `FavoritePlayerHistoryIntent` | `FavoritePlayerHistoryIntentHandler` | `playerName`, `numberOfRounds` | Get friend's score history |
-| `AddScorecardIntent` | `AddScorecardIntentHandler` | None | Add a new score (stub) |
+| `GOLFCANADA.Handicap` | `HandicapIntentRequestHandler` | `FriendFullName`, `FriendFirstName` | Get handicap for self or friend |
+| `GOLFCANADA.PlayerProfileMembership` | `PlayerProfileMembershipIntentHandler` | None | Get membership information |
+| `GOLFCANADA.PlayerProfileHistory` | `PlayerProfileHistoryIntentHandler` | `numberOfRounds`, `year` | Get score history |
+| `GOLFCANADA.FavoritePlayerHistory` | `FavoritePlayerHistoryIntentHandler` | `playerName`, `numberOfRounds` | Get friend's score history |
+| `GOLFCANADA.AddScorecard` | `AddScorecardIntentHandler` | None | Add a new score (stub) |
 
 ### Request Interceptors
 

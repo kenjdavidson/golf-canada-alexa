@@ -23,7 +23,7 @@ This document outlines the planned features and development milestones for the G
 Account information retrieval functionality has been implemented and tested.
 
 #### 2.1 Player Profile - Membership Intent
-**Intent:** `PlayerProfileMembershipIntent`
+**Intent:** `GOLFCANADA.PlayerProfileMembership`
 
 **Sample Utterances:**
 - "what's my membership"
@@ -42,7 +42,7 @@ Account information retrieval functionality has been implemented and tested.
 > "Your Golf Canada membership is active at the [level] level and expires on [date]."
 
 #### 2.2 Player Profile - Handicap Intent
-**Intent:** `GOLFCANADA.HandicapIntent`
+**Intent:** `GOLFCANADA.Handicap`
 
 **Sample Utterances:**
 - "what is my handicap"
@@ -68,7 +68,7 @@ Account information retrieval functionality has been implemented and tested.
 ### 🚧 Phase 3: Round History (Partially Complete)
 
 #### 3.1 Player Round History Intent
-**Intent:** `PlayerProfileHistoryIntent`
+**Intent:** `GOLFCANADA.PlayerProfileHistory`
 
 **Sample Utterances:**
 - "tell me about my last round"
@@ -93,7 +93,7 @@ Account information retrieval functionality has been implemented and tested.
 ### ✅ Phase 4: Friends/Favorites (Completed)
 
 #### 4.1 Favorite Player Handicap
-**Intent:** `GOLFCANADA.HandicapIntent` (with friend slots)
+**Intent:** `GOLFCANADA.Handicap` (with friend slots)
 
 **Sample Utterances:**
 - "what is [name]'s handicap"
@@ -109,7 +109,7 @@ Account information retrieval functionality has been implemented and tested.
 - [x] Add unit tests
 
 #### 4.2 Favorite Player History Intent
-**Intent:** `FavoritePlayerHistoryIntent`
+**Intent:** `GOLFCANADA.FavoritePlayerHistory`
 
 **Sample Utterances:**
 - "what was [playerName]'s last score"
@@ -126,7 +126,7 @@ Account information retrieval functionality has been implemented and tested.
 ### 🚧 Phase 5: Score Posting (In Progress)
 
 #### 5.1 Add Scorecard Intent
-**Intent:** `AddScorecardIntent`
+**Intent:** `GOLFCANADA.AddScorecard`
 
 This is a complex conversational flow that will guide users through posting a new score.
 
