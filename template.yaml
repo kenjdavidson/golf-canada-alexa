@@ -59,14 +59,13 @@ Resources:
             - Effect: Allow
               Action:
                 - logs:CreateLogGroup
-              Resource: arn:aws:logs:us-east-1:772896054063:*
+              Resource: !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*'
             - Effect: Allow
               Action:
                 - logs:CreateLogStream
                 - logs:PutLogEvents
               Resource:
-                - >-
-                  arn:aws:logs:us-east-1:772896054063:log-group:/aws/lambda/kjd_golfcanada_alexa_authentication:*
+                - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/kjd_golfcanada_alexa_authentication:*'
       SnapStart:
         ApplyOn: None
       Tags:
@@ -100,14 +99,13 @@ Resources:
             - Effect: Allow
               Action:
                 - logs:CreateLogGroup
-              Resource: arn:aws:logs:us-east-1:772896054063:*
+              Resource: !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*'
             - Effect: Allow
               Action:
                 - logs:CreateLogStream
                 - logs:PutLogEvents
               Resource:
-                - >-
-                  arn:aws:logs:us-east-1:772896054063:log-group:/aws/lambda/kjd_golfcanada_alexa_skill:*
+                - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/kjd_golfcanada_alexa_skill:*'
       SnapStart:
         ApplyOn: None
       Tags:
