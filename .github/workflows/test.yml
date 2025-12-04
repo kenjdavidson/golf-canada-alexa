@@ -31,6 +31,3 @@ jobs:
 
       - name: Run tests
         run: ./gradlew test
-        env:
-          TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
-          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
