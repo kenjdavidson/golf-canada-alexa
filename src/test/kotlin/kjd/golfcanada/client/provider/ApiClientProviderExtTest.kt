@@ -8,9 +8,9 @@ import com.amazon.ask.model.interfaces.system.SystemState
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
 import kjd.golfcanada.alexa.exception.AccountLinkingException
 
 /**
@@ -51,7 +51,7 @@ class ApiClientProviderExtTest : DescribeSpec({
             }
             
             blockExecuted shouldBe true
-            receivedWrapper shouldBe receivedWrapper
+            receivedWrapper shouldNotBe null
             result shouldBe "success"
         }
         
@@ -80,7 +80,7 @@ class ApiClientProviderExtTest : DescribeSpec({
             }
             
             blockExecuted shouldBe true
-            result shouldBe result
+            result shouldNotBe null
         }
         
         it("should throw AccountLinkingException when access token is null") {
@@ -98,7 +98,7 @@ class ApiClientProviderExtTest : DescribeSpec({
             every { mockUser.accessToken } returns null
             
             shouldThrow<AccountLinkingException> {
-                provider.withAuthenticatedClient(mockInput) { client ->
+                provider.withAuthenticatedClient(mockInput) { _ ->
                     "should not be executed"
                 }
             }
@@ -119,7 +119,7 @@ class ApiClientProviderExtTest : DescribeSpec({
             every { mockUser.accessToken } returns "   "
             
             shouldThrow<AccountLinkingException> {
-                provider.withAuthenticatedClient(mockInput) { client ->
+                provider.withAuthenticatedClient(mockInput) { _ ->
                     "should not be executed"
                 }
             }
@@ -140,7 +140,7 @@ class ApiClientProviderExtTest : DescribeSpec({
             every { mockUser.accessToken } returns ""
             
             shouldThrow<AccountLinkingException> {
-                provider.withAuthenticatedClient(mockInput) { client ->
+                provider.withAuthenticatedClient(mockInput) { _ ->
                     "should not be executed"
                 }
             }
@@ -162,7 +162,7 @@ class ApiClientProviderExtTest : DescribeSpec({
             
             data class TestResult(val value: String)
             
-            val result = provider.withAuthenticatedClient(mockInput) { client ->
+            val result = provider.withAuthenticatedClient(mockInput) { _ ->
                 TestResult("computed value")
             }
             
@@ -184,7 +184,7 @@ class ApiClientProviderExtTest : DescribeSpec({
             every { mockUser.accessToken } returns "test-token"
             
             shouldThrow<IllegalStateException> {
-                provider.withAuthenticatedClient(mockInput) { client ->
+                provider.withAuthenticatedClient(mockInput) { _ ->
                     throw IllegalStateException("Test exception")
                 }
             }
