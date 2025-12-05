@@ -9,7 +9,6 @@ import kjd.golfcanada.alexa.IntentName
 import kjd.golfcanada.alexa.exception.AccountLinkingException
 import kjd.golfcanada.alexa.exception.GolfCanadaApiException
 import kjd.golfcanada.alexa.exception.NoUserDetailsException
-import kjd.golfcanada.alexa.interceptor.HandicapLookupInterceptor
 import kjd.golfcanada.alexa.interceptor.UserProfileInterceptor
 import kjd.golfcanada.alexa.data.HandicapSummaryData
 import kjd.golfcanada.alexa.util.FriendNameMatcher
@@ -17,6 +16,7 @@ import kjd.golfcanada.client.api.MembersApi
 import kjd.golfcanada.client.api.ScoresApi
 import kjd.golfcanada.client.model.User
 import kjd.golfcanada.client.model.extractAccessToken
+import kjd.golfcanada.client.provider.ApiClientProvider
 import org.slf4j.LoggerFactory
 import java.util.*
 
@@ -24,10 +24,10 @@ import java.util.*
  * Handles requests for handicap information.
  * 
  * This handler supports two scenarios:
- * 1. Own Handicap: When no friend slot is provided, returns the current user's handicap
- *    from Request Attributes (cached by HandicapLookupInterceptor)
+ * 1. Own Handicap: When no friend slot is provided, fetches the current user's handicap
+ *    from the Golf Canada API
  * 2. Friend's Handicap: When a friend slot is provided, makes a live API call to fetch
- *    the friend's handicap (no caching for friends)
+ *    the friend's handicap
  * 
  * Example utterances:
  * - "What's my handicap?"
@@ -35,7 +35,9 @@ import java.util.*
  * - "What is John's handicap?"
  * - "Get handicap for player 12345"
  */
-class HandicapIntentRequestHandler : RequestHandler {
+class HandicapIntentRequestHandler(
+    private val apiClientProvider: ApiClientProvider
+) : RequestHandler {
 
     private val logger = LoggerFactory.getLogger(HandicapIntentRequestHandler::class.java)
 
@@ -59,26 +61,49 @@ class HandicapIntentRequestHandler : RequestHandler {
     }
 
     /**
-     * Handles the request for the current user's handicap using cached data.
+     * Handles the request for the current user's handicap by making an API call.
      * 
      * @param input The handler input
      * @return Response with the user's handicap information
      */
     private fun handleOwnHandicap(input: HandlerInput): Optional<Response> {
-        val requestAttributes = input.attributesManager.requestAttributes
-        val handicapSummary = requestAttributes[HandicapLookupInterceptor.HANDICAP_REQUEST_KEY] as? HandicapSummaryData
+        val accessToken = input.requestEnvelope.context?.system?.user?.accessToken
 
-        if (handicapSummary == null) {
-            logger.warn("No handicap data available in request attributes")
+        if (accessToken.isNullOrBlank()) {
+            logger.warn("No access token available for fetching own handicap")
+            throw AccountLinkingException()
+        }
+
+        logger.info("Own handicap requested")
+        
+        try {
+            val actualAccessToken = accessToken.extractAccessToken()
+            
+            // Get user profile from session
+            val sessionAttributes = input.attributesManager.sessionAttributes
+            val user = sessionAttributes[UserProfileInterceptor.USER_SESSION_KEY] as? User
+            if (user?.id == null) {
+                logger.warn("No user profile available for fetching handicap")
+                throw NoUserDetailsException()
+            }
+            
+            // Get authenticated API client from provider
+            val clientWrapper = apiClientProvider.getClient(actualAccessToken)
+            
+            // Fetch user's handicap
+            val handicapCalculation = clientWrapper.scores.getHandicapCalculation(user.id)
+            val handicapSummary = HandicapSummaryData.fromDTO(handicapCalculation)
+
+            logger.info("Returning own handicap: ${handicapSummary.handicap}")
+
+            return input.generateTemplateResponse("HandicapIntentResponse", handicapSummary.toResponseData())
+        } catch (e: Exception) {
+            logger.error("Failed to fetch own handicap: ${e.message}", e)
             val dataModel = mapOf(
                 "error" to "Unable to retrieve your handicap information at this time."
             )
             return input.generateTemplateResponse("HandicapIntentErrorResponse", dataModel)
         }
-
-        logger.info("Returning own handicap: ${handicapSummary.handicap}")
-
-        return input.generateTemplateResponse("HandicapIntentResponse", handicapSummary.toResponseData())
     }
 
     /**
@@ -115,12 +140,11 @@ class HandicapIntentRequestHandler : RequestHandler {
                 throw NoUserDetailsException()
             }
             
-            // Set access token on ApiClient companion object
-            org.openapitools.client.infrastructure.ApiClient.accessToken = actualAccessToken
-            val membersApi = MembersApi()
+            // Get authenticated API client from provider
+            val clientWrapper = apiClientProvider.getClient(actualAccessToken)
             
             // Get friends list
-            val friends = membersApi.getFriends(user.id)
+            val friends = clientWrapper.members.getFriends(user.id)
             
             if (friends.isEmpty()) {
                 logger.info("No friends found for user ${user.id}")
