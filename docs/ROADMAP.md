@@ -65,7 +65,7 @@ Account information retrieval functionality has been implemented and tested.
 **Actual Response (Friend's Handicap):**
 > "[Friend name]'s current handicap index is [index]."
 
-### 🚧 Phase 3: Round History (Partially Complete)
+### 🚧 Phase 3: Round History (In Progress)
 
 #### 3.1 Player Round History Intent
 **Intent:** `GOLFCANADA.PlayerProfileHistory`
@@ -77,11 +77,12 @@ Account information retrieval functionality has been implemented and tested.
 - "how did I play in [year]"
 
 **Implementation Status:**
-- [x] Implement rounds history API endpoint in OpenAPI spec
-- [x] Create `PlayerProfileHistoryIntentHandler` intent handler
+- [x] Create `PlayerProfileHistoryIntentHandler` intent handler (stub)
 - [x] Add response templates for round summaries (English and French)
 - [x] Add unit tests
-- [ ] **TODO:** Implement full logic for pagination and multiple rounds
+- [ ] **TODO:** Implement rounds history API endpoint in OpenAPI spec
+- [ ] **TODO:** Implement full handler logic with API integration
+- [ ] **TODO:** Add support for pagination and multiple rounds
 - [ ] **TODO:** Add support for year filtering
 
 **Expected Response (single round):**
@@ -90,9 +91,11 @@ Account information retrieval functionality has been implemented and tested.
 **Expected Response (multiple rounds):**
 > "In your last [number] rounds, you've averaged [average] with scores ranging from [low] to [high]. Your best round was at [course]."
 
-### ✅ Phase 4: Friends/Favorites (Completed)
+**Current Status:** Handler exists but returns placeholder response. API integration not yet implemented.
 
-#### 4.1 Favorite Player Handicap
+### 🚧 Phase 4: Friends/Favorites (Partially Complete)
+
+#### 4.1 Favorite Player Handicap ✅ COMPLETE
 **Intent:** `GOLFCANADA.Handicap` (with friend slots)
 
 **Sample Utterances:**
@@ -108,6 +111,9 @@ Account information retrieval functionality has been implemented and tested.
 - [x] Handle multiple matching friends gracefully
 - [x] Add unit tests
 
+**Actual Response:**
+> "[Friend name]'s current handicap index is [index]."
+
 #### 4.2 Favorite Player History Intent
 **Intent:** `GOLFCANADA.FavoritePlayerHistory`
 
@@ -117,13 +123,17 @@ Account information retrieval functionality has been implemented and tested.
 - "what are [playerName]'s last [numberOfRounds] scores"
 
 **Implementation Status:**
-- [x] Create `FavoritePlayerHistoryIntentHandler` intent handler
+- [x] Create `FavoritePlayerHistoryIntentHandler` intent handler (stub)
 - [x] Add response templates (English and French)
 - [x] Add unit tests
-- [ ] **TODO:** Implement full logic for friend history lookup
+- [ ] **TODO:** Implement API endpoint for friend round history
+- [ ] **TODO:** Implement full logic for friend history lookup with API integration
 - [ ] **TODO:** Handle friend privacy settings
+- [ ] **TODO:** Add friend name matching similar to handicap intent
 
-### 🚧 Phase 5: Score Posting (In Progress)
+**Current Status:** Handler exists but returns placeholder response. API integration and friend matching not yet implemented.
+
+### 📋 Phase 5: Score Posting (Planned)
 
 #### 5.1 Add Scorecard Intent
 **Intent:** `GOLFCANADA.AddScorecard`
@@ -135,7 +145,7 @@ This is a complex conversational flow that will guide users through posting a ne
 - "post a new round"
 - "save my score"
 
-**Conversation Flow:**
+**Planned Conversation Flow:**
 1. "Where did you play?" → Course selection
 2. "Which tees did you play from?" → Tee selection
 3. "What was your score?" → Total score or hole-by-hole
@@ -144,14 +154,16 @@ This is a complex conversational flow that will guide users through posting a ne
 **Implementation Status:**
 - [x] Create `AddScorecardIntentHandler` intent handler (stub)
 - [x] Add response templates (English and French)
-- [x] Add unit tests
+- [x] Add unit tests (basic)
 - [ ] **TODO:** Implement score posting API endpoint in OpenAPI spec
 - [ ] **TODO:** Implement course search API endpoint
 - [ ] **TODO:** Create dialog model for multi-turn conversation
-- [ ] **TODO:** Implement full dialog management logic
+- [ ] **TODO:** Implement full dialog management logic in handler
 - [ ] **TODO:** Add support for both total score and hole-by-hole entry
 - [ ] **TODO:** Handle edge cases (9-hole rounds, incomplete rounds)
 - [ ] **TODO:** Add confirmation prompts
+
+**Current Status:** Handler exists with basic structure but returns placeholder response. Multi-turn dialog and API integration not yet implemented.
 
 ### 📋 Phase 6: Advanced Features
 
