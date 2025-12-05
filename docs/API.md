@@ -244,13 +244,51 @@ The Alexa Skill Handler receives requests from the Alexa service and returns voi
 
 #### Custom Golf Canada Intents
 
-| Intent | Handler | Slots | Description |
-|--------|---------|-------|-------------|
-| `GOLFCANADA.Handicap` | `HandicapIntentRequestHandler` | `FriendFullName`, `FriendFirstName` | Get handicap for self or friend |
-| `GOLFCANADA.PlayerProfileMembership` | `PlayerProfileMembershipIntentHandler` | None | Get membership information |
-| `GOLFCANADA.PlayerProfileHistory` | `PlayerProfileHistoryIntentHandler` | `numberOfRounds`, `year` | Get score history |
-| `GOLFCANADA.FavoritePlayerHistory` | `FavoritePlayerHistoryIntentHandler` | `playerName`, `numberOfRounds` | Get friend's score history |
-| `GOLFCANADA.AddScorecard` | `AddScorecardIntentHandler` | None | Add a new score (stub) |
+| Intent | Handler | Slots | Status | Description |
+|--------|---------|-------|--------|-------------|
+| `GOLFCANADA.Handicap` | `HandicapIntentRequestHandler` | `FriendFullName`, `FriendFirstName` | ✅ Complete | Get handicap for self or friend with intelligent name matching |
+| `GOLFCANADA.PlayerProfileMembership` | `PlayerProfileMembershipIntentHandler` | None | ✅ Complete | Get membership level and expiration information |
+| `GOLFCANADA.PlayerProfileHistory` | `PlayerProfileHistoryIntentHandler` | `numberOfRounds`, `year` | 🚧 Stub | Get score history (planned) |
+| `GOLFCANADA.FavoritePlayerHistory` | `FavoritePlayerHistoryIntentHandler` | `playerName`, `numberOfRounds` | 🚧 Stub | Get friend's score history (planned) |
+| `GOLFCANADA.AddScorecard` | `AddScorecardIntentHandler` | None | 🚧 Stub | Add a new score (planned multi-turn dialog) |
+
+### Intent Details
+
+#### GOLFCANADA.Handicap
+
+The handicap intent supports two modes:
+
+**Own Handicap:**
+- Cached with 10-minute TTL in session attributes
+- Pre-loaded by `HandicapLookupInterceptor`
+- Returns current, low, and high handicap index values
+
+**Friend's Handicap:**
+- Live API call (no caching)
+- Fetches user's friends list from Golf Canada API
+- Uses `FriendNameMatcher` utility for intelligent fuzzy matching
+- Handles multiple name formats (full name or first name only)
+- Provides helpful feedback for no matches or multiple matches
+
+Example utterances:
+- "What's my handicap?"
+- "What is my handicap index?"
+- "What is John Smith's handicap?"
+- "Tell me John's handicap"
+
+#### GOLFCANADA.PlayerProfileMembership
+
+Retrieves membership information from user profile stored in session.
+
+Returns:
+- Membership level (e.g., "Full", "Associate")
+- Expiration date
+- Active status
+
+Example utterances:
+- "What's my membership?"
+- "When does my membership expire?"
+- "Is my membership active?"
 
 ### Request Interceptors
 
@@ -258,7 +296,7 @@ Request interceptors run before intent handlers and prepare data:
 
 1. **AuthenticationRequestInterceptor** - Validates access token presence
 2. **UserProfileInterceptor** - Loads user profile and caches in session (1 API call per session)
-3. **HandicapLookupInterceptor** - Pre-loads handicap data with 10-minute TTL cache
+3. **HandicapLookupInterceptor** - Pre-loads handicap data with 10-minute TTL cache for current user
 
 ### Exception Handlers
 
