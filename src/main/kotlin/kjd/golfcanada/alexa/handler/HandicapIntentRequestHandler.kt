@@ -7,6 +7,7 @@ import com.amazon.ask.model.Response
 import com.amazon.ask.request.Predicates.intentName
 import kjd.golfcanada.alexa.IntentName
 import kjd.golfcanada.alexa.exception.AccountLinkingException
+import kjd.golfcanada.alexa.exception.GenericIntentException
 import kjd.golfcanada.alexa.exception.GolfCanadaApiException
 import kjd.golfcanada.alexa.exception.NoUserDetailsException
 import kjd.golfcanada.alexa.interceptor.UserProfileInterceptor
@@ -97,10 +98,7 @@ class HandicapIntentRequestHandler(
             return input.generateTemplateResponse("HandicapIntentResponse", handicapSummary.toResponseData())
         } catch (e: Exception) {
             logger.error("Failed to fetch own handicap: ${e.message}", e)
-            val dataModel = mapOf(
-                "error" to "Unable to retrieve your handicap information at this time."
-            )
-            return input.generateTemplateResponse("HandicapIntentErrorResponse", dataModel)
+            throw GenericIntentException("Failed to fetch own handicap", e)
         }
     }
 
