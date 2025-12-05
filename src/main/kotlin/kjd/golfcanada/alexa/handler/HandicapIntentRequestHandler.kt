@@ -12,8 +12,6 @@ import kjd.golfcanada.alexa.exception.NoUserDetailsException
 import kjd.golfcanada.alexa.interceptor.UserProfileInterceptor
 import kjd.golfcanada.alexa.data.HandicapSummaryData
 import kjd.golfcanada.alexa.util.FriendNameMatcher
-import kjd.golfcanada.client.api.MembersApi
-import kjd.golfcanada.client.api.ScoresApi
 import kjd.golfcanada.client.model.User
 import kjd.golfcanada.client.model.extractAccessToken
 import kjd.golfcanada.client.provider.ApiClientProvider
@@ -97,6 +95,10 @@ class HandicapIntentRequestHandler(
             logger.info("Returning own handicap: ${handicapSummary.handicap}")
 
             return input.generateTemplateResponse("HandicapIntentResponse", handicapSummary.toResponseData())
+        } catch (e: AccountLinkingException) {
+            throw e
+        } catch (e: NoUserDetailsException) {
+            throw e
         } catch (e: Exception) {
             logger.error("Failed to fetch own handicap: ${e.message}", e)
             val dataModel = mapOf(
