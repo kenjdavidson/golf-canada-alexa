@@ -40,9 +40,6 @@ class GenericIntentExceptionHandler : ExceptionHandler {
     override fun handle(input: HandlerInput, throwable: Throwable): Optional<Response> {
         logger.error("Handling GenericIntentException: ${throwable.message}", throwable)
 
-        val dataModel = mapOf(
-            "error" to "Unable to process your request at this time."
-        )
-        return input.generateTemplateResponse("GenericIntentErrorResponse", dataModel)
+        return input.generateTemplateResponse("GenericIntentErrorResponse", emptyMap())
     }
 }
