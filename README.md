@@ -59,18 +59,27 @@ The following interactions are currently available:
 
 ### Handicap Information
 - **Your Handicap** - "What's my handicap?" or "Tell me my handicap index"
+  - View your current handicap index
+  - See your low and high index values
+  - Cached for 10 minutes to improve performance
 - **Friend's Handicap** - "What is [friend name]'s handicap?"
-  - Supports both full names and first names
+  - Supports both full names and first names (e.g., "John Smith" or "John")
+  - Uses intelligent fuzzy matching to find friends
   - Searches your Golf Canada friends list
+  - Handles multiple matches gracefully
 
 ### Membership Information
 - **Membership Status** - "What's my membership?" or "When does my membership expire?"
   - View your membership level and expiration date
   - Check if your membership is active
 
-### Score History
+### Score History (Coming Soon)
 - **Your Recent Rounds** - "Tell me about my last round" or "How did I play last?"
+  - *Note: This intent is defined but not yet fully implemented*
 - **Friend's Recent Rounds** - "What was [friend name]'s last score?"
+  - *Note: This intent is defined but not yet fully implemented*
+- **Add Scorecard** - "Add a score" or "Post a new round"
+  - *Note: This intent is defined but not yet fully implemented*
 
 > **Privacy Note**: This application is hosted on AWS and gains access to your Golf Canada
 > account through Account Linking, which you can read about here:
@@ -82,10 +91,13 @@ The following interactions are currently available:
 
 The following interactions are planned for future development:
 
+- [ ] Complete implementation of score history ("Tell me about my last round")
 - [ ] Year-specific score history ("How did I play in 2024?")
 - [ ] Multiple rounds statistics ("Tell me about my last 5 rounds")
-- [ ] Adding/saving new rounds through voice
-- [ ] More detailed score breakdowns
+- [ ] Complete implementation of friend's score history ("What was John's last score?")
+- [ ] Adding/saving new rounds through voice with multi-turn dialog
+- [ ] More detailed score breakdowns (hole-by-hole)
+- [ ] Course information and search
 
 For detailed planning on future work, see [docs/ROADMAP.md](docs/ROADMAP.md).
 

@@ -173,6 +173,7 @@ golf-canada-alexa/
    ```
 5. Add comprehensive unit tests using Kotest and MockK
 6. Update the interaction model in `model/model.json` if adding new intents or slots
+7. **Update documentation** (See [Documentation Requirements](#documentation-requirements))
 
 ### Adding a New Request Interceptor
 
@@ -247,6 +248,47 @@ class MyHandlerTest : StringSpec({
    curl "http://localhost:3000/login?client_id=test&redirect_uri=http://localhost&response_type=code&state=test123"
    ```
 
+## Documentation Requirements
+
+When adding a new intent or feature, **always** update the following documentation files:
+
+### 1. README.md
+Add to the "Available Interactions" section with:
+- Intent description
+- Example utterances
+- Expected behavior
+- Any limitations or special notes
+
+### 2. docs/ROADMAP.md
+Update the appropriate phase section with:
+- Implementation status checkboxes
+- Intent name and sample utterances
+- Actual response examples
+- TODO items or known limitations
+
+### 3. docs/API.md
+Update the "Supported Intents" table with:
+- Intent name
+- Handler class name
+- Slots (if any)
+- Status (Complete/Stub/Planned)
+- Brief description
+
+### 4. docs/ARCHITECTURE.md
+Update if your changes affect:
+- System architecture or components
+- Data flow or request processing
+- New dependencies
+- Caching strategy
+
+### 5. model/model.json
+Update the Alexa interaction model with:
+- New intents
+- New slots and slot types
+- Sample utterances
+
+For detailed guidance on adding features, see [.github/AGENT.md](../.github/AGENT.md).
+
 ## Pull Request Process
 
 1. **Ensure tests pass:**
@@ -254,9 +296,9 @@ class MyHandlerTest : StringSpec({
    ./gradlew test
    ```
 
-2. **Update documentation:**
-   - Update README.md if needed
-   - Update relevant docs/ files
+2. **Verify documentation is updated:**
+   - Review all files listed in [Documentation Requirements](#documentation-requirements)
+   - Ensure consistency across all documentation
    - Add inline code comments where helpful
 
 3. **Create PR with:**
@@ -264,6 +306,7 @@ class MyHandlerTest : StringSpec({
    - Reference to related issue(s)
    - Screenshots for UI changes
    - Test evidence
+   - Documentation checklist
 
 4. **PR Review:**
    - Address review feedback
