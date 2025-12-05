@@ -6,7 +6,7 @@ This document lists all currently available and planned features for the Golf Ca
 
 ### Account Information
 
-#### Handicap Lookup
+#### ✅ Handicap Lookup
 **Voice Commands:**
 - "What is my handicap?"
 - "What is my handicap index?"
@@ -27,7 +27,7 @@ This document lists all currently available and planned features for the Golf Ca
 or for a friend:
 > "[Friend name]'s current handicap index is [index]."
 
-#### Membership Status
+#### ✅ Membership Status
 **Voice Commands:**
 - "What's my membership?"
 - "Tell me about my membership"
@@ -48,7 +48,7 @@ The following features are planned for future development:
 
 ### Score History
 
-#### Your Recent Rounds
+#### 📋 Your Recent Rounds
 **Voice Commands:**
 - "Tell me about my last round"
 - "How did I play last?"
@@ -64,7 +64,7 @@ The following features are planned for future development:
 **Expected Response:**
 > "Your last round was at [course] on [date]. You shot [score] with a differential of [diff]."
 
-#### Friend's Recent Rounds
+#### 📋 Friend's Recent Rounds
 **Voice Commands:**
 - "What was [friend name]'s last score?"
 - "How did [friend name] shoot last?"
@@ -79,7 +79,7 @@ The following features are planned for future development:
 
 ### Score Posting
 
-#### Add a New Scorecard
+#### 📋 Add a New Scorecard
 **Voice Commands:**
 - "I want to add a score"
 - "Post a new round"
@@ -101,9 +101,9 @@ The following features are planned for future development:
 
 The following features are being considered for future releases:
 
-- **Course Information** - Search for courses, get ratings and contact info
-- **Statistics and Trends** - Handicap trends, scoring patterns, best/worst courses
-- **Notifications** - Handicap updates, membership expiration reminders (if supported by Alexa)
+- 📋 **Course Information** - Search for courses, get ratings and contact info
+- 📋 **Statistics and Trends** - Handicap trends, scoring patterns, best/worst courses
+- 📋 **Notifications** - Handicap updates, membership expiration reminders (if supported by Alexa)
 
 ## Feature Status Legend
 
