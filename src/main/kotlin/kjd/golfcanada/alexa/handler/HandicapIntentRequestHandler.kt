@@ -74,20 +74,20 @@ class HandicapIntentRequestHandler(
 
         logger.info("Own handicap requested")
         
+        val actualAccessToken = accessToken.extractAccessToken()
+        
+        // Get user profile from session
+        val sessionAttributes = input.attributesManager.sessionAttributes
+        val user = sessionAttributes[UserProfileInterceptor.USER_SESSION_KEY] as? User
+        if (user?.id == null) {
+            logger.warn("No user profile available for fetching handicap")
+            throw NoUserDetailsException()
+        }
+        
+        // Get authenticated API client from provider
+        val clientWrapper = apiClientProvider.getClient(actualAccessToken)
+        
         try {
-            val actualAccessToken = accessToken.extractAccessToken()
-            
-            // Get user profile from session
-            val sessionAttributes = input.attributesManager.sessionAttributes
-            val user = sessionAttributes[UserProfileInterceptor.USER_SESSION_KEY] as? User
-            if (user?.id == null) {
-                logger.warn("No user profile available for fetching handicap")
-                throw NoUserDetailsException()
-            }
-            
-            // Get authenticated API client from provider
-            val clientWrapper = apiClientProvider.getClient(actualAccessToken)
-            
             // Fetch user's handicap
             val handicapCalculation = clientWrapper.scores.getHandicapCalculation(user.id)
             val handicapSummary = HandicapSummaryData.fromDTO(handicapCalculation)
@@ -95,10 +95,6 @@ class HandicapIntentRequestHandler(
             logger.info("Returning own handicap: ${handicapSummary.handicap}")
 
             return input.generateTemplateResponse("HandicapIntentResponse", handicapSummary.toResponseData())
-        } catch (e: AccountLinkingException) {
-            throw e
-        } catch (e: NoUserDetailsException) {
-            throw e
         } catch (e: Exception) {
             logger.error("Failed to fetch own handicap: ${e.message}", e)
             val dataModel = mapOf(
