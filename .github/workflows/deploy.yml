@@ -58,17 +58,17 @@ jobs:
           echo "Deployment target: $TARGET"
           
           if [[ "$TARGET" == "authentication" ]]; then
-            echo "Deploying: Authentication function only"
+            echo "Primary focus: Authentication function"
             echo "type=authentication" >> $GITHUB_OUTPUT
           elif [[ "$TARGET" == "skill" ]]; then
-            echo "Deploying: Skill function only"
+            echo "Primary focus: Skill function"
             echo "type=skill" >> $GITHUB_OUTPUT
           else
-            echo "Deploying: Both functions"
+            echo "Primary focus: Both functions"
             echo "type=both" >> $GITHUB_OUTPUT
           fi
           
-          echo "Note: SAM will deploy the entire stack (both functions) regardless of selection"
+          echo "Note: The entire stack (both Lambda functions) will be deployed"
 
       - name: SAM Build
         run: sam build

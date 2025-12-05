@@ -266,7 +266,7 @@ The recommended approach is to use the GitHub Actions workflow for manual deploy
 - `GOLF_CANADA_CLIENT_SECRET` - OAuth Client Secret
 - `ALEXA_SKILL_ID` - Your Alexa Skill ID
 
-For complete setup instructions, required secrets, and tag-based deployment strategies, see **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**.
+For complete setup instructions and detailed information on configuring GitHub Secrets, see **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**.
 
 ### Manual Deployment
 
