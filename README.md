@@ -252,11 +252,11 @@ The recommended approach is to use the GitHub Actions workflow for manual deploy
 3. Click **Run workflow**
 4. Choose the deployment target from the dropdown:
    - **both** - Deploy both Lambda functions (default)
-   - **authentication** - Deploy authentication function
-   - **skill** - Deploy skill function
+   - **authentication** - Deploy only the authentication function
+   - **skill** - Deploy only the skill function
 5. Click **Run workflow** to start the deployment
 
-**Note:** The workflow deploys the entire CloudFormation stack (both Lambda functions) regardless of the selection. The dropdown is for organizational tracking.
+The workflow will build and deploy only the selected function(s) to AWS.
 
 **Required GitHub Secrets:**
 - `AWS_ROLE_ARN` - IAM role ARN for GitHub Actions to assume

@@ -58,22 +58,60 @@ jobs:
           echo "Deployment target: $TARGET"
           
           if [[ "$TARGET" == "authentication" ]]; then
-            echo "Primary focus: Authentication function"
+            echo "Deploying: Authentication function only"
             echo "type=authentication" >> $GITHUB_OUTPUT
           elif [[ "$TARGET" == "skill" ]]; then
-            echo "Primary focus: Skill function"
+            echo "Deploying: Skill function only"
             echo "type=skill" >> $GITHUB_OUTPUT
           else
-            echo "Primary focus: Both functions"
+            echo "Deploying: Both functions"
             echo "type=both" >> $GITHUB_OUTPUT
           fi
-          
-          echo "Note: The entire stack (both Lambda functions) will be deployed"
 
-      - name: SAM Build
+      - name: SAM Build - Both Functions
+        if: inputs.deployment_target == 'both'
         run: sam build
 
-      - name: Deploy to AWS
+      - name: SAM Build - Authentication Function Only
+        if: inputs.deployment_target == 'authentication'
+        run: sam build GolfCanadaAuthenticationFunction
+
+      - name: SAM Build - Skill Function Only
+        if: inputs.deployment_target == 'skill'
+        run: sam build GolfCanadaAlexaSkillFunction
+
+      - name: Deploy Both Functions to AWS
+        if: inputs.deployment_target == 'both'
+        run: |
+          sam deploy \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset \
+            --stack-name ${{ secrets.STACK_NAME }} \
+            --capabilities CAPABILITY_IAM \
+            --resolve-s3 \
+            --region ${{ secrets.AWS_REGION }} \
+            --parameter-overrides \
+              ClientId="${{ secrets.GOLF_CANADA_CLIENT_ID }}" \
+              ClientSecret="${{ secrets.GOLF_CANADA_CLIENT_SECRET }}" \
+              SkillId="${{ secrets.ALEXA_SKILL_ID }}"
+
+      - name: Deploy Authentication Function to AWS
+        if: inputs.deployment_target == 'authentication'
+        run: |
+          sam deploy \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset \
+            --stack-name ${{ secrets.STACK_NAME }} \
+            --capabilities CAPABILITY_IAM \
+            --resolve-s3 \
+            --region ${{ secrets.AWS_REGION }} \
+            --parameter-overrides \
+              ClientId="${{ secrets.GOLF_CANADA_CLIENT_ID }}" \
+              ClientSecret="${{ secrets.GOLF_CANADA_CLIENT_SECRET }}" \
+              SkillId="${{ secrets.ALEXA_SKILL_ID }}"
+
+      - name: Deploy Skill Function to AWS
+        if: inputs.deployment_target == 'skill'
         run: |
           sam deploy \
             --no-confirm-changeset \

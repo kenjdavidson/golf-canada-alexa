@@ -15,7 +15,10 @@ This document provides detailed instructions for deploying the Golf Canada Alexa
 
 The project uses GitHub Actions to deploy Lambda functions to AWS via a manual workflow trigger. 
 
-**Important Note:** Due to the nature of AWS SAM and CloudFormation, the deployment always updates the entire stack, which includes both Lambda functions. The deployment target selection is for organizational tracking and helps identify which component was the primary focus of the deployment.
+The workflow supports deploying:
+- **Both functions** - Deploy both authentication and skill Lambda functions
+- **Authentication only** - Deploy only the OAuth authentication wrapper function
+- **Skill only** - Deploy only the Alexa skill handler function
 
 ## GitHub Actions Workflow
 
@@ -24,12 +27,11 @@ The deployment workflow is defined in `.github/workflows/deploy.yml` and is trig
 ### Workflow Features
 
 - **Manual trigger** - Initiated on-demand from the GitHub Actions UI
-- **Deployment target selection** - Choose to track deployment focus (both, authentication, or skill)
+- **Conditional deployment** - Deploy only selected function(s) based on dropdown selection
 - **Automated builds** - Uses Gradle to build the Java/Kotlin application
 - **SAM deployment** - Leverages AWS SAM CLI for Lambda deployment via CloudFormation
 - **Secure authentication** - Uses AWS OIDC for secure, credential-less authentication
 - **Parameter management** - All sensitive configuration is stored in GitHub Secrets
-- **Full stack deployment** - Always updates both Lambda functions to maintain consistency
 
 ## Required GitHub Secrets
 
@@ -192,12 +194,12 @@ The deployment workflow is triggered manually from the GitHub Actions interface.
 4. Click the **Run workflow** button (on the right side)
 5. Choose the deployment target from the dropdown:
    - **both** - Deploy both Lambda functions (default)
-   - **authentication** - Deploy with focus on authentication function
-   - **skill** - Deploy with focus on skill function
+   - **authentication** - Deploy only the authentication function
+   - **skill** - Deploy only the skill function
 6. Select the branch to deploy from (typically `main` or `master`)
 7. Click **Run workflow** to start the deployment
 
-**Note:** Regardless of the selection, AWS SAM deploys the entire CloudFormation stack, which includes both Lambda functions. The deployment target selection helps track which component was the primary focus of this deployment.
+The workflow will conditionally build and deploy only the selected function(s).
 
 ### Step 3: Monitor Deployment
 

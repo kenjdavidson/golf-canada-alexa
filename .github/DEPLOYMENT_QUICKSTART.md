@@ -79,12 +79,12 @@ Trigger the deployment manually:
 3. Click **Run workflow**
 4. Choose deployment target:
    - **both** - Deploy both functions (default)
-   - **authentication** - Deploy with auth focus
-   - **skill** - Deploy with skill focus
+   - **authentication** - Deploy authentication only
+   - **skill** - Deploy skill only
 5. Select branch (e.g., `main`)
 6. Click **Run workflow**
 
-**Note:** All options deploy the entire stack (both Lambda functions). The selection is for tracking purposes.
+The workflow will build and deploy only the selected function(s).
 
 ### 5. Monitor the Deployment
 
