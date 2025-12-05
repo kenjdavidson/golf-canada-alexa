@@ -70,30 +70,26 @@ In your GitHub repository, go to **Settings** → **Secrets and variables** → 
 | `GOLF_CANADA_CLIENT_SECRET` | `your-client-secret` | OAuth Client Secret |
 | `ALEXA_SKILL_ID` | `amzn1.ask.skill.xxx...` | Your Alexa Skill ID |
 
-### 4. Test the Deployment
+### 4. Run the Deployment
 
-Create and push a test tag:
+Trigger the deployment manually:
 
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
+1. Go to **Actions** tab in GitHub
+2. Select **Deploy to AWS Lambda** workflow
+3. Click **Run workflow**
+4. Choose deployment target:
+   - **both** - Deploy both functions (default)
+   - **authentication** - Deploy with auth focus
+   - **skill** - Deploy with skill focus
+5. Select branch (e.g., `main`)
+6. Click **Run workflow**
+
+**Note:** All options deploy the entire stack (both Lambda functions). The selection is for tracking purposes.
 
 ### 5. Monitor the Deployment
 
-1. Go to **Actions** tab in GitHub
-2. Watch the workflow run
-3. Check AWS Lambda console to verify deployment
-
-## Tag Naming Strategy
-
-| Tag Pattern | Purpose | Example |
-|-------------|---------|---------|
-| `v*` | General releases | `v1.0.0`, `v2.1.3` |
-| `auth-v*` | Authentication-focused | `auth-v1.0.1` |
-| `skill-v*` | Skill-focused | `skill-v1.1.0` |
-
-**Note:** All tags deploy the entire stack (both Lambda functions).
+1. Watch the workflow run in the Actions tab
+2. Check AWS Lambda console to verify deployment
 
 ## Troubleshooting
 

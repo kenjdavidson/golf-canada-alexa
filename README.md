@@ -245,11 +245,18 @@ The project supports both automated deployment via GitHub Actions and manual dep
 
 ### Automated Deployment with GitHub Actions
 
-The recommended approach is to use the automated GitHub Actions workflow that triggers on git tags. The workflow deploys the entire CloudFormation stack (both Lambda functions) while using tag prefixes to organize releases:
+The recommended approach is to use the GitHub Actions workflow for manual deployment:
 
-- **General release**: Push a tag like `v1.0.0` for releases affecting both functions
-- **Authentication-focused**: Push a tag like `auth-v1.0.0` for auth-related changes
-- **Skill-focused**: Push a tag like `skill-v1.0.0` for skill-related changes
+1. Go to **Actions** tab in your GitHub repository
+2. Select the **Deploy to AWS Lambda** workflow
+3. Click **Run workflow**
+4. Choose the deployment target from the dropdown:
+   - **both** - Deploy both Lambda functions (default)
+   - **authentication** - Deploy authentication function
+   - **skill** - Deploy skill function
+5. Click **Run workflow** to start the deployment
+
+**Note:** The workflow deploys the entire CloudFormation stack (both Lambda functions) regardless of the selection. The dropdown is for organizational tracking.
 
 **Required GitHub Secrets:**
 - `AWS_ROLE_ARN` - IAM role ARN for GitHub Actions to assume

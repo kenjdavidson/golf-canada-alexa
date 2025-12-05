@@ -10,38 +10,26 @@ This document provides detailed instructions for deploying the Golf Canada Alexa
 - [GitHub Actions Workflow](#github-actions-workflow)
 - [Required GitHub Secrets](#required-github-secrets)
 - [Deployment Process](#deployment-process)
-- [Tag-Based Deployment Strategy](#tag-based-deployment-strategy)
 
 ## Overview
 
-The project uses GitHub Actions to automatically deploy Lambda functions to AWS when tags are pushed to the repository. 
+The project uses GitHub Actions to deploy Lambda functions to AWS via a manual workflow trigger. 
 
-**Important Note:** Due to the nature of AWS SAM and CloudFormation, the deployment always updates the entire stack, which includes both Lambda functions. However, the tag-based naming strategy helps with:
-
-1. **Version tracking** - Identify which component triggered the deployment
-2. **Release management** - Organize releases by functional area
-3. **Change tracking** - Understand deployment history at a glance
-
-### Tag-Based Deployment Triggers
-
-The workflow supports three tag patterns:
-
-1. **General release tags** (e.g., `v1.0.0`) - For releases affecting both functions or major updates
-2. **Authentication-focused tags** (e.g., `auth-v1.0.0`) - For releases primarily affecting the authentication function
-3. **Skill-focused tags** (e.g., `skill-v1.0.0`) - For releases primarily affecting the Alexa skill function
+**Important Note:** Due to the nature of AWS SAM and CloudFormation, the deployment always updates the entire stack, which includes both Lambda functions. The deployment target selection is for organizational tracking and helps identify which component was the primary focus of the deployment.
 
 ## GitHub Actions Workflow
 
-The deployment workflow is defined in `.github/workflows/deploy.yml` and is triggered when tags matching specific patterns are pushed to the repository.
+The deployment workflow is defined in `.github/workflows/deploy.yml` and is triggered manually from the GitHub Actions interface.
 
 ### Workflow Features
 
+- **Manual trigger** - Initiated on-demand from the GitHub Actions UI
+- **Deployment target selection** - Choose to track deployment focus (both, authentication, or skill)
 - **Automated builds** - Uses Gradle to build the Java/Kotlin application
 - **SAM deployment** - Leverages AWS SAM CLI for Lambda deployment via CloudFormation
 - **Secure authentication** - Uses AWS OIDC for secure, credential-less authentication
-- **Tag-based versioning** - Organizes releases by component using tag prefixes
 - **Parameter management** - All sensitive configuration is stored in GitHub Secrets
-- **Full stack deployment** - Updates both Lambda functions with each deployment to maintain consistency
+- **Full stack deployment** - Always updates both Lambda functions to maintain consistency
 
 ## Required GitHub Secrets
 
@@ -194,44 +182,22 @@ Your Golf Canada password for integration testing.
 
 Ensure all required secrets listed above are configured in your GitHub repository settings.
 
-### Step 2: Create and Push a Tag
+### Step 2: Trigger Deployment
 
-The deployment workflow is triggered by pushing tags to the repository. The tag name determines which functions will be deployed.
+The deployment workflow is triggered manually from the GitHub Actions interface.
 
-#### General Release (Both Functions)
+1. Navigate to your repository on GitHub
+2. Click on the **Actions** tab
+3. Select the **Deploy to AWS Lambda** workflow from the left sidebar
+4. Click the **Run workflow** button (on the right side)
+5. Choose the deployment target from the dropdown:
+   - **both** - Deploy both Lambda functions (default)
+   - **authentication** - Deploy with focus on authentication function
+   - **skill** - Deploy with focus on skill function
+6. Select the branch to deploy from (typically `main` or `master`)
+7. Click **Run workflow** to start the deployment
 
-For general releases, major updates, or changes affecting both functions:
-
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
-
-Any tag starting with `v` (e.g., `v1.0.0`, `v1.1.0`, `v2.0.0-beta`) will trigger a deployment.
-
-#### Authentication-Focused Release
-
-For releases primarily related to authentication function changes:
-
-```bash
-git tag auth-v1.0.0
-git push origin auth-v1.0.0
-```
-
-Tags starting with `auth-v` indicate authentication-focused deployments (both functions are still deployed).
-
-#### Skill-Focused Release
-
-For releases primarily related to Alexa skill function changes:
-
-```bash
-git tag skill-v1.0.0
-git push origin skill-v1.0.0
-```
-
-Tags starting with `skill-v` indicate skill-focused deployments (both functions are still deployed).
-
-**Note:** Regardless of the tag pattern used, AWS SAM deploys the entire CloudFormation stack, which includes both Lambda functions. The tag naming convention helps with release organization and tracking which component was the primary focus of the release.
+**Note:** Regardless of the selection, AWS SAM deploys the entire CloudFormation stack, which includes both Lambda functions. The deployment target selection helps track which component was the primary focus of this deployment.
 
 ### Step 3: Monitor Deployment
 
@@ -255,50 +221,6 @@ After successful deployment, verify that your functions are working:
 3. **Test Alexa Skill:**
    - Use the Alexa Developer Console test simulator
    - Or test with an Alexa-enabled device linked to your developer account
-
-## Tag-Based Deployment Strategy
-
-The deployment workflow uses semantic versioning with prefixes to organize releases by their primary focus:
-
-| Tag Pattern | Example | Primary Focus | Actual Deployment |
-|-------------|---------|---------------|-------------------|
-| `v*` | `v1.0.0`, `v2.1.3` | General release | Both functions |
-| `auth-v*` | `auth-v1.0.0` | Authentication changes | Both functions |
-| `skill-v*` | `skill-v1.0.0` | Skill changes | Both functions |
-
-**Important:** All tag patterns deploy the complete stack (both Lambda functions). The tag prefix is organizational and helps track which component motivated the release.
-
-### Recommended Versioning Strategy
-
-1. **Major releases** (breaking changes): `v2.0.0`
-2. **Minor releases** (new features): `v1.1.0`
-3. **Patch releases** (bug fixes): `v1.0.1`
-4. **Function-specific hotfixes**: `auth-v1.0.1`, `skill-v1.0.1`
-
-### Example Deployment Scenarios
-
-**Scenario 1: Initial Production Release**
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-# Deploys complete stack - both authentication and skill functions
-```
-
-**Scenario 2: Authentication Security Patch**
-```bash
-git tag auth-v1.0.1
-git push origin auth-v1.0.1
-# Deploys complete stack - focus is on authentication fixes
-# Both functions are updated to maintain stack consistency
-```
-
-**Scenario 3: New Skill Feature**
-```bash
-git tag skill-v1.1.0
-git push origin skill-v1.1.0
-# Deploys complete stack - focus is on skill enhancements
-# Both functions are updated to maintain stack consistency
-```
 
 ## Troubleshooting
 
