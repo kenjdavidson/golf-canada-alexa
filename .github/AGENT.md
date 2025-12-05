@@ -68,28 +68,21 @@ Update the "Available Interactions" section with:
 - Expected behavior
 - Any special notes or limitations
 
-### 2. docs/ROADMAP.md
-Update the appropriate phase section with:
-- Implementation status checkboxes
-- Intent name and sample utterances
-- Actual response examples
-- Any TODO items or known limitations
+### 2. docs/AVAILABLE_FEATURES.md
+Update with the new feature:
+- Voice commands/utterances
+- What the feature does
+- Expected responses
+- Feature status (Available/In Progress/Planned)
 
-### 3. docs/API.md
-Update the "Supported Intents" table with:
-- Intent name
-- Handler class name
-- Slots (if any)
-- Brief description
-
-### 4. docs/ARCHITECTURE.md
+### 3. docs/ARCHITECTURE.md
 Update if the change affects:
 - System architecture
 - Data flow
 - New components or dependencies
 - Caching strategy
 
-### 5. Interaction Model
+### 4. Interaction Model
 Update `model/model.json` with:
 - New intents
 - New slots
@@ -205,28 +198,19 @@ class YourIntentHandlerTest : StringSpec({
   - Any special notes
 ```
 
-**docs/ROADMAP.md** - Update the appropriate phase:
+**docs/AVAILABLE_FEATURES.md** - Add the new feature:
 ```markdown
-#### Your Intent
-**Intent:** `GOLFCANADA.YourIntent`
-
-**Sample Utterances:**
+#### Your Feature Name
+**Voice Commands:**
 - "utterance example 1"
 - "utterance example 2"
 
-**Implementation Status:**
-- [x] Implement API endpoint
-- [x] Create handler
-- [x] Add response templates
-- [x] Add unit tests
+**What it does:**
+- Describe the functionality
+- Any special notes
 
-**Actual Response:**
+**Response:**
 > "Your actual response text here."
-```
-
-**docs/API.md** - Add to "Supported Intents" table:
-```markdown
-| `GOLFCANADA.YourIntent` | `YourIntentHandler` | `slotName` | Brief description |
 ```
 
 ### 7. Build and Test
@@ -451,8 +435,7 @@ When adding a new intent or feature, ensure you:
 - [ ] Update interaction model (`model/model.json`)
 - [ ] Add comprehensive unit tests
 - [ ] Update README.md with examples
-- [ ] Update docs/ROADMAP.md with status
-- [ ] Update docs/API.md with intent details
+- [ ] Update docs/AVAILABLE_FEATURES.md with feature details
 - [ ] Update docs/ARCHITECTURE.md if needed
 - [ ] Build and test locally
 - [ ] Verify documentation is consistent across all files
