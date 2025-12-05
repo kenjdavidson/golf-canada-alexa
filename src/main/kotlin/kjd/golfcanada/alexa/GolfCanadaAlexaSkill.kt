@@ -8,6 +8,7 @@ import kjd.golfcanada.alexa.handler.AddScorecardIntentHandler
 import kjd.golfcanada.alexa.handler.CancelAndStopIntentHandler
 import kjd.golfcanada.alexa.handler.FallbackIntentHandler
 import kjd.golfcanada.alexa.handler.FavoritePlayerHistoryIntentHandler
+import kjd.golfcanada.alexa.handler.GenericIntentExceptionHandler
 import kjd.golfcanada.alexa.handler.GolfCanadaApiExceptionHandler
 import kjd.golfcanada.alexa.handler.HandicapIntentRequestHandler
 import kjd.golfcanada.alexa.handler.HelpIntentHandler
@@ -18,7 +19,6 @@ import kjd.golfcanada.alexa.handler.PlayerProfileHistoryIntentHandler
 import kjd.golfcanada.alexa.handler.PlayerProfileMembershipIntentHandler
 import kjd.golfcanada.alexa.handler.SessionEndedRequestHandler
 import kjd.golfcanada.alexa.interceptor.AuthenticationRequestInterceptor
-import kjd.golfcanada.alexa.interceptor.HandicapLookupInterceptor
 import kjd.golfcanada.alexa.interceptor.UserProfileInterceptor
 import kjd.golfcanada.client.provider.ApiClientProvider
 
@@ -37,7 +37,7 @@ class GolfCanadaAlexaSkill: SkillStreamHandler(getSkills()) {
                     CancelAndStopIntentHandler(),
                     NavigateHomeIntentHandler(),
                     FallbackIntentHandler(),
-                    HandicapIntentRequestHandler(),
+                    HandicapIntentRequestHandler(apiClientProvider),
                     FavoritePlayerHistoryIntentHandler(),
                     PlayerProfileMembershipIntentHandler(),
                     PlayerProfileHistoryIntentHandler(),
@@ -46,13 +46,13 @@ class GolfCanadaAlexaSkill: SkillStreamHandler(getSkills()) {
                 )
                 .addRequestInterceptors(
                     AuthenticationRequestInterceptor(),
-                    UserProfileInterceptor(),
-                    HandicapLookupInterceptor(apiClientProvider)
+                    UserProfileInterceptor()
                 )
                 .addExceptionHandlers(
                     AccountLinkingExceptionHandler(),
                     NoUserDetailsExceptionHandler(),
-                    GolfCanadaApiExceptionHandler()
+                    GolfCanadaApiExceptionHandler(),
+                    GenericIntentExceptionHandler()
                 )
                 .build()
         }
