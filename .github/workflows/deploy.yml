@@ -1,0 +1,104 @@
+name: Deploy to AWS Lambda
+
+on:
+  workflow_dispatch:
+    inputs:
+      deployment_target:
+        description: 'Select which Lambda function(s) to deploy'
+        required: true
+        type: choice
+        options:
+          - 'both'
+          - 'authentication'
+          - 'skill'
+        default: 'both'
+
+permissions:
+  contents: read
+  id-token: write    # Required for AWS OIDC authentication
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build with Gradle
+        run: ./gradlew packageJar
+
+      - name: Setup AWS SAM CLI
+        uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Determine deployment type
+        id: deployment-type
+        run: |
+          TARGET="${{ inputs.deployment_target }}"
+          echo "Deployment target: $TARGET"
+          
+          if [[ "$TARGET" == "authentication" ]]; then
+            echo "Deploying: Authentication function only"
+            echo "type=authentication" >> $GITHUB_OUTPUT
+          elif [[ "$TARGET" == "skill" ]]; then
+            echo "Deploying: Skill function only"
+            echo "type=skill" >> $GITHUB_OUTPUT
+          else
+            echo "Deploying: Both functions"
+            echo "type=both" >> $GITHUB_OUTPUT
+          fi
+
+      - name: SAM Build - Both Functions
+        if: inputs.deployment_target == 'both'
+        run: sam build
+
+      - name: SAM Build - Authentication Function Only
+        if: inputs.deployment_target == 'authentication'
+        run: sam build GolfCanadaAuthenticationFunction
+
+      - name: SAM Build - Skill Function Only
+        if: inputs.deployment_target == 'skill'
+        run: sam build GolfCanadaAlexaSkillFunction
+
+      - name: Deploy to AWS
+        run: |
+          sam deploy \
+            --template-file .aws-sam/build/template.yaml \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset \
+            --stack-name ${{ secrets.STACK_NAME }} \
+            --capabilities CAPABILITY_IAM \
+            --resolve-s3 \
+            --region ${{ secrets.AWS_REGION }} \
+            --parameter-overrides \
+              ClientId="${{ secrets.GOLF_CANADA_CLIENT_ID }}" \
+              ClientSecret="${{ secrets.GOLF_CANADA_CLIENT_SECRET }}" \
+              SkillId="${{ secrets.ALEXA_SKILL_ID }}"
+
+      - name: Output deployment information
+        run: |
+          echo "✅ Deployment completed successfully!"
+          echo "📦 Deployment target: ${{ inputs.deployment_target }}"
+          echo "🌿 Branch: ${{ github.ref_name }}"
+          echo "📚 Stack: ${{ secrets.STACK_NAME }}"
+          echo "🌍 Region: ${{ secrets.AWS_REGION }}"
