@@ -99,7 +99,7 @@ The following interactions are planned for future development:
 - [ ] More detailed score breakdowns (hole-by-hole)
 - [ ] Course information and search
 
-For detailed planning on future work, see [docs/ROADMAP.md](docs/ROADMAP.md).
+For a complete list of all available features and planned functionality, see [docs/AVAILABLE_FEATURES.md](docs/AVAILABLE_FEATURES.md).
 
 ## Local Development
 
@@ -370,8 +370,7 @@ At this point I'm unsure whether the Wiki or Discussions will be available for t
 ## Related Documentation
 
 - [Architecture Documentation](docs/ARCHITECTURE.md)
-- [Development Roadmap](docs/ROADMAP.md)
-- [API Documentation](docs/API.md)
+- [Available Features](docs/AVAILABLE_FEATURES.md)
 - [Deployment Guide](docs/DEPLOYMENT.md)
 - [Contribution Guidelines](CONTRIBUTION.md)
 - [Privacy Policy](PRIVACY_POLICY.md)

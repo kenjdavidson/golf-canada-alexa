@@ -141,7 +141,7 @@ golf-canada-alexa/
 
 ### Adding a New Feature
 
-1. **Check the roadmap:** See `docs/ROADMAP.md` for planned features
+1. **Check available features:** See `docs/AVAILABLE_FEATURES.md` for current and planned features
 2. **Open an issue:** Discuss the feature before implementing
 3. **Create a branch:**
    ```shell
@@ -259,29 +259,21 @@ Add to the "Available Interactions" section with:
 - Expected behavior
 - Any limitations or special notes
 
-### 2. docs/ROADMAP.md
-Update the appropriate phase section with:
-- Implementation status checkboxes
-- Intent name and sample utterances
-- Actual response examples
-- TODO items or known limitations
+### 2. docs/AVAILABLE_FEATURES.md
+Update with the new feature details:
+- Voice commands/utterances
+- What the feature does
+- Expected responses
+- Feature status (Available/In Progress/Planned)
 
-### 3. docs/API.md
-Update the "Supported Intents" table with:
-- Intent name
-- Handler class name
-- Slots (if any)
-- Status (Complete/Stub/Planned)
-- Brief description
-
-### 4. docs/ARCHITECTURE.md
+### 3. docs/ARCHITECTURE.md
 Update if your changes affect:
 - System architecture or components
 - Data flow or request processing
 - New dependencies
 - Caching strategy
 
-### 5. model/model.json
+### 4. model/model.json
 Update the Alexa interaction model with:
 - New intents
 - New slots and slot types
