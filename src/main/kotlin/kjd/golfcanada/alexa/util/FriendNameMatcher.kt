@@ -3,18 +3,6 @@ package kjd.golfcanada.alexa.util
 import kjd.golfcanada.client.model.Friend
 
 /**
- * Interface for objects that have a friend name.
- * 
- * This interface can be implemented by friend-like classes to enable name-based matching.
- * However, since the Friend DTO is generated code, FriendNameMatcher also provides
- * a generic findMatchesBy method that accepts a lambda for name extraction,
- * allowing type-safe matching without requiring interface implementation.
- */
-interface HasFriendName {
-    val name: String?
-}
-
-/**
  * Utility class for matching friend names against a search query using fuzzy matching.
  * 
  * This class provides a predicate that can be used to filter a list of friends

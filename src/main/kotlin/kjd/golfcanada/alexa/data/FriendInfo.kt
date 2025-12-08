@@ -1,7 +1,5 @@
 package kjd.golfcanada.alexa.data
 
-import kjd.golfcanada.alexa.util.HasFriendName
-
 /**
  * Lightweight representation of a friend containing only essential information.
  * 
@@ -14,6 +12,6 @@ import kjd.golfcanada.alexa.util.HasFriendName
  */
 data class FriendInfo(
     val memberId: Long?,
-    override val name: String?,
+    val name: String?,
     val handicap: String? = null
-) : HasFriendName
+)
