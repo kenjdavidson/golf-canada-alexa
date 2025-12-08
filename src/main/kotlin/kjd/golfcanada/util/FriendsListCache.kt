@@ -73,7 +73,7 @@ object FriendsListCache {
         
         if (cachedFriends != null) {
             // Return cached friends list, converting from serialized map format
-            return cachedFriends.mapNotNull { friendMap ->
+            return cachedFriends.map { friendMap ->
                 val memberId = when (val id = friendMap["memberId"]) {
                     is Number -> id.toLong()
                     is String -> id.toLongOrNull()
