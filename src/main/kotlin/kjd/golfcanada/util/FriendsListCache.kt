@@ -2,9 +2,8 @@ package kjd.golfcanada.util
 
 import com.amazon.ask.dispatcher.request.handler.HandlerInput
 import kjd.golfcanada.alexa.data.FriendInfo
-import kjd.golfcanada.alexa.interceptor.UserProfileInterceptor
+import kjd.golfcanada.alexa.util.getUserOrThrow
 import kjd.golfcanada.client.model.Friend
-import kjd.golfcanada.client.model.User
 import kjd.golfcanada.client.provider.ApiClientWrapper
 
 /**
@@ -49,14 +48,14 @@ object FriendsListCache {
      * @param input The HandlerInput containing session attributes
      * @param client The authenticated API client wrapper
      * @return List of FriendInfo objects (empty list if no friends found)
-     * @throws IllegalStateException if user ID is not available in session
+     * @throws NoUserDetailsException if user ID is not available in session
      */
     fun get(input: HandlerInput, client: ApiClientWrapper): List<FriendInfo> {
         val sessionAttributes = input.attributesManager.sessionAttributes
         
-        // Get user from session (populated by UserProfileInterceptor)
-        val user = sessionAttributes[UserProfileInterceptor.USER_SESSION_KEY] as? User
-        val userId = user?.id ?: throw IllegalStateException("User ID not available in session")
+        // Get user from session using extension function
+        val user = input.getUserOrThrow()
+        val userId = user.id!!
         
         // Check if friends list is already cached in session
         @Suppress("UNCHECKED_CAST")

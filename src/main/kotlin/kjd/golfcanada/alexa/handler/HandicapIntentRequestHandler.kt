@@ -9,10 +9,9 @@ import kjd.golfcanada.alexa.IntentName
 import kjd.golfcanada.alexa.exception.AccountLinkingException
 import kjd.golfcanada.alexa.exception.GenericIntentException
 import kjd.golfcanada.alexa.exception.GolfCanadaApiException
-import kjd.golfcanada.alexa.exception.NoUserDetailsException
-import kjd.golfcanada.alexa.interceptor.UserProfileInterceptor
 import kjd.golfcanada.alexa.data.HandicapSummaryData
 import kjd.golfcanada.alexa.util.FriendNameMatcher
+import kjd.golfcanada.alexa.util.getUserOrThrow
 import kjd.golfcanada.client.model.User
 import kjd.golfcanada.client.provider.ApiClientProvider
 import kjd.golfcanada.client.provider.withAuthenticatedClient
@@ -49,12 +48,7 @@ class HandicapIntentRequestHandler(
         val slots = request.intent?.slots
 
         // Get user profile from session - validate once for all handicap requests
-        val sessionAttributes = input.attributesManager.sessionAttributes
-        val user = sessionAttributes[UserProfileInterceptor.USER_SESSION_KEY] as? User
-        if (user?.id == null) {
-            logger.warn("No user profile available for handicap request")
-            throw NoUserDetailsException()
-        }
+        val user = input.getUserOrThrow()
 
         val friendFullNameSlot = slots?.get("FriendFullName")
         val friendFirstNameSlot = slots?.get("FriendFirstName")
