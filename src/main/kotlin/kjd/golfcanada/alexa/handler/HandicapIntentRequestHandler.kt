@@ -144,8 +144,9 @@ class HandicapIntentRequestHandler(
                         logger.info("Found matching friend")
                         
                         // Return friend's handicap information
-                        val dataModel = mutableMapOf<String, Any>()
-                        friend.name?.let { dataModel["name"] = it }
+                        val dataModel = mutableMapOf<String, Any>(
+                            "name" to friend.name
+                        )
                         friend.handicap?.let { dataModel["handicap"] = it }
                         
                         input.generateTemplateResponse("HandicapIntentFriendResponse", dataModel)

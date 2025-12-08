@@ -228,22 +228,23 @@ class FriendsListCacheTest : DescribeSpec({
             result[1].handicap shouldBe "12.3"
         }
         
-        it("should handle friends with null fields") {
+        it("should filter out friends with null id or name") {
             // Arrange
             val friends = listOf(
                 Friend(individualId = null, name = null),
-                Friend(individualId = 1002, name = "Jane Smith")
+                Friend(individualId = 1001, name = null),
+                Friend(individualId = null, name = "Missing ID"),
+                Friend(individualId = 1002, name = "Jane Smith", handicap = "12.3")
             )
             
             // Act
             val result = FriendsListCache.fromFriends(friends)
             
-            // Assert
-            result shouldHaveSize 2
-            result[0].memberId shouldBe null
-            result[0].name shouldBe null
-            result[1].memberId shouldBe 1002L
-            result[1].name shouldBe "Jane Smith"
+            // Assert - only the friend with both id and name should be included
+            result shouldHaveSize 1
+            result[0].memberId shouldBe 1002L
+            result[0].name shouldBe "Jane Smith"
+            result[0].handicap shouldBe "12.3"
         }
         
         it("should handle empty friends list") {

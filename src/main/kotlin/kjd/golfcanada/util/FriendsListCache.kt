@@ -68,11 +68,13 @@ object FriendsListCache {
         // Friends list not cached, fetch from API
         val friends = client.members.getFriends(userId)
         
-        // Convert to lightweight FriendInfo objects
-        val friendInfoList = friends.map { friend ->
+        // Convert to lightweight FriendInfo objects, filtering out friends with null id or name
+        val friendInfoList = friends.mapNotNull { friend ->
+            val id = friend.individualId ?: return@mapNotNull null
+            val name = friend.name ?: return@mapNotNull null
             FriendInfo(
-                memberId = friend.individualId,
-                name = friend.name,
+                memberId = id,
+                name = name,
                 handicap = friend.handicap
             )
         }
@@ -89,15 +91,18 @@ object FriendsListCache {
      * 
      * This is a utility method for converting the full Friend DTO from the API
      * to the minimal FriendInfo representation used by the cache.
+     * Friends with null id or name are filtered out.
      * 
      * @param friends List of Friend DTOs from the API
-     * @return List of FriendInfo objects
+     * @return List of FriendInfo objects (excludes friends with null id or name)
      */
     fun fromFriends(friends: List<Friend>): List<FriendInfo> {
-        return friends.map { friend ->
+        return friends.mapNotNull { friend ->
+            val id = friend.individualId ?: return@mapNotNull null
+            val name = friend.name ?: return@mapNotNull null
             FriendInfo(
-                memberId = friend.individualId,
-                name = friend.name,
+                memberId = id,
+                name = name,
                 handicap = friend.handicap
             )
         }
