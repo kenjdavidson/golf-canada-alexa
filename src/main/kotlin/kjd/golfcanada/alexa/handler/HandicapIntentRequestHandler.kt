@@ -68,17 +68,17 @@ class HandicapIntentRequestHandler(
     private fun handleOwnHandicap(input: HandlerInput): Optional<Response> {
         logger.info("Own handicap requested")
         
+        // Get user profile from session - validate before authentication
+        val sessionAttributes = input.attributesManager.sessionAttributes
+        val user = sessionAttributes[UserProfileInterceptor.USER_SESSION_KEY] as? User
+        if (user?.id == null) {
+            logger.warn("No user profile available for fetching handicap")
+            throw NoUserDetailsException()
+        }
+        
         try {
             // Use the withAuthenticatedClient extension to simplify API client access
             return apiClientProvider.withAuthenticatedClient(input) { client ->
-                // Get user profile from session
-                val sessionAttributes = input.attributesManager.sessionAttributes
-                val user = sessionAttributes[UserProfileInterceptor.USER_SESSION_KEY] as? User
-                if (user?.id == null) {
-                    logger.warn("No user profile available for fetching handicap")
-                    throw NoUserDetailsException()
-                }
-                
                 // Fetch user's handicap
                 val handicapCalculation = client.scores.getHandicapCalculation(user.id)
                 val handicapSummary = HandicapSummaryData.fromDTO(handicapCalculation)
@@ -112,17 +112,17 @@ class HandicapIntentRequestHandler(
     private fun handleFriendHandicap(input: HandlerInput, friendQuery: String): Optional<Response> {
         logger.info("Friend handicap requested for: $friendQuery")
         
+        // Get user profile from session - validate before authentication
+        val sessionAttributes = input.attributesManager.sessionAttributes
+        val user = sessionAttributes[UserProfileInterceptor.USER_SESSION_KEY] as? User
+        if (user?.id == null) {
+            logger.warn("No user profile available for fetching friends list")
+            throw NoUserDetailsException()
+        }
+        
         try {
             // Use the withAuthenticatedClient extension to simplify API client access
             return apiClientProvider.withAuthenticatedClient(input) { client ->
-                // Get user profile from session
-                val sessionAttributes = input.attributesManager.sessionAttributes
-                val user = sessionAttributes[UserProfileInterceptor.USER_SESSION_KEY] as? User
-                if (user?.id == null) {
-                    logger.warn("No user profile available for fetching friends list")
-                    throw NoUserDetailsException()
-                }
-                
                 // Get friends list
                 val friends = client.members.getFriends(user.id)
                 

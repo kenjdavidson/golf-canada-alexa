@@ -17,6 +17,7 @@ import io.kotest.matchers.string.shouldContain
 import io.mockk.every
 import io.mockk.mockk
 import kjd.golfcanada.alexa.exception.AccountLinkingException
+import kjd.golfcanada.alexa.exception.NoUserDetailsException
 import kjd.golfcanada.alexa.interceptor.UserProfileInterceptor
 import kjd.golfcanada.alexa.data.HandicapSummaryData
 import kjd.golfcanada.alexa.util.TemplateFactoryUtil
@@ -73,7 +74,7 @@ class HandicapIntentRequestHandlerTest : DescribeSpec({
     }
 
     context("handle - own handicap") {
-        it("should throw AccountLinkingException when no access token") {
+        it("should throw NoUserDetailsException when no user profile") {
             val apiClientProvider = mockk<ApiClientProvider>(relaxed = true)
             val attributesManager = mockk<AttributesManager>(relaxed = true)
             every { attributesManager.sessionAttributes } returns mutableMapOf()
@@ -90,14 +91,14 @@ class HandicapIntentRequestHandlerTest : DescribeSpec({
 
             val handler = HandicapIntentRequestHandler(apiClientProvider)
 
-            shouldThrow<AccountLinkingException> {
+            shouldThrow<NoUserDetailsException> {
                 handler.handle(input)
             }
         }
     }
 
     context("handle - friend handicap") {
-        it("should throw AccountLinkingException when no access token with FriendFullName") {
+        it("should throw NoUserDetailsException when no user profile with FriendFullName") {
             val apiClientProvider = mockk<ApiClientProvider>(relaxed = true)
             val attributesManager = mockk<AttributesManager>(relaxed = true)
             every { attributesManager.sessionAttributes } returns mutableMapOf()
@@ -120,12 +121,12 @@ class HandicapIntentRequestHandlerTest : DescribeSpec({
 
             val handler = HandicapIntentRequestHandler(apiClientProvider)
 
-            shouldThrow<AccountLinkingException> {
+            shouldThrow<NoUserDetailsException> {
                 handler.handle(input)
             }
         }
 
-        it("should throw AccountLinkingException when no access token with FriendFirstName") {
+        it("should throw NoUserDetailsException when no user profile with FriendFirstName") {
             val apiClientProvider = mockk<ApiClientProvider>(relaxed = true)
             val attributesManager = mockk<AttributesManager>(relaxed = true)
             every { attributesManager.sessionAttributes } returns mutableMapOf()
@@ -148,7 +149,7 @@ class HandicapIntentRequestHandlerTest : DescribeSpec({
 
             val handler = HandicapIntentRequestHandler(apiClientProvider)
 
-            shouldThrow<AccountLinkingException> {
+            shouldThrow<NoUserDetailsException> {
                 handler.handle(input)
             }
         }
