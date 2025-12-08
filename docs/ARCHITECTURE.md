@@ -52,6 +52,7 @@ Generated client code for interacting with Golf Canada's API.
 
 **Key Components:**
 - **ApiClientProvider** - Manages API client instances with shared OkHttp client for connection pooling
+  - Provides `withAuthenticatedClient` extension function for simplified API access with automatic token handling
 - **ApiClientWrapper** - Wraps API clients with authentication token management
 - **Token Management** - Automatically extracts and manages Golf Canada access tokens from Alexa account linking
 - **API Endpoints** - Generated from OpenAPI spec including:
