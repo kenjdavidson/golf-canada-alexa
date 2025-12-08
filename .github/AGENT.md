@@ -346,6 +346,22 @@ sam local invoke GolfCanadaAlexaSkillFunction \
 
 ### Logging
 
+**IMPORTANT: Privacy Policy Compliance**
+
+Per the privacy policy, **ABSOLUTELY NO USER-RELATED INFORMATION** should be logged at any point. This includes:
+
+- User account information: usernames, IDs, email addresses
+- Player information: player names, IDs, handicap values
+- Friend information: friend names, IDs  
+- Query details: any names or identifiers provided by users for lookups
+- Personal data: any information that can identify or relate to a specific individual
+
+**Allowed Logging:**
+- Generic operation status (e.g., "Handicap requested", "Login attempt started")
+- Error messages and exceptions (without user-specific context)
+- Technical diagnostics (e.g., "No access token present")
+- Count/statistics without identifying information (e.g., "Multiple matches found")
+
 ```kotlin
 import org.slf4j.LoggerFactory
 
@@ -353,9 +369,15 @@ class YourHandler {
     private val logger = LoggerFactory.getLogger(YourHandler::class.java)
     
     fun process() {
-        logger.info("Information message")
-        logger.warn("Warning message")
-        logger.error("Error message with context", exception)
+        // CORRECT - No user information
+        logger.info("Processing request")
+        logger.warn("No access token available")
+        logger.error("Failed to fetch data: ${e.message}", exception)
+        
+        // WRONG - Contains user information
+        // logger.info("Processing request for user: $userId")  // ❌ Never log user IDs
+        // logger.info("Friend name: $friendName")  // ❌ Never log names
+        // logger.info("Query: $query")  // ❌ Never log search queries
     }
 }
 ```

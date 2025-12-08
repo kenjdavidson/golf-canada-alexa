@@ -60,7 +60,7 @@ class AuthenticationHandler internal constructor(
         System.getenv("CLIENT_ID"),
         System.getenv("CLIENT_SECRET")
     ) {
-        logger.info("Building AuthenticationHandler with client_id: '$clientId' and client_secret: '$clientSecret'")
+        logger.info("Building AuthenticationHandler with client credentials")
     }
 
     /**
@@ -71,8 +71,7 @@ class AuthenticationHandler internal constructor(
      * @returns API Gateway response matching Alexa Account Linking requirements
      */
     override fun handleRequest(event: APIGatewayV2HTTPEvent, context: Context): APIGatewayProxyResponseEvent {
-        logger.debug("Attempting request with query params: {}", event.queryStringParameters)
-        logger.debug("Attempting request with body: {}", event.body)
+        logger.debug("Processing authentication request for path: {}", event.rawPath)
 
         return try {
             when(event.rawPath) {
@@ -209,7 +208,7 @@ class AuthenticationHandler internal constructor(
                 invalidAuthenticationRequest(ErrorCode.INVALID_PASSWORD)
             }.trim()
 
-            logger.info("Attempting login {}:{} with scopes '{}'", username, "***********", scopes)
+            logger.info("Attempting login with provided credentials and scopes")
             val authToken = authApi.getAuthToken(
                 AuthApi.GrantTypeGetAuthToken.PASSWORD,
                 scopes,
