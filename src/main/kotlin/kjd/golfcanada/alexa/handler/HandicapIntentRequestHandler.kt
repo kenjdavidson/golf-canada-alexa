@@ -16,6 +16,7 @@ import kjd.golfcanada.alexa.util.FriendNameMatcher
 import kjd.golfcanada.client.model.User
 import kjd.golfcanada.client.provider.ApiClientProvider
 import kjd.golfcanada.client.provider.withAuthenticatedClient
+import kjd.golfcanada.util.FriendsListCache
 import org.slf4j.LoggerFactory
 import java.util.*
 
@@ -98,13 +99,13 @@ class HandicapIntentRequestHandler(
     }
 
     /**
-     * Handles the request for a friend's handicap by making a live API call.
+     * Handles the request for a friend's handicap by using cached friends list.
      * 
      * This method:
-     * 1. Retrieves the user's friends list from the Golf Canada API
+     * 1. Retrieves the user's friends list from cache or API via FriendsListCache
      * 2. Performs fuzzy matching on the raw search query against friend names
      * 3. Handles ambiguity if multiple matches are found
-     * 4. Fetches and returns the friend's handicap information
+     * 4. Returns the friend's handicap information
      * 
      * @param input The handler input
      * @param user The validated user from session
@@ -117,8 +118,8 @@ class HandicapIntentRequestHandler(
         try {
             // Use the withAuthenticatedClient extension to simplify API client access
             return apiClientProvider.withAuthenticatedClient(input) { client ->
-                // Get friends list
-                val friends = client.members.getFriends(user.id!!)
+                // Get friends list from cache or API
+                val friends = FriendsListCache.get(input, client, user.id!!)
                 
                 if (friends.isEmpty()) {
                     logger.info("No friends found for user")
@@ -126,7 +127,7 @@ class HandicapIntentRequestHandler(
                 }
                 
                 // Perform fuzzy matching using FriendNameMatcher
-                val matches = FriendNameMatcher.findMatches(friends, friendQuery)
+                val matches = FriendNameMatcher.findMatchesBy(friends, friendQuery) { it.name }
                 
                 when {
                     matches.isEmpty() -> {

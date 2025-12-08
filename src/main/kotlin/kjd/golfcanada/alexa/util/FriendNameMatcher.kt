@@ -3,6 +3,13 @@ package kjd.golfcanada.alexa.util
 import kjd.golfcanada.client.model.Friend
 
 /**
+ * Interface for objects that have a friend name.
+ */
+interface HasFriendName {
+    val name: String?
+}
+
+/**
  * Utility class for matching friend names against a search query using fuzzy matching.
  * 
  * This class provides a predicate that can be used to filter a list of friends
@@ -52,6 +59,46 @@ object FriendNameMatcher {
     }
     
     /**
+     * Generic version that finds objects whose names match the search query using fuzzy matching.
+     * 
+     * This method works with any object that has a name property accessible via the getName lambda.
+     * 
+     * Matching logic (in priority order):
+     * 1. Exact match (case-insensitive)
+     * 2. Starts with query (case-insensitive)
+     * 3. Contains query (case-insensitive)
+     * 4. Query contains any part of the friend's name (case-insensitive)
+     * 
+     * @param items List of items to search
+     * @param query The search query
+     * @param getName Lambda to extract the name from each item
+     * @return List of matching items
+     */
+    fun <T> findMatchesBy(items: List<T>, query: String, getName: (T) -> String?): List<T> {
+        if (query.isBlank()) return emptyList()
+        
+        val normalizedQuery = query.trim().lowercase()
+        
+        // Try exact match first
+        val exactMatches = items.filter { matchesByName(getName(it), normalizedQuery, MatchType.EXACT) }
+        if (exactMatches.isNotEmpty()) return exactMatches
+        
+        // Try starts with
+        val startsWithMatches = items.filter { matchesByName(getName(it), normalizedQuery, MatchType.STARTS_WITH) }
+        if (startsWithMatches.isNotEmpty()) return startsWithMatches
+        
+        // Try contains query
+        val containsMatches = items.filter { matchesByName(getName(it), normalizedQuery, MatchType.CONTAINS) }
+        if (containsMatches.isNotEmpty()) return containsMatches
+        
+        // Try query contains any part of friend's name (for nicknames or partial names)
+        val queryContainsPart = items.filter { matchesByName(getName(it), normalizedQuery, MatchType.QUERY_CONTAINS_NAME_PART) }
+        if (queryContainsPart.isNotEmpty()) return queryContainsPart
+        
+        return emptyList()
+    }
+    
+    /**
      * Creates a predicate function that can be used with filter() to find matching friends.
      * 
      * @param query The search query
@@ -72,13 +119,18 @@ object FriendNameMatcher {
     
     private fun matches(friend: Friend, normalizedQuery: String, matchType: MatchType): Boolean {
         val friendName = friend.name?.lowercase()?.trim() ?: return false
+        return matchesByName(friendName, normalizedQuery, matchType)
+    }
+    
+    private fun matchesByName(friendName: String?, normalizedQuery: String, matchType: MatchType): Boolean {
+        val name = friendName?.lowercase()?.trim() ?: return false
         
         return when (matchType) {
-            MatchType.EXACT -> friendName == normalizedQuery
-            MatchType.STARTS_WITH -> friendName.startsWith(normalizedQuery)
-            MatchType.CONTAINS -> friendName.contains(normalizedQuery)
+            MatchType.EXACT -> name == normalizedQuery
+            MatchType.STARTS_WITH -> name.startsWith(normalizedQuery)
+            MatchType.CONTAINS -> name.contains(normalizedQuery)
             MatchType.QUERY_CONTAINS_NAME_PART -> {
-                val nameParts = friendName.split(" ")
+                val nameParts = name.split(" ")
                 nameParts.any { part -> normalizedQuery.contains(part) && part.length > 2 }
             }
         }
