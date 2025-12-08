@@ -115,4 +115,30 @@ class MembersApiTest : AuthenticatedApiTest({
             }
         }
     }
+    
+    describe("getCourseList") {
+        it("should retrieve course list for authenticated user") {
+            val userId = authToken.user?.id ?: throw IllegalStateException("User ID not found in auth token")
+            val courses = membersApi.getCourseList(userId)
+            
+            courses.shouldNotBeNull()
+            // Course list may be empty or contain courses
+            // Verify it returns a list (not throwing an exception is sufficient)
+        }
+        
+        it("should return courses with expected properties when courses exist") {
+            val userId = authToken.user?.id ?: throw IllegalStateException("User ID not found in auth token")
+            val courses = membersApi.getCourseList(userId)
+            
+            courses.shouldNotBeNull()
+            // If there are courses, verify the structure
+            if (courses.isNotEmpty()) {
+                val course = courses.first()
+                course.shouldNotBeNull()
+                // Verify that the course has expected properties
+                course.id shouldNotBe null
+                course.name.shouldNotBeNull()
+            }
+        }
+    }
 })
