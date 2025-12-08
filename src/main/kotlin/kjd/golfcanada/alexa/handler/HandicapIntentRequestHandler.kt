@@ -9,13 +9,13 @@ import kjd.golfcanada.alexa.IntentName
 import kjd.golfcanada.alexa.exception.AccountLinkingException
 import kjd.golfcanada.alexa.exception.GenericIntentException
 import kjd.golfcanada.alexa.exception.GolfCanadaApiException
-import kjd.golfcanada.alexa.exception.NoUserDetailsException
-import kjd.golfcanada.alexa.interceptor.UserProfileInterceptor
 import kjd.golfcanada.alexa.data.HandicapSummaryData
 import kjd.golfcanada.alexa.util.FriendNameMatcher
+import kjd.golfcanada.alexa.util.getUserOrThrow
 import kjd.golfcanada.client.model.User
 import kjd.golfcanada.client.provider.ApiClientProvider
 import kjd.golfcanada.client.provider.withAuthenticatedClient
+import kjd.golfcanada.util.FriendsListCache
 import org.slf4j.LoggerFactory
 import java.util.*
 
@@ -48,12 +48,7 @@ class HandicapIntentRequestHandler(
         val slots = request.intent?.slots
 
         // Get user profile from session - validate once for all handicap requests
-        val sessionAttributes = input.attributesManager.sessionAttributes
-        val user = sessionAttributes[UserProfileInterceptor.USER_SESSION_KEY] as? User
-        if (user?.id == null) {
-            logger.warn("No user profile available for handicap request")
-            throw NoUserDetailsException()
-        }
+        val user = input.getUserOrThrow()
 
         val friendFullNameSlot = slots?.get("FriendFullName")
         val friendFirstNameSlot = slots?.get("FriendFirstName")
@@ -61,7 +56,7 @@ class HandicapIntentRequestHandler(
         val friendQuery = friendFullNameSlot?.value ?: friendFirstNameSlot?.value
 
         return if (friendQuery != null) {
-            handleFriendHandicap(input, user, friendQuery)
+            handleFriendHandicap(input, friendQuery)
         } else {
             handleOwnHandicap(input, user)
         }
@@ -98,27 +93,26 @@ class HandicapIntentRequestHandler(
     }
 
     /**
-     * Handles the request for a friend's handicap by making a live API call.
+     * Handles the request for a friend's handicap by using cached friends list.
      * 
      * This method:
-     * 1. Retrieves the user's friends list from the Golf Canada API
+     * 1. Retrieves the user's friends list from cache or API via FriendsListCache
      * 2. Performs fuzzy matching on the raw search query against friend names
      * 3. Handles ambiguity if multiple matches are found
-     * 4. Fetches and returns the friend's handicap information
+     * 4. Returns the friend's handicap information
      * 
      * @param input The handler input
-     * @param user The validated user from session
      * @param friendQuery The raw search query from the user (e.g., "Dean Ellis" or "Deano")
      * @return Response with the friend's handicap information
      */
-    private fun handleFriendHandicap(input: HandlerInput, user: User, friendQuery: String): Optional<Response> {
+    private fun handleFriendHandicap(input: HandlerInput, friendQuery: String): Optional<Response> {
         logger.info("Friend handicap requested")
         
         try {
             // Use the withAuthenticatedClient extension to simplify API client access
             return apiClientProvider.withAuthenticatedClient(input) { client ->
-                // Get friends list
-                val friends = client.members.getFriends(user.id!!)
+                // Get friends list from cache or API
+                val friends = FriendsListCache.get(input, client)
                 
                 if (friends.isEmpty()) {
                     logger.info("No friends found for user")
@@ -126,7 +120,7 @@ class HandicapIntentRequestHandler(
                 }
                 
                 // Perform fuzzy matching using FriendNameMatcher
-                val matches = FriendNameMatcher.findMatches(friends, friendQuery)
+                val matches = FriendNameMatcher.findMatchesBy(friends, friendQuery) { it.name }
                 
                 when {
                     matches.isEmpty() -> {
@@ -150,8 +144,9 @@ class HandicapIntentRequestHandler(
                         logger.info("Found matching friend")
                         
                         // Return friend's handicap information
-                        val dataModel = mutableMapOf<String, Any>()
-                        friend.name?.let { dataModel["name"] = it }
+                        val dataModel = mutableMapOf<String, Any>(
+                            "name" to friend.name
+                        )
                         friend.handicap?.let { dataModel["handicap"] = it }
                         
                         input.generateTemplateResponse("HandicapIntentFriendResponse", dataModel)
