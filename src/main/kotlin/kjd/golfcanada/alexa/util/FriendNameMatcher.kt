@@ -5,9 +5,10 @@ import kjd.golfcanada.client.model.Friend
 /**
  * Interface for objects that have a friend name.
  * 
- * This interface allows FriendNameMatcher to work with different friend representations
- * (e.g., Friend DTO, FriendInfo cache object) without requiring each to implement this interface.
- * The generic findMatchesBy method provides type-safe name matching through a lambda instead.
+ * This interface can be implemented by friend-like classes to enable name-based matching.
+ * However, since the Friend DTO is generated code, FriendNameMatcher also provides
+ * a generic findMatchesBy method that accepts a lambda for name extraction,
+ * allowing type-safe matching without requiring interface implementation.
  */
 interface HasFriendName {
     val name: String?

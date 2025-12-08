@@ -28,7 +28,7 @@ data class FriendInfo(
  * the friends list from the Golf Canada API within a single Alexa session.
  * 
  * The cache:
- * - Stores only minimal friend information (ID and name) in session attributes
+ * - Stores only minimal friend information (ID, name, and handicap) in session attributes
  * - Checks session storage before making API calls
  * - Automatically fetches and populates the session when cache is empty
  * - Returns the cached list for subsequent requests in the same session
