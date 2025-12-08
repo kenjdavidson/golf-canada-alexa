@@ -118,10 +118,18 @@ object FriendNameMatcher {
     }
     
     private fun matches(friend: Friend, normalizedQuery: String, matchType: MatchType): Boolean {
-        val friendName = friend.name?.lowercase()?.trim() ?: return false
+        val friendName = friend.name ?: return false
         return matchesByName(friendName, normalizedQuery, matchType)
     }
     
+    /**
+     * Matches a friend name against a normalized query.
+     * 
+     * @param friendName The friend's name (unnormalized)
+     * @param normalizedQuery The search query (already normalized - lowercase and trimmed)
+     * @param matchType The type of match to perform
+     * @return true if the name matches the query according to the match type
+     */
     private fun matchesByName(friendName: String?, normalizedQuery: String, matchType: MatchType): Boolean {
         val name = friendName?.lowercase()?.trim() ?: return false
         
