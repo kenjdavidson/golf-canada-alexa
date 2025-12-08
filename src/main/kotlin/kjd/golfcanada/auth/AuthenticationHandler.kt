@@ -71,8 +71,7 @@ class AuthenticationHandler internal constructor(
      * @returns API Gateway response matching Alexa Account Linking requirements
      */
     override fun handleRequest(event: APIGatewayV2HTTPEvent, context: Context): APIGatewayProxyResponseEvent {
-        logger.debug("Attempting request with query params: {}", event.queryStringParameters)
-        logger.debug("Attempting request with body: {}", event.body)
+        logger.debug("Processing authentication request for path: {}", event.rawPath)
 
         return try {
             when(event.rawPath) {
