@@ -37,7 +37,7 @@ data class FriendInfo(
  * ```kotlin
  * apiClientProvider.withAuthenticatedClient(input) { client ->
  *     val friends = FriendsListCache.get(input, client, userId)
- *     // Use friends list...
+ *     // friends is a List<FriendInfo> with memberId, name, and handicap
  * }
  * ```
  */
