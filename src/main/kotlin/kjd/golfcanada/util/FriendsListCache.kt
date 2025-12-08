@@ -68,16 +68,8 @@ object FriendsListCache {
         // Friends list not cached, fetch from API
         val friends = client.members.getFriends(userId)
         
-        // Convert to lightweight FriendInfo objects, filtering out friends with null id or name
-        val friendInfoList = friends.mapNotNull { friend ->
-            val id = friend.individualId ?: return@mapNotNull null
-            val name = friend.name ?: return@mapNotNull null
-            FriendInfo(
-                memberId = id,
-                name = name,
-                handicap = friend.handicap
-            )
-        }
+        // Convert to lightweight FriendInfo objects using the conversion utility
+        val friendInfoList = fromFriends(friends)
         
         // Store FriendInfo list directly in session
         sessionAttributes[FRIENDS_LIST_KEY] = friendInfoList
