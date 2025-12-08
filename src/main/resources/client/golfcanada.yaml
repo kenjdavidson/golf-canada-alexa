@@ -124,6 +124,34 @@ paths:
         404:
           description: Member Not Found
 
+  /api/members/{userId}/getCourseList:
+    get:
+      summary: Retrieve member course list (favorite courses)
+      tags: ["Members"]
+      operationId: getCourseList
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: The unique identifier of the member
+          schema:
+            type: identifier
+      responses:
+        200:
+          description: Course list retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Course"
+        401:
+          description: Not Authorized
+        404:
+          description: Member Not Found
+
   /api/scores/getHandicapCalculation:
     get:
       summary: Retrieve handicap calculation for an individual
@@ -530,6 +558,21 @@ components:
         expiresOn:
           type: string
           pattern: "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?"
+
+    Course:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        individualId:
+          type: identifier
+        name:
+          type: string
+        city:
+          type: string
+        region:
+          type: string
           
     HandicapHistoryEntry:
       type: object
