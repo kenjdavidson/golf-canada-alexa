@@ -9,8 +9,11 @@ import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kjd.golfcanada.alexa.data.FriendInfo
+import kjd.golfcanada.alexa.interceptor.UserProfileInterceptor
 import kjd.golfcanada.client.api.MembersApi
 import kjd.golfcanada.client.model.Friend
+import kjd.golfcanada.client.model.User
 import kjd.golfcanada.client.provider.ApiClientWrapper
 
 /**
@@ -31,12 +34,15 @@ class FriendsListCacheTest : DescribeSpec({
             it("should fetch friends from API and cache them") {
                 // Arrange
                 val userId = 12345L
+                val user = User(id = userId)
                 val apiFriends = listOf(
                     Friend(individualId = 1001, name = "Dean Ellis", handicap = "8.5"),
                     Friend(individualId = 1002, name = "Jane Smith", handicap = "12.3")
                 )
                 
-                val sessionAttributes = mutableMapOf<String, Any>()
+                val sessionAttributes = mutableMapOf<String, Any>(
+                    UserProfileInterceptor.USER_SESSION_KEY to user
+                )
                 val attributesManager = mockk<AttributesManager>()
                 every { attributesManager.sessionAttributes } returns sessionAttributes
                 every { attributesManager.sessionAttributes = any() } answers { 
@@ -53,7 +59,7 @@ class FriendsListCacheTest : DescribeSpec({
                 every { clientWrapper.members } returns membersApi
                 
                 // Act
-                val result = FriendsListCache.get(input, clientWrapper, userId)
+                val result = FriendsListCache.get(input, clientWrapper)
                 
                 // Assert
                 result shouldHaveSize 2
@@ -67,16 +73,22 @@ class FriendsListCacheTest : DescribeSpec({
                 // Verify API was called
                 verify(exactly = 1) { membersApi.getFriends(userId) }
                 
-                // Verify cache was populated
-                sessionAttributes.containsKey("friends_list_cache") shouldBe true
+                // Verify cache was populated with FriendInfo objects
+                sessionAttributes.containsKey("friends_list") shouldBe true
+                @Suppress("UNCHECKED_CAST")
+                val cached = sessionAttributes["friends_list"] as List<FriendInfo>
+                cached shouldHaveSize 2
             }
             
             it("should handle empty friends list from API") {
                 // Arrange
                 val userId = 12345L
+                val user = User(id = userId)
                 val apiFriends = emptyList<Friend>()
                 
-                val sessionAttributes = mutableMapOf<String, Any>()
+                val sessionAttributes = mutableMapOf<String, Any>(
+                    UserProfileInterceptor.USER_SESSION_KEY to user
+                )
                 val attributesManager = mockk<AttributesManager>()
                 every { attributesManager.sessionAttributes } returns sessionAttributes
                 every { attributesManager.sessionAttributes = any() } answers {
@@ -93,18 +105,19 @@ class FriendsListCacheTest : DescribeSpec({
                 every { clientWrapper.members } returns membersApi
                 
                 // Act
-                val result = FriendsListCache.get(input, clientWrapper, userId)
+                val result = FriendsListCache.get(input, clientWrapper)
                 
                 // Assert
                 result.shouldBeEmpty()
                 
                 // Verify cache was populated with empty list
-                sessionAttributes.containsKey("friends_list_cache") shouldBe true
+                sessionAttributes.containsKey("friends_list") shouldBe true
             }
             
             it("should only store memberId, name, and handicap, not full Friend DTO") {
                 // Arrange
                 val userId = 12345L
+                val user = User(id = userId)
                 val apiFriends = listOf(
                     Friend(
                         individualId = 1001,
@@ -119,7 +132,9 @@ class FriendsListCacheTest : DescribeSpec({
                     )
                 )
                 
-                val sessionAttributes = mutableMapOf<String, Any>()
+                val sessionAttributes = mutableMapOf<String, Any>(
+                    UserProfileInterceptor.USER_SESSION_KEY to user
+                )
                 val attributesManager = mockk<AttributesManager>()
                 every { attributesManager.sessionAttributes } returns sessionAttributes
                 every { attributesManager.sessionAttributes = any() } answers {
@@ -136,19 +151,17 @@ class FriendsListCacheTest : DescribeSpec({
                 every { clientWrapper.members } returns membersApi
                 
                 // Act
-                FriendsListCache.get(input, clientWrapper, userId)
+                FriendsListCache.get(input, clientWrapper)
                 
-                // Assert - verify only memberId, name, and handicap are stored
+                // Assert - verify only memberId, name, and handicap are stored as FriendInfo
                 @Suppress("UNCHECKED_CAST")
-                val cachedData = sessionAttributes["friends_list_cache"] as List<Map<String, Any?>>
+                val cachedData = sessionAttributes["friends_list"] as List<FriendInfo>
                 cachedData shouldHaveSize 1
                 
                 val firstFriend = cachedData[0]
-                firstFriend.keys shouldHaveSize 3
-                firstFriend.containsKey("memberId") shouldBe true
-                firstFriend.containsKey("name") shouldBe true
-                firstFriend.containsKey("handicap") shouldBe true
-                firstFriend.containsKey("club") shouldBe false
+                firstFriend.memberId shouldBe 1001L
+                firstFriend.name shouldBe "Dean Ellis"
+                firstFriend.handicap shouldBe "8.5"
             }
         }
         
@@ -156,13 +169,15 @@ class FriendsListCacheTest : DescribeSpec({
             it("should return cached friends without calling API") {
                 // Arrange
                 val userId = 12345L
+                val user = User(id = userId)
                 val cachedFriends = listOf(
-                    mapOf("memberId" to 1001L, "name" to "Dean Ellis", "handicap" to "8.5"),
-                    mapOf("memberId" to 1002L, "name" to "Jane Smith", "handicap" to "12.3")
+                    FriendInfo(memberId = 1001L, name = "Dean Ellis", handicap = "8.5"),
+                    FriendInfo(memberId = 1002L, name = "Jane Smith", handicap = "12.3")
                 )
                 
                 val sessionAttributes = mutableMapOf<String, Any>(
-                    "friends_list_cache" to cachedFriends
+                    UserProfileInterceptor.USER_SESSION_KEY to user,
+                    "friends_list" to cachedFriends
                 )
                 val attributesManager = mockk<AttributesManager>()
                 every { attributesManager.sessionAttributes } returns sessionAttributes
@@ -175,7 +190,7 @@ class FriendsListCacheTest : DescribeSpec({
                 every { clientWrapper.members } returns membersApi
                 
                 // Act
-                val result = FriendsListCache.get(input, clientWrapper, userId)
+                val result = FriendsListCache.get(input, clientWrapper)
                 
                 // Assert
                 result shouldHaveSize 2
@@ -188,60 +203,6 @@ class FriendsListCacheTest : DescribeSpec({
                 
                 // Verify API was NOT called
                 verify(exactly = 0) { membersApi.getFriends(any()) }
-            }
-            
-            it("should handle cached friends with numeric memberId as Number") {
-                // Arrange - simulate how session attributes might deserialize numbers
-                val userId = 12345L
-                val cachedFriends = listOf(
-                    mapOf("memberId" to 1001, "name" to "Dean Ellis", "handicap" to "8.5"), // Int instead of Long
-                    mapOf("memberId" to 1002.0, "name" to "Jane Smith", "handicap" to "12.3") // Double instead of Long
-                )
-                
-                val sessionAttributes = mutableMapOf<String, Any>(
-                    "friends_list_cache" to cachedFriends
-                )
-                val attributesManager = mockk<AttributesManager>()
-                every { attributesManager.sessionAttributes } returns sessionAttributes
-                
-                val input = mockk<HandlerInput>()
-                every { input.attributesManager } returns attributesManager
-                
-                val clientWrapper = mockk<ApiClientWrapper>()
-                
-                // Act
-                val result = FriendsListCache.get(input, clientWrapper, userId)
-                
-                // Assert
-                result shouldHaveSize 2
-                result[0].memberId shouldBe 1001L
-                result[1].memberId shouldBe 1002L
-            }
-            
-            it("should handle cached friends with memberId as String") {
-                // Arrange - handle edge case where memberId might be stored as string
-                val userId = 12345L
-                val cachedFriends = listOf(
-                    mapOf("memberId" to "1001", "name" to "Dean Ellis", "handicap" to "8.5")
-                )
-                
-                val sessionAttributes = mutableMapOf<String, Any>(
-                    "friends_list_cache" to cachedFriends
-                )
-                val attributesManager = mockk<AttributesManager>()
-                every { attributesManager.sessionAttributes } returns sessionAttributes
-                
-                val input = mockk<HandlerInput>()
-                every { input.attributesManager } returns attributesManager
-                
-                val clientWrapper = mockk<ApiClientWrapper>()
-                
-                // Act
-                val result = FriendsListCache.get(input, clientWrapper, userId)
-                
-                // Assert
-                result shouldHaveSize 1
-                result[0].memberId shouldBe 1001L
             }
         }
     }

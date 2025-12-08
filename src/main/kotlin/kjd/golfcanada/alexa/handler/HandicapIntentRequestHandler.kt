@@ -62,7 +62,7 @@ class HandicapIntentRequestHandler(
         val friendQuery = friendFullNameSlot?.value ?: friendFirstNameSlot?.value
 
         return if (friendQuery != null) {
-            handleFriendHandicap(input, user, friendQuery)
+            handleFriendHandicap(input, friendQuery)
         } else {
             handleOwnHandicap(input, user)
         }
@@ -108,18 +108,17 @@ class HandicapIntentRequestHandler(
      * 4. Returns the friend's handicap information
      * 
      * @param input The handler input
-     * @param user The validated user from session
      * @param friendQuery The raw search query from the user (e.g., "Dean Ellis" or "Deano")
      * @return Response with the friend's handicap information
      */
-    private fun handleFriendHandicap(input: HandlerInput, user: User, friendQuery: String): Optional<Response> {
+    private fun handleFriendHandicap(input: HandlerInput, friendQuery: String): Optional<Response> {
         logger.info("Friend handicap requested")
         
         try {
             // Use the withAuthenticatedClient extension to simplify API client access
             return apiClientProvider.withAuthenticatedClient(input) { client ->
                 // Get friends list from cache or API
-                val friends = FriendsListCache.get(input, client, user.id!!)
+                val friends = FriendsListCache.get(input, client)
                 
                 if (friends.isEmpty()) {
                     logger.info("No friends found for user")

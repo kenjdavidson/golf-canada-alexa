@@ -1,25 +1,11 @@
 package kjd.golfcanada.util
 
 import com.amazon.ask.dispatcher.request.handler.HandlerInput
-import kjd.golfcanada.alexa.util.HasFriendName
+import kjd.golfcanada.alexa.data.FriendInfo
+import kjd.golfcanada.alexa.interceptor.UserProfileInterceptor
 import kjd.golfcanada.client.model.Friend
+import kjd.golfcanada.client.model.User
 import kjd.golfcanada.client.provider.ApiClientWrapper
-
-/**
- * Lightweight representation of a friend containing only essential information.
- * 
- * This class is used for session storage to minimize data size, containing only
- * the friend's member ID, full name, and handicap rather than the complete Friend DTO.
- * 
- * @property memberId The friend's unique member identifier
- * @property name The friend's full name
- * @property handicap The friend's handicap index (optional)
- */
-data class FriendInfo(
-    val memberId: Long?,
-    override val name: String?,
-    val handicap: String? = null
-) : HasFriendName
 
 /**
  * Cache utility for managing friends list data in Alexa session attributes.
@@ -36,7 +22,7 @@ data class FriendInfo(
  * Example usage:
  * ```kotlin
  * apiClientProvider.withAuthenticatedClient(input) { client ->
- *     val friends = FriendsListCache.get(input, client, userId)
+ *     val friends = FriendsListCache.get(input, client)
  *     // friends is a List<FriendInfo> with memberId, name, and handicap
  * }
  * ```
@@ -46,43 +32,38 @@ object FriendsListCache {
     /**
      * Session attribute key for storing the cached friends list.
      */
-    private const val FRIENDS_CACHE_KEY = "friends_list_cache"
+    private const val FRIENDS_LIST_KEY = "friends_list"
     
     /**
      * Gets the friends list from session cache or fetches from API if not cached.
      * 
      * This method implements the following logic:
-     * 1. Check if friends list exists in session attributes
-     * 2. If found, return the cached list
-     * 3. If not found, fetch from API using the provided client
-     * 4. Convert full Friend DTOs to lightweight FriendInfo objects
-     * 5. Store FriendInfo list in session attributes
-     * 6. Return the friends list
+     * 1. Get user ID from session attributes (populated by UserProfileInterceptor)
+     * 2. Check if friends list exists in session attributes
+     * 3. If found, return the cached list
+     * 4. If not found, fetch from API using the provided client
+     * 5. Convert full Friend DTOs to lightweight FriendInfo objects
+     * 6. Store FriendInfo list in session attributes
+     * 7. Return the friends list
      * 
      * @param input The HandlerInput containing session attributes
      * @param client The authenticated API client wrapper
-     * @param userId The user's member ID for fetching friends
      * @return List of FriendInfo objects (empty list if no friends found)
+     * @throws IllegalStateException if user ID is not available in session
      */
-    fun get(input: HandlerInput, client: ApiClientWrapper, userId: Long): List<FriendInfo> {
+    fun get(input: HandlerInput, client: ApiClientWrapper): List<FriendInfo> {
         val sessionAttributes = input.attributesManager.sessionAttributes
+        
+        // Get user from session (populated by UserProfileInterceptor)
+        val user = sessionAttributes[UserProfileInterceptor.USER_SESSION_KEY] as? User
+        val userId = user?.id ?: throw IllegalStateException("User ID not available in session")
         
         // Check if friends list is already cached in session
         @Suppress("UNCHECKED_CAST")
-        val cachedFriends = sessionAttributes[FRIENDS_CACHE_KEY] as? List<Map<String, Any?>>
+        val cachedFriends = sessionAttributes[FRIENDS_LIST_KEY] as? List<FriendInfo>
         
         if (cachedFriends != null) {
-            // Return cached friends list, converting from serialized map format
-            return cachedFriends.map { friendMap ->
-                val memberId = when (val id = friendMap["memberId"]) {
-                    is Number -> id.toLong()
-                    is String -> id.toLongOrNull()
-                    else -> null
-                }
-                val name = friendMap["name"] as? String
-                val handicap = friendMap["handicap"] as? String
-                FriendInfo(memberId, name, handicap)
-            }
+            return cachedFriends
         }
         
         // Friends list not cached, fetch from API
@@ -97,15 +78,8 @@ object FriendsListCache {
             )
         }
         
-        // Store in session as serializable maps
-        val serializableFriends = friendInfoList.map { friendInfo ->
-            mapOf(
-                "memberId" to friendInfo.memberId,
-                "name" to friendInfo.name,
-                "handicap" to friendInfo.handicap
-            )
-        }
-        sessionAttributes[FRIENDS_CACHE_KEY] = serializableFriends
+        // Store FriendInfo list directly in session
+        sessionAttributes[FRIENDS_LIST_KEY] = friendInfoList
         input.attributesManager.sessionAttributes = sessionAttributes
         
         return friendInfoList
