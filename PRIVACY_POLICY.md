@@ -90,6 +90,15 @@ Alexa stores an authentication token provided by Golf Canada after you successfu
 
 Personal data is stored and maintained by Golf Canada, for information please see [Golf Canada Privacy Policy](https://www.golfcanada.ca/privacy-policy/)
 
+### Logging and Troubleshooting
+For troubleshooting purposes, the Service logs only generic operational information such as request types, error messages, and technical diagnostics. **No personal information is logged**, including but not limited to:
+- User account details (usernames, user IDs, email addresses)
+- Player information (names, player IDs)
+- Query details (names or identifiers used in searches)
+- Any other information that could identify or relate to a specific individual
+
+This logging policy ensures Your privacy is protected while allowing Us to maintain and improve the Service.
+
 ## Children's Privacy
 Our Service does not address anyone under the age of 13. We do not knowingly collect personally identifiable information from anyone under the age of 13. If You are a parent or guardian and You are aware that Your child has provided Us with Personal Data, please contact Us. If We become aware that We have collected Personal Data from anyone under the age of 13 without verification of parental consent, We take steps to remove that information from Our servers.
 

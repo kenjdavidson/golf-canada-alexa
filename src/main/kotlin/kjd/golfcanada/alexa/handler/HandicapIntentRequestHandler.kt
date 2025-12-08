@@ -84,7 +84,7 @@ class HandicapIntentRequestHandler(
                 val handicapCalculation = client.scores.getHandicapCalculation(user.id!!)
                 val handicapSummary = HandicapSummaryData.fromDTO(handicapCalculation)
 
-                logger.info("Returning own handicap: ${handicapSummary.handicap}")
+                logger.info("Returning own handicap")
 
                 input.generateTemplateResponse("HandicapIntentResponse", handicapSummary.toResponseData())
             }
@@ -112,7 +112,7 @@ class HandicapIntentRequestHandler(
      * @return Response with the friend's handicap information
      */
     private fun handleFriendHandicap(input: HandlerInput, user: User, friendQuery: String): Optional<Response> {
-        logger.info("Friend handicap requested for: $friendQuery")
+        logger.info("Friend handicap requested")
         
         try {
             // Use the withAuthenticatedClient extension to simplify API client access
@@ -121,7 +121,7 @@ class HandicapIntentRequestHandler(
                 val friends = client.members.getFriends(user.id!!)
                 
                 if (friends.isEmpty()) {
-                    logger.info("No friends found for user ${user.id}")
+                    logger.info("No friends found for user")
                     return@withAuthenticatedClient input.generateTemplateResponse("HandicapIntentNoFriendsResponse", emptyMap())
                 }
                 
@@ -130,14 +130,14 @@ class HandicapIntentRequestHandler(
                 
                 when {
                     matches.isEmpty() -> {
-                        logger.info("No matching friend found for query: $friendQuery")
+                        logger.info("No matching friend found")
                         val dataModel = mapOf(
                             "query" to friendQuery
                         )
                         input.generateTemplateResponse("HandicapIntentNoMatchingFriendResponse", dataModel)
                     }
                     matches.size > 1 -> {
-                        logger.info("Multiple matches found for query: $friendQuery")
+                        logger.info("Multiple matches found")
                         val dataModel = mapOf(
                             "count" to matches.size,
                             "query" to friendQuery,
@@ -147,7 +147,7 @@ class HandicapIntentRequestHandler(
                     }
                     else -> {
                         val friend = matches.first()
-                        logger.info("Found matching friend: ${friend.name} (ID: ${friend.individualId})")
+                        logger.info("Found matching friend")
                         
                         // Return friend's handicap information
                         val dataModel = mutableMapOf<String, Any>()
@@ -162,7 +162,7 @@ class HandicapIntentRequestHandler(
             logger.warn("No access token available for fetching friend handicap")
             throw e
         } catch (e: Exception) {
-            logger.error("Failed to fetch friend handicap for query '$friendQuery': ${e.message}", e)
+            logger.error("Failed to fetch friend handicap: ${e.message}", e)
             throw GolfCanadaApiException("Error fetching friend handicap", e)
         }
     }
