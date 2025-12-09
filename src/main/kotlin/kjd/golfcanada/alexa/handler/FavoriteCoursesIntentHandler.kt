@@ -5,8 +5,6 @@ import com.amazon.ask.dispatcher.request.handler.RequestHandler
 import com.amazon.ask.model.Response
 import com.amazon.ask.request.Predicates.intentName
 import kjd.golfcanada.alexa.IntentName
-import kjd.golfcanada.alexa.exception.AccountLinkingException
-import kjd.golfcanada.alexa.exception.GenericIntentException
 import kjd.golfcanada.alexa.util.getUserOrThrow
 import kjd.golfcanada.client.provider.ApiClientProvider
 import kjd.golfcanada.client.provider.withAuthenticatedClient
@@ -39,28 +37,20 @@ class FavoriteCoursesIntentHandler(
         // Get user profile from session
         val user = input.getUserOrThrow()
         
-        try {
-            // Use the withAuthenticatedClient extension to simplify API client access
-            return apiClientProvider.withAuthenticatedClient(input) { client ->
-                // Fetch user's course list
-                val courses = client.members.getCourseList(user.id!!)
-                
-                logger.info("Retrieved ${courses.size} favorite courses")
-                
-                // Prepare response data
-                val dataModel = mapOf(
-                    "count" to courses.size,
-                    "courses" to courses
-                )
-                
-                input.generateTemplateResponse("FavoriteCoursesIntentResponse", dataModel)
-            }
-        } catch (e: AccountLinkingException) {
-            logger.warn("No access token available for fetching favorite courses")
-            throw e
-        } catch (e: Exception) {
-            logger.error("Failed to fetch favorite courses: ${e.message}", e)
-            throw GenericIntentException("Failed to fetch favorite courses", e)
+        // Use the withAuthenticatedClient extension to simplify API client access
+        return apiClientProvider.withAuthenticatedClient(input) { client ->
+            // Fetch user's course list
+            val courses = client.members.getCourseList(user.id!!)
+            
+            logger.info("Retrieved ${courses.size} favorite courses")
+            
+            // Prepare response data
+            val dataModel = mapOf(
+                "count" to courses.size,
+                "courses" to courses
+            )
+            
+            input.generateTemplateResponse("FavoriteCoursesIntentResponse", dataModel)
         }
     }
 }
