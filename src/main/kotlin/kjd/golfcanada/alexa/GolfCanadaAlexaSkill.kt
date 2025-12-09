@@ -7,6 +7,7 @@ import kjd.golfcanada.alexa.handler.AccountLinkingExceptionHandler
 import kjd.golfcanada.alexa.handler.AddScorecardIntentHandler
 import kjd.golfcanada.alexa.handler.CancelAndStopIntentHandler
 import kjd.golfcanada.alexa.handler.FallbackIntentHandler
+import kjd.golfcanada.alexa.handler.FavoriteCoursesIntentHandler
 import kjd.golfcanada.alexa.handler.FavoritePlayerHistoryIntentHandler
 import kjd.golfcanada.alexa.handler.GenericIntentExceptionHandler
 import kjd.golfcanada.alexa.handler.GolfCanadaApiExceptionHandler
@@ -39,6 +40,7 @@ class GolfCanadaAlexaSkill: SkillStreamHandler(getSkills()) {
                     FallbackIntentHandler(),
                     HandicapIntentRequestHandler(apiClientProvider),
                     FavoritePlayerHistoryIntentHandler(),
+                    FavoriteCoursesIntentHandler(apiClientProvider),
                     PlayerProfileMembershipIntentHandler(),
                     PlayerProfileHistoryIntentHandler(),
                     AddScorecardIntentHandler(),
