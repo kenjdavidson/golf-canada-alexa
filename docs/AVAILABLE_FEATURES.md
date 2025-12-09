@@ -42,6 +42,25 @@ or for a friend:
 **Response:**
 > "Your Golf Canada membership is active at the [level] level and expires on [date]."
 
+#### ✅ Favorite Courses
+**Voice Commands:**
+- "What are my favorite courses?"
+- "List my favorite courses"
+- "Tell me my favorite courses"
+- "What courses do I play?"
+- "Show me my course list"
+
+**What it does:**
+- Retrieves your list of favorite/member courses from Golf Canada
+- Reads out each course name with its city and region
+- Handles empty course lists gracefully
+
+**Response:**
+> "You have [number] favorite courses. [Course Name] in [City], [Region]. [Course Name 2] in [City], [Region]..."
+
+or when you have no courses:
+> "You don't have any favorite courses in your list."
+
 ## Planned Features
 
 The following features are planned for future development:

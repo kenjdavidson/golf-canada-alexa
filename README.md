@@ -73,6 +73,12 @@ The following interactions are currently available:
   - View your membership level and expiration date
   - Check if your membership is active
 
+### Course Information
+- **Favorite Courses** - "What are my favorite courses?" or "List my course list"
+  - View your list of favorite/member courses
+  - Each course is read with its name, city, and region
+  - Handles empty course lists gracefully
+
 ### Score History (Coming Soon)
 - **Your Recent Rounds** - "Tell me about my last round" or "How did I play last?"
   - *Note: This intent is defined but not yet fully implemented*

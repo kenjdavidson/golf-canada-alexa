@@ -146,6 +146,18 @@
           "name": "GOLFCANADA.AddScorecard",
           "slots": [],
           "samples": []
+        },
+        {
+          "name": "GOLFCANADA.FavoriteCourses",
+          "slots": [],
+          "samples": [
+            "what are my favorite courses",
+            "list my favorite courses",
+            "tell me my favorite courses",
+            "what courses do I play",
+            "show me my course list",
+            "what are my courses"
+          ]
         }
       ],
       "types": []
