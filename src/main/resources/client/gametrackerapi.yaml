@@ -8,7 +8,7 @@ info:
     url: https://github.com/kenjdavidson/golf-canada-alexa
     email: ken.j.davidson@live.ca
 servers:
-- url: https://scg.golfcanada.ca
+  - url: 'https://scg.golfcanada.ca'
 paths:
   /api/gameTracker/getSummary:
     get:
