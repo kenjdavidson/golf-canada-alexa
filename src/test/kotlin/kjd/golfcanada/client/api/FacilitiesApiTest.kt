@@ -13,6 +13,20 @@ import kjd.golfcanada.client.model.FacilitySearchResponse
  * 
  * These tests verify the facility search functionality.
  * Tests are only enabled when TEST_FACILITIES_API environment variable is set to enable network access.
+ * 
+ * Example usage:
+ * ```kotlin
+ * val facilitiesApi = FacilitiesApi()
+ * val response = facilitiesApi.searchFacilities(
+ *     dollarTop = 10,
+ *     nationalAssociation = "RCGA",
+ *     text = "glen"
+ * )
+ * println("Found ${response.totalCount} facilities")
+ * response.facilities?.forEach { facility ->
+ *     println("${facility.name} in ${facility.city}, ${facility.region}")
+ * }
+ * ```
  */
 @EnabledIf(FacilitiesApiCondition::class)
 class FacilitiesApiTest : DescribeSpec({
