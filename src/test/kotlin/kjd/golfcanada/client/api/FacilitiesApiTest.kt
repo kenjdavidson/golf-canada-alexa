@@ -1,18 +1,16 @@
 package kjd.golfcanada.client.api
 
 import io.kotest.core.annotation.EnabledIf
-import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.collections.shouldNotBeEmpty
-import kjd.golfcanada.client.model.FacilitySearchResponse
 
 /**
  * Tests for the FacilitiesApi client.
  * 
  * These tests verify the facility search functionality.
- * Tests are only enabled when TEST_FACILITIES_API environment variable is set to enable network access.
+ * Tests are only enabled when TEST_USERNAME and TEST_PASSWORD environment variables are set.
  * 
  * Example usage:
  * ```kotlin
@@ -28,8 +26,8 @@ import kjd.golfcanada.client.model.FacilitySearchResponse
  * }
  * ```
  */
-@EnabledIf(FacilitiesApiCondition::class)
-class FacilitiesApiTest : DescribeSpec({
+@EnabledIf(UsernamePasswordCondition::class)
+class FacilitiesApiTest : AuthenticatedApiTest({
     
     lateinit var facilitiesApi: FacilitiesApi
     
