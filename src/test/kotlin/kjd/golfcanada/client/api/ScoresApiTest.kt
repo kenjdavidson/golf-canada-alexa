@@ -115,8 +115,7 @@ class ScoresApiTest : AuthenticatedApiTest({
                 course.tees shouldNotBe null
                 
                 // If tees exist, verify structure
-                if (course.tees != null && course.tees!!.isNotEmpty()) {
-                    val tee = course.tees!!.first()
+                course.tees?.takeIf { it.isNotEmpty() }?.first()?.let { tee ->
                     tee.id shouldNotBe null
                     tee.name shouldNotBe null
                     tee.holes shouldNotBe null
