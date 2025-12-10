@@ -1,7 +1,6 @@
 package kjd.golfcanada.client.api
 
 import io.kotest.core.annotation.EnabledIf
-import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.ints.shouldBeGreaterThan
@@ -10,12 +9,12 @@ import io.kotest.matchers.collections.shouldNotBeEmpty
 /**
  * Tests for the FacilitiesApi client.
  * 
- * These tests verify the facility search functionality.
- * Tests are only enabled when TEST_USERNAME and TEST_PASSWORD environment variables are set.
+ * Extends AuthenticatedApiTest to get pre-authenticated access to the Golf Canada API.
+ * These tests are only enabled when TEST_USERNAME and TEST_PASSWORD environment variables are set.
  * 
  * Example usage:
  * ```kotlin
- * val facilitiesApi = FacilitiesApi()
+ * val facilitiesApi = FacilitiesApi(client = authenticatedClient)
  * val response = facilitiesApi.searchFacilities(
  *     dollarTop = 10,
  *     nationalAssociation = "RCGA",
@@ -28,12 +27,12 @@ import io.kotest.matchers.collections.shouldNotBeEmpty
  * ```
  */
 @EnabledIf(UsernamePasswordCondition::class)
-class FacilitiesApiTest : DescribeSpec({
+class FacilitiesApiTest : AuthenticatedApiTest({
     
     lateinit var facilitiesApi: FacilitiesApi
     
     beforeSpec {
-        facilitiesApi = FacilitiesApi()
+        facilitiesApi = FacilitiesApi(client = authenticatedClient)
     }
     
     describe("searchFacilities") {
