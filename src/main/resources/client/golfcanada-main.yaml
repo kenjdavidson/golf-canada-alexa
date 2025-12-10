@@ -1,0 +1,85 @@
+openapi: 3.0.3
+info:
+  title: Golf Canada Client
+  description: |
+    Unofficial Golf Canada HTTP Client.
+  version: 1.0.0
+  contact:
+    name: Ken Davidson
+    url: https://github.com/kenjdavidson/golf-canada-alexa
+    email: ken.j.davidson@live.ca
+servers:
+  - url: 'https://scg.golfcanada.ca'
+paths:
+  /connect/token:
+    $ref: 'authapi.yaml#/paths/~1connect~1token'
+  /api/members/{userId}/getSnapshot:
+    $ref: 'membersapi.yaml#/paths/~1api~1members~1{userId}~1getSnapshot'
+  /api/members/{userId}/getFriends:
+    $ref: 'membersapi.yaml#/paths/~1api~1members~1{userId}~1getFriends'
+  /api/members/{userId}/getHandicapHistory:
+    $ref: 'membersapi.yaml#/paths/~1api~1members~1{userId}~1getHandicapHistory'
+  /api/members/{userId}/getCourseList:
+    $ref: 'membersapi.yaml#/paths/~1api~1members~1{userId}~1getCourseList'
+  /api/scores/getHandicapCalculation:
+    $ref: 'scoresapi.yaml#/paths/~1api~1scores~1getHandicapCalculation'
+  /api/scores/getScoreData:
+    $ref: 'scoresapi.yaml#/paths/~1api~1scores~1getScoreData'
+  /api/gameTracker/getSummary:
+    $ref: 'gametrackerapi.yaml#/paths/~1api~1gameTracker~1getSummary'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    # Auth schemas
+    AuthRequest:
+      $ref: 'authapi.yaml#/components/schemas/AuthRequest'
+    AuthToken:
+      $ref: 'authapi.yaml#/components/schemas/AuthToken'
+    User:
+      $ref: 'authapi.yaml#/components/schemas/User'
+    ScoreDefaults:
+      $ref: 'authapi.yaml#/components/schemas/ScoreDefaults'
+    
+    # Members schemas
+    MemberSnapshot:
+      $ref: 'membersapi.yaml#/components/schemas/MemberSnapshot'
+    Friend:
+      $ref: 'membersapi.yaml#/components/schemas/Friend'
+    HandicapHistoryEntry:
+      $ref: 'membersapi.yaml#/components/schemas/HandicapHistoryEntry'
+    Course:
+      $ref: 'membersapi.yaml#/components/schemas/Course'
+    Score:
+      $ref: 'membersapi.yaml#/components/schemas/Score'
+    
+    # Scores schemas
+    HandicapCalculation:
+      $ref: 'scoresapi.yaml#/components/schemas/HandicapCalculation'
+    HandicapScore:
+      $ref: 'scoresapi.yaml#/components/schemas/HandicapScore'
+    ScoreData:
+      $ref: 'scoresapi.yaml#/components/schemas/ScoreData'
+    ScoreDetail:
+      $ref: 'scoresapi.yaml#/components/schemas/ScoreDetail'
+    Facility:
+      $ref: 'scoresapi.yaml#/components/schemas/Facility'
+    CourseDetail:
+      $ref: 'scoresapi.yaml#/components/schemas/CourseDetail'
+    Tee:
+      $ref: 'scoresapi.yaml#/components/schemas/Tee'
+    Hole:
+      $ref: 'scoresapi.yaml#/components/schemas/Hole'
+    HoleScore:
+      $ref: 'scoresapi.yaml#/components/schemas/HoleScore'
+    
+    # GameTracker schemas
+    GameTrackerSummary:
+      $ref: 'gametrackerapi.yaml#/components/schemas/GameTrackerSummary'
+    SummaryScore:
+      $ref: 'gametrackerapi.yaml#/components/schemas/SummaryScore'
+    HoleStatistic:
+      $ref: 'gametrackerapi.yaml#/components/schemas/HoleStatistic'

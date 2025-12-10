@@ -49,6 +49,30 @@ tasks.test {
     useJUnitPlatform()
 }
 
+val bundleOpenApiSpec = tasks.register<Exec>("bundleOpenApiSpec") {
+    group = "openapi"
+    description = "Bundle OpenAPI specification files into a single file"
+    
+    workingDir = file("$rootDir")
+    
+    // Use npx to run redocly-cli bundle command
+    commandLine(
+        "npx", "@redocly/cli", "bundle",
+        "src/main/resources/client/golfcanada-main.yaml",
+        "-o", "src/main/resources/client/golfcanada.yaml"
+    )
+    
+    // Define inputs and outputs for up-to-date checking
+    inputs.files(
+        "src/main/resources/client/golfcanada-main.yaml",
+        "src/main/resources/client/authapi.yaml",
+        "src/main/resources/client/membersapi.yaml",
+        "src/main/resources/client/scoresapi.yaml",
+        "src/main/resources/client/gametrackerapi.yaml"
+    )
+    outputs.file("src/main/resources/client/golfcanada.yaml")
+}
+
 openApiGenerate {
     generatorName = "kotlin"
     inputSpec = "$rootDir/src/main/resources/client/golfcanada.yaml"
@@ -59,6 +83,14 @@ openApiGenerate {
     typeMappings = mapOf(
         "identifier" to "kotlin.Long"
     )
+}
+
+tasks.named("openApiGenerate") {
+    dependsOn(bundleOpenApiSpec)
+}
+
+tasks.named("processResources") {
+    dependsOn(bundleOpenApiSpec)
 }
 
 task("packageJar", Zip::class) {

@@ -5,6 +5,14 @@ build/
 !**/src/test/**/build/
 .aws-sam
 
+# Node modules for bundling tools
+node_modules/
+package.json
+package-lock.json
+
+# Generated OpenAPI bundle
+src/main/resources/client/golfcanada.yaml
+
 ### IntelliJ IDEA ###
 .idea/modules.xml
 .idea/jarRepositories.xml
