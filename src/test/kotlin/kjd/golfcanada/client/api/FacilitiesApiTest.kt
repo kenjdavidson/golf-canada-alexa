@@ -1,9 +1,10 @@
 package kjd.golfcanada.client.api
 
 import io.kotest.core.annotation.EnabledIf
+import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.collections.shouldNotBeEmpty
 
 /**
@@ -27,7 +28,7 @@ import io.kotest.matchers.collections.shouldNotBeEmpty
  * ```
  */
 @EnabledIf(UsernamePasswordCondition::class)
-class FacilitiesApiTest : AuthenticatedApiTest({
+class FacilitiesApiTest : DescribeSpec({
     
     lateinit var facilitiesApi: FacilitiesApi
     
@@ -43,7 +44,7 @@ class FacilitiesApiTest : AuthenticatedApiTest({
             
             response.shouldNotBeNull()
             response.totalCount.shouldNotBeNull()
-            response.totalCount shouldNotBe 0
+            response.totalCount!! shouldBeGreaterThan 0
             response.facilities.shouldNotBeNull()
             response.facilities!!.shouldNotBeEmpty()
         }
@@ -78,7 +79,7 @@ class FacilitiesApiTest : AuthenticatedApiTest({
             response.shouldNotBeNull()
             response.facilities.shouldNotBeNull()
             // The API should return at most 5 results
-            response.facilities!!.size shouldBe 5
+            response.facilities!!.size shouldBe minOf(5, response.totalCount ?: 5)
         }
         
         it("should filter by nationalAssociation parameter") {
