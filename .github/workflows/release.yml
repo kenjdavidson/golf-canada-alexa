@@ -1,0 +1,115 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Triggers on version tags like v1.0.0, v2.1.3, etc.
+
+permissions:
+  contents: write  # Required to create releases
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for changelog generation
+      
+      - name: Generate changelog
+        id: changelog
+        run: |
+          CURRENT_TAG=${GITHUB_REF#refs/tags/}
+          
+          # Get the previous tag
+          PREVIOUS_TAG=$(git tag --sort=-version:refname | grep -v "^$CURRENT_TAG$" | head -n 1)
+          
+          if [ -z "$PREVIOUS_TAG" ]; then
+            echo "No previous tag found, generating changelog from first commit"
+            PREVIOUS_TAG=$(git rev-list --max-parents=0 HEAD)
+            RANGE="$PREVIOUS_TAG..$CURRENT_TAG"
+          else
+            echo "Generating changelog from $PREVIOUS_TAG to $CURRENT_TAG"
+            RANGE="$PREVIOUS_TAG..$CURRENT_TAG"
+            echo "previous_tag=$PREVIOUS_TAG" >> $GITHUB_OUTPUT
+          fi
+          
+          # Generate changelog grouped by type
+          CHANGELOG=""
+          
+          # Get all commits in range
+          COMMITS=$(git log $RANGE --pretty=format:"%s|%h" --no-merges)
+          
+          if [ -z "$COMMITS" ]; then
+            CHANGELOG="* Initial release"
+          else
+            # Categorize commits
+            FEATURES=""
+            FIXES=""
+            DOCS=""
+            OTHER=""
+            
+            while IFS='|' read -r message hash; do
+              # Clean up merge commit messages
+              if [[ "$message" =~ ^Merge\ pull\ request ]]; then
+                continue
+              fi
+              
+              # Categorize by conventional commit prefix or keywords
+              if [[ "$message" =~ ^feat:|^feature: ]] || [[ "$message" =~ ^Add|^Implement ]]; then
+                FEATURES="${FEATURES}* ${message} (${hash})\n"
+              elif [[ "$message" =~ ^fix:|^bug: ]] || [[ "$message" =~ ^Fix ]]; then
+                FIXES="${FIXES}* ${message} (${hash})\n"
+              elif [[ "$message" =~ ^docs:|^doc: ]] || [[ "$message" =~ ^Update.*\.md|^Add.*\.md ]]; then
+                DOCS="${DOCS}* ${message} (${hash})\n"
+              else
+                OTHER="${OTHER}* ${message} (${hash})\n"
+              fi
+            done <<< "$COMMITS"
+            
+            # Build changelog with sections
+            if [ -n "$FEATURES" ]; then
+              CHANGELOG="${CHANGELOG}### ✨ Features\n${FEATURES}\n"
+            fi
+            
+            if [ -n "$FIXES" ]; then
+              CHANGELOG="${CHANGELOG}### 🐛 Bug Fixes\n${FIXES}\n"
+            fi
+            
+            if [ -n "$DOCS" ]; then
+              CHANGELOG="${CHANGELOG}### 📚 Documentation\n${DOCS}\n"
+            fi
+            
+            if [ -n "$OTHER" ]; then
+              CHANGELOG="${CHANGELOG}### 🔧 Other Changes\n${OTHER}\n"
+            fi
+          fi
+          
+          # Save to file and output
+          echo -e "$CHANGELOG" > CHANGELOG.txt
+          
+          # Set output for use in release creation
+          # Using heredoc to handle multiline content
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          echo "Generated changelog:"
+          echo -e "$CHANGELOG"
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body: |
+            ## What's Changed
+            
+            ${{ steps.changelog.outputs.changelog }}
+            
+            **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ steps.changelog.outputs.previous_tag || github.event.before }}...${{ github.ref_name }}
+          draft: false
+          prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
+          generate_release_notes: true  # Uses GitHub's automatic release notes as additional context
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
