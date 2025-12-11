@@ -49,9 +49,26 @@ tasks.test {
     useJUnitPlatform()
 }
 
+task("bundleOpenApiSpec", Exec::class) {
+    group = "openapi"
+    description = "Bundle modular OpenAPI spec into a single file"
+    
+    commandLine("npx", "@apidevtools/swagger-cli@4.0.4", "bundle",  
+        "$rootDir/src/main/resources/client/golfcanada.yaml",
+        "-o", "${buildDir}/openapi/golfcanada-bundled.yaml",
+        "-t", "yaml")
+    
+    inputs.dir("$rootDir/src/main/resources/client")
+    outputs.file("${buildDir}/openapi/golfcanada-bundled.yaml")
+    
+    doFirst {
+        mkdir("${buildDir}/openapi")
+    }
+}
+
 openApiGenerate {
     generatorName = "kotlin"
-    inputSpec = "$rootDir/src/main/resources/client/golfcanada.yaml"
+    inputSpec = "${buildDir}/openapi/golfcanada-bundled.yaml"
     outputDir = "${buildDir}/generated/openapi"
     apiPackage = "kjd.golfcanada.client.api"
     invokerPackage = "kjd.golfcanada.client.invoker"
@@ -59,6 +76,10 @@ openApiGenerate {
     typeMappings = mapOf(
         "identifier" to "kotlin.Long"
     )
+}
+
+tasks.named("openApiGenerate") {
+    dependsOn("bundleOpenApiSpec")
 }
 
 task("packageJar", Zip::class) {
