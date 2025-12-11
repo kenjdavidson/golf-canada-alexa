@@ -11,6 +11,7 @@ Contributions are always welcome! This guide will help you get set up for develo
 - [Testing](#testing)
 - [Pull Request Process](#pull-request-process)
 - [Code Style](#code-style)
+- [Releases and Versioning](#releases-and-versioning)
 
 ## Getting Started
 
@@ -340,6 +341,60 @@ private fun handleLoginRequest(event: APIGatewayV2HTTPEvent): APIGatewayProxyRes
     // Implementation
 }
 ```
+
+## Releases and Versioning
+
+### Creating a Release
+
+Releases are automatically created when a version tag is pushed to the repository. The process is:
+
+1. **Tag the release:**
+   ```shell
+   # Create an annotated tag with semantic versioning
+   git tag -a v1.0.0 -m "Release version 1.0.0"
+   
+   # Push the tag to GitHub
+   git push origin v1.0.0
+   ```
+
+2. **Automatic release creation:**
+   - A GitHub Actions workflow automatically triggers when the tag is pushed
+   - The workflow generates a changelog from commits since the last tag
+   - A GitHub release is created with the changelog and release notes
+   - Pre-release tags (containing `alpha`, `beta`, or `rc`) are marked as pre-releases
+
+### Versioning Convention
+
+This project follows [Semantic Versioning](https://semver.org/) (SemVer):
+
+- **MAJOR.MINOR.PATCH** (e.g., `v1.2.3`)
+  - **MAJOR**: Breaking changes or major feature releases
+  - **MINOR**: New features that are backward-compatible
+  - **PATCH**: Bug fixes and minor improvements
+
+**Examples:**
+- `v1.0.0` - Initial stable release
+- `v1.1.0` - Added new intent handler
+- `v1.1.1` - Fixed bug in authentication
+- `v2.0.0` - Breaking API changes
+- `v1.2.0-beta.1` - Pre-release beta version
+
+### Changelog Generation
+
+The changelog is automatically categorized by commit message patterns:
+
+- **Features** - Commits starting with `feat:`, `feature:`, `Add`, or `Implement`
+- **Bug Fixes** - Commits starting with `fix:`, `bug:`, or `Fix`
+- **Documentation** - Commits starting with `docs:`, `doc:`, or updating markdown files
+- **Other Changes** - All other commits
+
+**Tips for better changelogs:**
+- Use clear, descriptive commit messages
+- Follow [Conventional Commits](https://www.conventionalcommits.org/) when possible
+- Examples:
+  - `feat: Add handicap lookup intent handler`
+  - `fix: Correct authentication token refresh logic`
+  - `docs: Update deployment guide with new steps`
 
 ## Questions?
 
