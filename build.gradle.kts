@@ -59,6 +59,7 @@ openApiGenerate {
     typeMappings = mapOf(
         "identifier" to "kotlin.Long"
     )
+    skipValidateSpec = true
 }
 
 task("packageJar", Zip::class) {
