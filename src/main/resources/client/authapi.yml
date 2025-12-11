@@ -1,0 +1,118 @@
+openapi: 3.0.3
+info:
+  title: Golf Canada Auth API
+  version: 1.0.0
+paths:
+  /connect/token:
+    post:
+      summary: Retrieve authentication token
+      tags: ["Auth"]
+      operationId: getAuthToken
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/AuthRequest"
+      responses:
+        200:
+          description: Login Successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthToken"
+        401:
+          description: Not Authorized
+        400:
+          description: Invalid Request
+
+components:
+  schemas:
+    AuthRequest:
+      type: object
+      required:
+        - grant_type
+        - scope
+      properties:
+        grant_type:
+          type: string
+          enum: [password, refresh_token]
+          x-enum-varnames: [PASSWORD, REFRESH_TOKEN]
+        scope:
+          type: string
+        username:
+          type: string
+        password:
+          type: string
+        refresh_token:
+          type: string
+
+    AuthToken:
+      type: object
+      properties:
+          access_token:
+            type: string
+          refresh_token:
+            type: string
+          id_token:
+            type: string
+          expires_in:
+            type: integer
+          token_type:
+            type: string
+          user:
+            $ref: "#/components/schemas/User"
+
+    User:
+      type: object
+      properties:
+        allowScorePosting:
+          type: boolean
+        authUserId:
+          type: identifier
+        clubManagementGroupId:
+          type: integer
+        email:
+          type: string
+        expirationDate:
+          type: string
+          pattern: "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
+        firstName:
+          type: string
+        fullName:
+          type: string
+        golfCanadaCardId:
+          type: string
+        handicap:
+          type: string
+        id:
+          type: identifier
+        lastName:
+          type: string
+        membershipLevel:
+          type: string
+        networkId:
+          type: string
+        termsAndConditionsDate:
+          type: string
+          pattern: "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
+        username:
+          type: string
+        scoreDefaults:
+          $ref: "#/components/schemas/ScoreDefaults"
+
+    ScoreDefaults:
+      type: object
+      properties:
+        facilityName:
+          type: string
+        facilityId:
+          type: integer
+        courseId:
+          type: integer
+        teeId:
+          type: integer
+        nationalAssociation:
+          type: string
+        postHoleByHole:
+          type: boolean
