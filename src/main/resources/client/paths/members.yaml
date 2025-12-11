@@ -1,0 +1,117 @@
+/api/members/{userId}/getSnapshot:
+  get:
+    summary: Retrieve member snapshot
+    tags: ["Members"]
+    operationId: getSnapshot
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        description: The unique identifier of the member
+        schema:
+          type: identifier
+    responses:
+      200:
+        description: Member snapshot retrieved successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../models/MemberSnapshot.yaml'
+      401:
+        description: Not Authorized
+      404:
+        description: Member Not Found
+
+/api/members/{userId}/getFriends:
+  get:
+    summary: Retrieve member friends list
+    tags: ["Members"]
+    operationId: getFriends
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        description: The unique identifier of the member
+        schema:
+          type: integer
+          format: int64
+    responses:
+      200:
+        description: Friends list retrieved successfully
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '../models/Friend.yaml'
+      401:
+        description: Not Authorized
+      404:
+        description: Member Not Found
+
+/api/members/{userId}/getHandicapHistory:
+  get:
+    summary: Retrieve member handicap history
+    tags: ["Members"]
+    operationId: getHandicapHistory
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        description: The unique identifier of the member
+        schema:
+          type: identifier
+      - name: offsetInDays
+        in: query
+        required: false
+        description: Offset in days from current date (use negative values for past dates)
+        schema:
+          type: integer
+          default: -365
+    responses:
+      200:
+        description: Handicap history retrieved successfully
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '../models/HandicapHistoryEntry.yaml'
+      401:
+        description: Not Authorized
+      404:
+        description: Member Not Found
+
+/api/members/{userId}/getCourseList:
+  get:
+    summary: Retrieve member course list (favorite courses)
+    tags: ["Members"]
+    operationId: getCourseList
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        description: The unique identifier of the member
+        schema:
+          type: identifier
+    responses:
+      200:
+        description: Course list retrieved successfully
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '../models/Course.yaml'
+      401:
+        description: Not Authorized
+      404:
+        description: Member Not Found

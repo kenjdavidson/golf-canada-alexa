@@ -1,0 +1,107 @@
+type: object
+properties:
+  albatross:
+    type: integer
+  albatrossPercent:
+    type: number
+    format: double
+  eagles:
+    type: integer
+  eaglePercent:
+    type: number
+    format: double
+  birdies:
+    type: integer
+  birdiePercent:
+    type: number
+    format: double
+  pars:
+    type: integer
+  parPercent:
+    type: number
+    format: double
+  bogeys:
+    type: integer
+  bogeyPercent:
+    type: number
+    format: double
+  doubles:
+    type: integer
+  doublePercent:
+    type: number
+    format: double
+  others:
+    type: integer
+  otherPercent:
+    type: number
+    format: double
+  totalPutts:
+    type: integer
+  puttsPerRound:
+    type: number
+    format: double
+  puttsPerHole:
+    type: number
+    format: double
+  proximity:
+    type: number
+    format: double
+    nullable: true
+  girHit:
+    type: integer
+  girOpportunities:
+    type: number
+    format: double
+  girPercent:
+    type: number
+    format: double
+  drivingAverage:
+    type: number
+    format: double
+    nullable: true
+  firHit:
+    type: integer
+  firMissedLeft:
+    type: integer
+  firMissedRight:
+    type: integer
+  firMissedLong:
+    type: integer
+  firMissedShort:
+    type: integer
+  firMissedOther:
+    type: integer
+  firOpportunities:
+    type: integer
+  firPercent:
+    type: number
+    format: double
+  scrambling:
+    type: number
+    format: double
+  upDown:
+    type: number
+    format: double
+  sandSave:
+    type: number
+    format: double
+  bounceBack:
+    type: number
+    format: double
+  par3:
+    type: number
+    format: double
+  par4:
+    type: number
+    format: double
+  par5:
+    type: number
+    format: double
+  scores:
+    type: array
+    items:
+      $ref: ./SummaryScore.yaml
+  holeStatistics:
+    type: array
+    items:
+      $ref: ./HoleStatistic.yaml

@@ -1,0 +1,8 @@
+type: object
+properties:
+  totalCount:
+    type: integer
+  facilities:
+    type: array
+    items:
+      $ref: ./FacilitySearchResult.yaml

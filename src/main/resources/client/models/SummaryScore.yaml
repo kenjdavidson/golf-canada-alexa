@@ -1,0 +1,19 @@
+type: object
+properties:
+  date:
+    type: string
+    pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}'
+  course:
+    type: string
+  gross:
+    type: integer
+  differential:
+    type: number
+    format: double
+  esc:
+    type: integer
+  slope:
+    type: integer
+  rating:
+    type: number
+    format: double

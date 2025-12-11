@@ -1,0 +1,18 @@
+type: object
+properties:
+  number:
+    type: number
+    format: double
+  par:
+    type: integer
+  yards:
+    type: integer
+  handicap:
+    type: integer
+    nullable: true
+  max:
+    type: integer
+  frontMax:
+    type: integer
+  backMax:
+    type: integer

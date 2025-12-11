@@ -1,0 +1,81 @@
+type: object
+properties:
+  name:
+    type: string
+  email:
+    type: string
+  club:
+    type: string
+  handicap:
+    type: string
+  handicapDate:
+    type: string
+    pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}'
+  scores:
+    type: array
+    items:
+      $ref: ./HandicapScore.yaml
+  clubManagementGroup:
+    type: string
+  scoreCount:
+    type: integer
+  numCalcScores:
+    type: integer
+  handicapScores:
+    type: array
+    items:
+      $ref: ./HandicapScore.yaml
+  adjustedScores:
+    type: array
+    items:
+      $ref: ./HandicapScore.yaml
+  esrTriggerScores:
+    type: array
+    items:
+      $ref: ./HandicapScore.yaml
+  exceptionalScores:
+    type: array
+    items:
+      $ref: ./HandicapScore.yaml
+  pccScores:
+    type: array
+    items:
+      $ref: ./HandicapScore.yaml
+  committeeScores:
+    type: array
+    items:
+      $ref: ./HandicapScore.yaml
+  diffSum:
+    type: number
+    format: double
+  avgDiff:
+    type: number
+    format: double
+  lowValue:
+    type: number
+    format: double
+  isLowValueAdjusted:
+    type: boolean
+  lowIndexAdjustedOn:
+    type: string
+    pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}'
+  calcValue:
+    type: number
+    format: double
+  adjustedValue:
+    type: number
+    format: double
+  lowValueDifference:
+    type: number
+    format: double
+  softCap:
+    type: number
+    format: double
+  hardCap:
+    type: number
+    format: double
+  lowScoreCountAdjustment:
+    type: integer
+  adjustedAvgDiff:
+    type: number
+    format: double
