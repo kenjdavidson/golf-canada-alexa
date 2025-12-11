@@ -243,6 +243,41 @@ paths:
         404:
           description: Score data not found
 
+  /api/facilities/search:
+    get:
+      summary: Search for golf facilities
+      tags: ["Facilities"]
+      operationId: searchFacilities
+      parameters:
+        - name: $top
+          in: query
+          required: false
+          description: Maximum number of results to return
+          schema:
+            type: integer
+            default: 10
+        - name: nationalAssociation
+          in: query
+          required: false
+          description: National association to filter by (e.g., RCGA)
+          schema:
+            type: string
+        - name: text
+          in: query
+          required: false
+          description: Search text to match against facility names
+          schema:
+            type: string
+      responses:
+        200:
+          description: Facility search results retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FacilitySearchResponse"
+        400:
+          description: Invalid Request
+
 components:
   securitySchemes:
     bearerAuth:
@@ -978,3 +1013,28 @@ components:
           type: integer
         backMax:
           type: integer
+
+    FacilitySearchResponse:
+      type: object
+      properties:
+        totalCount:
+          type: integer
+        facilities:
+          type: array
+          items:
+            $ref: "#/components/schemas/FacilitySearchResult"
+
+    FacilitySearchResult:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        city:
+          type: string
+        region:
+          type: string
+        nationalAssociation:
+          type: string
