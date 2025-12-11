@@ -284,6 +284,8 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+  # Schema definitions reference external modular files in ./models/ directory.
+  # The bundleOpenApiSpec task resolves these references before code generation.
   schemas:
     AuthRequest:
       $ref: './models/AuthRequest.yaml'
