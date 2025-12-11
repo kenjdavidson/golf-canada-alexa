@@ -1,0 +1,36 @@
+type: object
+properties:
+  allowScorePosting:
+    type: boolean
+  authUserId:
+    type: identifier
+  clubManagementGroupId:
+    type: integer
+  email:
+    type: string
+  expirationDate:
+    type: string
+    pattern: "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
+  firstName:
+    type: string
+  fullName:
+    type: string
+  golfCanadaCardId:
+    type: string
+  handicap:
+    type: string
+  id:
+    type: identifier
+  lastName:
+    type: string
+  membershipLevel:
+    type: string
+  networkId:
+    type: string
+  termsAndConditionsDate:
+    type: string
+    pattern: "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
+  username:
+    type: string
+  scoreDefaults:
+    $ref: './ScoreDefaults.yaml'

@@ -1,0 +1,14 @@
+type: object
+properties:
+  facilityName:
+    type: string
+  facilityId:
+    type: integer
+  courseId:
+    type: integer
+  teeId:
+    type: integer
+  nationalAssociation:
+    type: string
+  postHoleByHole:
+    type: boolean

@@ -1,0 +1,70 @@
+type: object
+properties:
+  club:
+    type: string
+  membershipType:
+    type: string
+  expirationDate:
+    type: string
+    pattern: "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
+  homeCourse:
+    type: string
+  defaultTee:
+    type: string
+  courseHandicap:
+    type: string
+  winterHandicap:
+    type: string
+  winterCourseHandicap:
+    type: string
+  isWinterHandicapDisplayed:
+    type: boolean
+  scores:
+    type: array
+    items:
+      $ref: './Score.yaml'
+  clubManagementGroup:
+    type: string
+  ytdScoreCount:
+    type: integer
+  ytdScoreAverage:
+    type: number
+    format: double
+  ytdYear:
+    type: integer
+  transferClubName:
+    type: string
+  transferRequestDate:
+    type: string
+    pattern: "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
+  lastCardRequestedOn:
+    type: string
+    pattern: "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?"
+  expectedDeliveryOn:
+    type: string
+    pattern: "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
+  isCardsSentToClub:
+    type: boolean
+  lowHandicap:
+    type: string
+  lowHandicapOn:
+    type: string
+    pattern: "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
+  adjustedLowHandicap:
+    type: string
+  displayLowHandicap:
+    type: string
+  adjustedLowHandicapStartOn:
+    type: string
+    pattern: "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
+  adjustedLowHandicapEndOn:
+    type: string
+    pattern: "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
+  lowHandicapAdjustedOn:
+    type: string
+    pattern: "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
+  isLowIndexAdjusted:
+    type: boolean
+  subscriptionRenewsOn:
+    type: string
+    pattern: "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"

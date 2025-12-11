@@ -1,0 +1,13 @@
+type: object
+properties:
+  id:
+    type: integer
+    format: int64
+  nationalAssociation:
+    type: string
+  name:
+    type: string
+  courses:
+    type: array
+    items:
+      $ref: ./CourseDetail.yaml

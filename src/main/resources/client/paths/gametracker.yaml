@@ -1,0 +1,38 @@
+/api/gameTracker/getSummary:
+  get:
+    summary: Retrieve game tracker summary for an individual
+    tags: ["GameTracker"]
+    operationId: getGameTrackerSummary
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: courseId
+        in: query
+        required: true
+        description: The unique identifier of the course
+        schema:
+          type: integer
+          format: int64
+      - name: individualId
+        in: query
+        required: true
+        description: The unique identifier of the individual
+        schema:
+          type: identifier
+      - name: range
+        in: query
+        required: true
+        description: The range of data to retrieve (e.g., YTD, Last20, or a specific year like 2025)
+        schema:
+          type: string
+    responses:
+      200:
+        description: Game tracker summary retrieved successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../models/GameTrackerSummary.yaml'
+      401:
+        description: Not Authorized
+      404:
+        description: Game tracker summary not found

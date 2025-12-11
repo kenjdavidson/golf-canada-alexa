@@ -1,0 +1,6 @@
+type: object
+properties:
+  score:
+    $ref: ./ScoreDetail.yaml
+  facility:
+    $ref: ./Facility.yaml

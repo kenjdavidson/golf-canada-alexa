@@ -1,0 +1,28 @@
+type: object
+properties:
+  number:
+    type: integer
+  par:
+    type: integer
+  averageScore:
+    type: number
+    format: double
+  averagePutts:
+    type: number
+    format: double
+  totalAlbatross:
+    type: integer
+  totalEagles:
+    type: integer
+  totalBirdies:
+    type: integer
+  totalPars:
+    type: integer
+  totalBogeys:
+    type: integer
+  totalDoubles:
+    type: integer
+  totalDoublesPlus:
+    type: integer
+  totalPenalties:
+    type: integer
