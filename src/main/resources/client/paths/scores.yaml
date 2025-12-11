@@ -1,0 +1,51 @@
+/api/scores/getHandicapCalculation:
+  get:
+    summary: Retrieve handicap calculation for an individual
+    tags: ["Scores"]
+    operationId: getHandicapCalculation
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: individualId
+        in: query
+        required: true
+        description: The unique identifier of the individual
+        schema:
+          type: identifier
+    responses:
+      200:
+        description: Handicap calculation retrieved successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../models/HandicapCalculation.yaml'
+      401:
+        description: Not Authorized
+      404:
+        description: Handicap calculation not found
+
+/api/scores/getScoreData:
+  get:
+    summary: Retrieve score data for an individual
+    tags: ["Scores"]
+    operationId: getScoreData
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: individualId
+        in: query
+        required: true
+        description: The unique identifier of the individual
+        schema:
+          type: identifier
+    responses:
+      200:
+        description: Score data retrieved successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../models/ScoreData.yaml'
+      401:
+        description: Not Authorized
+      404:
+        description: Score data not found

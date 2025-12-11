@@ -1,0 +1,36 @@
+type: object
+properties:
+  number:
+    type: number
+    format: double
+  gross:
+    type: integer
+    nullable: true
+  putts:
+    type: integer
+    nullable: true
+  puttLength:
+    type: number
+    format: double
+    nullable: true
+  club:
+    type: integer
+    nullable: true
+  drive:
+    type: string
+    nullable: true
+  fir:
+    type: integer
+    nullable: true
+  upDown:
+    type: integer
+    nullable: true
+  sandSave:
+    type: integer
+    nullable: true
+  penalty:
+    type: integer
+    nullable: true
+  max:
+    type: integer
+    nullable: true

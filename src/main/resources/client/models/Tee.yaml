@@ -1,0 +1,30 @@
+type: object
+properties:
+  id:
+    type: integer
+    format: int64
+  name:
+    type: string
+  holes:
+    type: array
+    items:
+      $ref: ./Hole.yaml
+  frontRating:
+    type: number
+    format: double
+  backRating:
+    type: number
+    format: double
+  rating:
+    type: number
+    format: double
+  frontSlope:
+    type: integer
+  backSlope:
+    type: integer
+  slope:
+    type: integer
+  targetScore:
+    type: integer
+  adjustedTargetScore:
+    type: integer
