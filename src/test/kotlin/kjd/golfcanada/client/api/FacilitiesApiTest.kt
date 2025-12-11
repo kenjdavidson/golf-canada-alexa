@@ -16,8 +16,8 @@ import io.kotest.matchers.collections.shouldNotBeEmpty
  * ```kotlin
  * val facilitiesApi = FacilitiesApi(client = authenticatedClient)
  * val response = facilitiesApi.searchFacilities(
- *     dollarTop = 10,
  *     nationalAssociation = "RCGA",
+ *     dollarTop = 10,
  *     text = "glen"
  * )
  * println("Found ${response.totalCount} facilities")
@@ -36,25 +36,15 @@ class FacilitiesApiTest : AuthenticatedApiTest({
     }
     
     describe("searchFacilities") {
-        it("should search for facilities with text parameter") {
+        it("should return facilities with expected properties") {
             val response = facilitiesApi.searchFacilities(
+                nationalAssociation = "RCGA",
                 text = "glen"
             )
             
             response.shouldNotBeNull()
             response.totalCount.shouldNotBeNull()
             response.totalCount!! shouldBeGreaterThan 0
-            response.facilities.shouldNotBeNull()
-            response.facilities!!.shouldNotBeEmpty()
-        }
-        
-        it("should return facilities with expected properties") {
-            val response = facilitiesApi.searchFacilities(
-                text = "glen",
-                nationalAssociation = "RCGA"
-            )
-            
-            response.shouldNotBeNull()
             response.facilities.shouldNotBeNull()
             response.facilities!!.shouldNotBeEmpty()
             
@@ -70,9 +60,9 @@ class FacilitiesApiTest : AuthenticatedApiTest({
         
         it("should respect the \$top parameter") {
             val response = facilitiesApi.searchFacilities(
+                nationalAssociation = "RCGA",
                 dollarTop = 5,
-                text = "glen",
-                nationalAssociation = "RCGA"
+                text = "glen"
             )
             
             response.shouldNotBeNull()
@@ -83,8 +73,8 @@ class FacilitiesApiTest : AuthenticatedApiTest({
         
         it("should filter by nationalAssociation parameter") {
             val response = facilitiesApi.searchFacilities(
-                text = "glen",
-                nationalAssociation = "RCGA"
+                nationalAssociation = "RCGA",
+                text = "glen"
             )
             
             response.shouldNotBeNull()

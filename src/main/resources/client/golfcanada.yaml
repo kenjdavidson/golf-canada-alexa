@@ -258,7 +258,7 @@ paths:
             default: 10
         - name: nationalAssociation
           in: query
-          required: false
+          required: true
           description: National association to filter by (e.g., RCGA)
           schema:
             type: string
