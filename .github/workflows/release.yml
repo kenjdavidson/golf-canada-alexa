@@ -23,8 +23,8 @@ jobs:
         run: |
           CURRENT_TAG=${GITHUB_REF#refs/tags/}
           
-          # Get the previous tag
-          PREVIOUS_TAG=$(git tag --sort=-version:refname | grep -v "^$CURRENT_TAG$" | head -n 1)
+          # Get the previous tag (only version tags matching v*.*.*)
+          PREVIOUS_TAG=$(git tag -l 'v*.*.*' --sort=-version:refname | grep -v "^$CURRENT_TAG$" | head -n 1)
           
           if [ -z "$PREVIOUS_TAG" ]; then
             echo "No previous tag found, generating changelog from first commit"
@@ -58,11 +58,11 @@ jobs:
               fi
               
               # Categorize by conventional commit prefix or keywords
-              if [[ "$message" =~ ^feat:|^feature: ]] || [[ "$message" =~ ^Add|^Implement ]]; then
+              if [[ "$message" =~ ^feat:|^feature: ]] || [[ "$message" =~ ^Add[[:space:]]|^Implement[[:space:]] ]]; then
                 FEATURES="${FEATURES}* ${message} (${hash})\n"
-              elif [[ "$message" =~ ^fix:|^bug: ]] || [[ "$message" =~ ^Fix ]]; then
+              elif [[ "$message" =~ ^fix:|^bug: ]] || [[ "$message" =~ ^Fix[[:space:]] ]]; then
                 FIXES="${FIXES}* ${message} (${hash})\n"
-              elif [[ "$message" =~ ^docs:|^doc: ]] || [[ "$message" =~ ^Update.*\.md|^Add.*\.md ]]; then
+              elif [[ "$message" =~ ^docs:|^doc: ]] || [[ "$message" =~ ^Update[[:space:]].*\.md|^Add[[:space:]].*\.md ]]; then
                 DOCS="${DOCS}* ${message} (${hash})\n"
               else
                 OTHER="${OTHER}* ${message} (${hash})\n"
@@ -107,7 +107,7 @@ jobs:
             
             ${{ steps.changelog.outputs.changelog }}
             
-            **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ steps.changelog.outputs.previous_tag || github.event.before }}...${{ github.ref_name }}
+            ${{ steps.changelog.outputs.previous_tag && format('**Full Changelog**: https://github.com/{0}/compare/{1}...{2}', github.repository, steps.changelog.outputs.previous_tag, github.ref_name) || '**Note**: This is the first release.' }}
           draft: false
           prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
           generate_release_notes: true  # Uses GitHub's automatic release notes as additional context
