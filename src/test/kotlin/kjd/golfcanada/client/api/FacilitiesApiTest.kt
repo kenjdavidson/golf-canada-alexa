@@ -15,15 +15,14 @@ import io.kotest.matchers.collections.shouldNotBeEmpty
  * Example usage:
  * ```kotlin
  * val facilitiesApi = FacilitiesApi(client = authenticatedClient)
+ * // With nationalAssociation (recommended)
  * val response = facilitiesApi.searchFacilities(
  *     nationalAssociation = "RCGA",
  *     dollarTop = 10,
  *     text = "glen"
  * )
- * println("Found ${response.totalCount} facilities")
- * response.facilities?.forEach { facility ->
- *     println("${facility.name} in ${facility.city}, ${facility.region}")
- * }
+ * // Without nationalAssociation (returns empty result)
+ * val emptyResponse = facilitiesApi.searchFacilities(text = "glen")
  * ```
  */
 @EnabledIf(UsernamePasswordCondition::class)
@@ -36,6 +35,17 @@ class FacilitiesApiTest : AuthenticatedApiTest({
     }
     
     describe("searchFacilities") {
+        it("should return empty result when nationalAssociation is null") {
+            val response = facilitiesApi.searchFacilities(
+                text = "glen"
+            )
+            
+            response.shouldNotBeNull()
+            response.totalCount.shouldNotBeNull()
+            response.totalCount shouldBe 0
+            response.facilities.shouldNotBeNull()
+        }
+        
         it("should return facilities with expected properties") {
             val response = facilitiesApi.searchFacilities(
                 nationalAssociation = "RCGA",
