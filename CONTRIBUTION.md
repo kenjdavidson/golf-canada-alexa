@@ -346,7 +346,7 @@ private fun handleLoginRequest(event: APIGatewayV2HTTPEvent): APIGatewayProxyRes
 
 ### Creating a Release
 
-Releases are automatically created when a version tag is pushed to the repository. The process is:
+Releases are created manually using a GitHub Actions workflow. The process is:
 
 1. **Tag the release:**
    ```shell
@@ -357,11 +357,18 @@ Releases are automatically created when a version tag is pushed to the repositor
    git push origin v1.0.0
    ```
 
-2. **Automatic release creation:**
-   - A GitHub Actions workflow automatically triggers when the tag is pushed
-   - The workflow generates a changelog from commits since the last tag
-   - A GitHub release is created with the changelog and release notes
-   - Pre-release tags (containing `alpha`, `beta`, or `rc`) are marked as pre-releases
+2. **Create the release via GitHub Actions:**
+   - Go to the **Actions** tab in the GitHub repository
+   - Select the **Create Release** workflow
+   - Click **Run workflow**
+   - Enter the tag name (e.g., `v1.0.0`) in the input field
+   - Click **Run workflow** to start the release process
+
+3. **Automated release generation:**
+   - The workflow validates that the tag exists
+   - Generates a changelog from commits since the last tag
+   - Creates a GitHub release with the changelog and release notes
+   - Pre-release tags (containing `alpha`, `beta`, or `rc`) are automatically marked as pre-releases
 
 ### Versioning Convention
 
