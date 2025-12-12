@@ -42,99 +42,12 @@ jobs:
           fi
           echo "Tag '$TAG' exists and is valid"
       
-      - name: Generate changelog
-        id: changelog
-        run: |
-          CURRENT_TAG="${{ inputs.tag }}"
-          
-          # Get the previous tag (only version tags matching v*.*.*)
-          PREVIOUS_TAG=$(git tag -l 'v*.*.*' --sort=-version:refname | grep -v "^$CURRENT_TAG$" | head -n 1)
-          
-          if [ -z "$PREVIOUS_TAG" ]; then
-            echo "No previous tag found, generating changelog from first commit"
-            PREVIOUS_TAG=$(git rev-list --max-parents=0 HEAD)
-            RANGE="$PREVIOUS_TAG..$CURRENT_TAG"
-          else
-            echo "Generating changelog from $PREVIOUS_TAG to $CURRENT_TAG"
-            RANGE="$PREVIOUS_TAG..$CURRENT_TAG"
-            echo "previous_tag=$PREVIOUS_TAG" >> $GITHUB_OUTPUT
-          fi
-          
-          # Generate changelog grouped by type
-          CHANGELOG=""
-          
-          # Get all commits in range
-          COMMITS=$(git log $RANGE --pretty=format:"%s|%h" --no-merges)
-          
-          if [ -z "$COMMITS" ]; then
-            CHANGELOG="* Initial release"
-          else
-            # Categorize commits
-            FEATURES=""
-            FIXES=""
-            DOCS=""
-            OTHER=""
-            
-            while IFS='|' read -r message hash; do
-              # Clean up merge commit messages
-              if [[ "$message" =~ ^Merge\ pull\ request ]]; then
-                continue
-              fi
-              
-              # Categorize by conventional commit prefix or keywords
-              if [[ "$message" =~ ^feat:|^feature: ]] || [[ "$message" =~ ^Add[[:space:]]|^Implement[[:space:]] ]]; then
-                FEATURES="${FEATURES}* ${message} (${hash})\n"
-              elif [[ "$message" =~ ^fix:|^bug: ]] || [[ "$message" =~ ^Fix[[:space:]] ]]; then
-                FIXES="${FIXES}* ${message} (${hash})\n"
-              elif [[ "$message" =~ ^docs:|^doc: ]] || [[ "$message" =~ ^Update[[:space:]].*\.md|^Add[[:space:]].*\.md ]]; then
-                DOCS="${DOCS}* ${message} (${hash})\n"
-              else
-                OTHER="${OTHER}* ${message} (${hash})\n"
-              fi
-            done <<< "$COMMITS"
-            
-            # Build changelog with sections
-            if [ -n "$FEATURES" ]; then
-              CHANGELOG="${CHANGELOG}### ✨ Features\n${FEATURES}\n"
-            fi
-            
-            if [ -n "$FIXES" ]; then
-              CHANGELOG="${CHANGELOG}### 🐛 Bug Fixes\n${FIXES}\n"
-            fi
-            
-            if [ -n "$DOCS" ]; then
-              CHANGELOG="${CHANGELOG}### 📚 Documentation\n${DOCS}\n"
-            fi
-            
-            if [ -n "$OTHER" ]; then
-              CHANGELOG="${CHANGELOG}### 🔧 Other Changes\n${OTHER}\n"
-            fi
-          fi
-          
-          # Save to file and output
-          echo -e "$CHANGELOG" > CHANGELOG.txt
-          
-          # Set output for use in release creation
-          # Using heredoc to handle multiline content
-          echo "changelog<<EOF" >> $GITHUB_OUTPUT
-          echo -e "$CHANGELOG" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-          
-          echo "Generated changelog:"
-          echo -e "$CHANGELOG"
-      
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.tag }}
-          body: |
-            ## What's Changed
-            
-            ${{ steps.changelog.outputs.changelog }}
-            
-            ${{ steps.changelog.outputs.previous_tag && format('**Full Changelog**: https://github.com/{0}/compare/{1}...{2}', github.repository, steps.changelog.outputs.previous_tag, inputs.tag) || '**Note**: This is the first release.' }}
+          generate_release_notes: true
           draft: false
           prerelease: ${{ contains(inputs.tag, 'alpha') || contains(inputs.tag, 'beta') || contains(inputs.tag, 'rc') }}
-          generate_release_notes: true  # Uses GitHub's automatic release notes as additional context
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
