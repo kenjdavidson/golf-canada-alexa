@@ -8,8 +8,7 @@ import com.amazon.ask.request.Predicates.intentName
 import kjd.golfcanada.alexa.IntentName
 import kjd.golfcanada.alexa.data.UserProfileSession
 import kjd.golfcanada.alexa.exception.GenericIntentException
-import kjd.golfcanada.alexa.exception.NoUserDetailsException
-import kjd.golfcanada.alexa.interceptor.UserProfileInterceptor
+import kjd.golfcanada.alexa.util.getUserOrThrow
 import kjd.golfcanada.client.provider.ApiClientProvider
 import kjd.golfcanada.client.provider.withAuthenticatedClient
 import org.slf4j.LoggerFactory
@@ -50,13 +49,7 @@ class CourseHandicapIntentHandler(
         val slots = request.intent?.slots
 
         // Get user profile from session - validate once for all requests
-        val sessionAttributes = input.attributesManager.sessionAttributes
-        val userProfile = sessionAttributes[UserProfileInterceptor.USER_SESSION_KEY] as? UserProfileSession
-            ?: throw NoUserDetailsException()
-        
-        if (userProfile.id == null) {
-            throw NoUserDetailsException()
-        }
+        val userProfile = input.getUserOrThrow()
 
         val facilityNameSlot = slots?.get("FacilityName")
         val facilityName = facilityNameSlot?.value
