@@ -53,9 +53,9 @@ object FriendsListCache {
     fun get(input: HandlerInput, client: ApiClientWrapper): List<FriendInfo> {
         val sessionAttributes = input.attributesManager.sessionAttributes
         
-        // Get user from session using extension function
-        val user = input.getUserOrThrow()
-        val userId = user.id!!
+        // Get user profile from session using extension function
+        val userProfile = input.getUserOrThrow()
+        val userId = userProfile.id!!
         
         // Check if friends list is already cached in session
         @Suppress("UNCHECKED_CAST")
