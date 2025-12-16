@@ -10,8 +10,6 @@ import kjd.golfcanada.alexa.data.UserProfileSession
 import kjd.golfcanada.alexa.exception.GenericIntentException
 import kjd.golfcanada.alexa.exception.NoUserDetailsException
 import kjd.golfcanada.alexa.interceptor.UserProfileInterceptor
-import kjd.golfcanada.alexa.util.getUserOrThrow
-import kjd.golfcanada.client.model.User
 import kjd.golfcanada.client.provider.ApiClientProvider
 import kjd.golfcanada.client.provider.withAuthenticatedClient
 import org.slf4j.LoggerFactory
@@ -52,12 +50,13 @@ class CourseHandicapIntentHandler(
         val slots = request.intent?.slots
 
         // Get user profile from session - validate once for all requests
-        val user = input.getUserOrThrow()
-        
-        // Get user profile session for facility information
         val sessionAttributes = input.attributesManager.sessionAttributes
         val userProfile = sessionAttributes[UserProfileInterceptor.USER_SESSION_KEY] as? UserProfileSession
             ?: throw NoUserDetailsException()
+        
+        if (userProfile.id == null) {
+            throw NoUserDetailsException()
+        }
 
         val facilityNameSlot = slots?.get("FacilityName")
         val facilityName = facilityNameSlot?.value
@@ -66,9 +65,9 @@ class CourseHandicapIntentHandler(
         val teeName = teeNameSlot?.value
 
         return if (facilityName != null) {
-            handleSpecificFacility(input, user, facilityName, teeName)
+            handleSpecificFacility(input, userProfile, facilityName, teeName)
         } else {
-            handleDefaultCourse(input, user, userProfile)
+            handleDefaultCourse(input, userProfile)
         }
     }
 
@@ -81,11 +80,10 @@ class CourseHandicapIntentHandler(
      * 3. Returns the course handicap
      * 
      * @param input The handler input
-     * @param user The user object
-     * @param userProfile The user profile session containing facility information
+     * @param userProfile The user profile session containing user and facility information
      * @return Response with the user's default course handicap information
      */
-    private fun handleDefaultCourse(input: HandlerInput, user: User, userProfile: UserProfileSession): Optional<Response> {
+    private fun handleDefaultCourse(input: HandlerInput, userProfile: UserProfileSession): Optional<Response> {
         logger.info("Default course handicap requested")
         
         try {
@@ -104,7 +102,7 @@ class CourseHandicapIntentHandler(
                 val courseHandicapInfo = client.courses.getCourseHandicapInfo(
                     facilityId = facilityId,
                     handicapPercent = DEFAULT_HANDICAP_PERCENT,
-                    individualId = user.id!!
+                    individualId = userProfile.id!!
                 )
                 
                 // Get the first course and first tee for the default response
@@ -139,12 +137,12 @@ class CourseHandicapIntentHandler(
      * 4. Returns the tee's course handicap and expected score information
      * 
      * @param input The handler input
-     * @param user The user object
+     * @param userProfile The user profile session containing user information
      * @param facilityName The name of the facility to search for
      * @param teeName The name of the tee (optional) to filter by
      * @return Response with the course handicap information
      */
-    private fun handleSpecificFacility(input: HandlerInput, user: User, facilityName: String, teeName: String? = null): Optional<Response> {
+    private fun handleSpecificFacility(input: HandlerInput, userProfile: UserProfileSession, facilityName: String, teeName: String? = null): Optional<Response> {
         logger.info("Specific course handicap requested for facility: $facilityName")
         
         try {
@@ -184,7 +182,7 @@ class CourseHandicapIntentHandler(
                 val courseHandicapInfo = client.courses.getCourseHandicapInfo(
                     facilityId = matchingFacility.id,
                     handicapPercent = DEFAULT_HANDICAP_PERCENT,
-                    individualId = user.id!!
+                    individualId = userProfile.id!!
                 )
                 
                 // Get the first course and filter tees if tee name is provided
