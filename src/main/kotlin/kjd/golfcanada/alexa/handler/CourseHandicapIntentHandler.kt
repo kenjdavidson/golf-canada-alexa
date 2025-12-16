@@ -6,7 +6,6 @@ import com.amazon.ask.model.IntentRequest
 import com.amazon.ask.model.Response
 import com.amazon.ask.request.Predicates.intentName
 import kjd.golfcanada.alexa.IntentName
-import kjd.golfcanada.alexa.exception.AccountLinkingException
 import kjd.golfcanada.alexa.exception.GenericIntentException
 import kjd.golfcanada.alexa.util.getUserOrThrow
 import kjd.golfcanada.client.provider.ApiClientProvider
@@ -97,9 +96,6 @@ class CourseHandicapIntentHandler(
                     input.generateTemplateResponse("CourseHandicapIntentResponse", dataModel)
                 }
             }
-        } catch (e: AccountLinkingException) {
-            logger.warn("No access token available for fetching default course handicap")
-            throw e
         } catch (e: Exception) {
             logger.error("Failed to fetch default course handicap: ${e.message}", e)
             throw GenericIntentException("Failed to fetch default course handicap", e)
@@ -204,9 +200,6 @@ class CourseHandicapIntentHandler(
                     input.generateTemplateResponse("CourseHandicapIntentSpecificCourseResponse", dataModel)
                 }
             }
-        } catch (e: AccountLinkingException) {
-            logger.warn("No access token available for fetching course handicap")
-            throw e
         } catch (e: Exception) {
             logger.error("Failed to fetch course handicap for $courseName: ${e.message}", e)
             throw GenericIntentException("Failed to fetch course handicap", e)
