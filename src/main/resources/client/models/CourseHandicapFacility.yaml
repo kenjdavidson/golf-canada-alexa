@@ -1,0 +1,39 @@
+type: object
+properties:
+  id:
+    type: integer
+    format: int64
+  nationalAssociation:
+    type: string
+  name:
+    type: string
+  courses:
+    type: array
+    items:
+      $ref: ./CourseHandicapCourse.yaml
+  address1:
+    type: string
+    nullable: true
+  address2:
+    type: string
+    nullable: true
+  city:
+    type: string
+  region:
+    type: string
+  postalCode:
+    type: string
+  logo@odata.mediaReadLink:
+    type: string
+    nullable: true
+  website:
+    type: string
+    nullable: true
+  phone:
+    type: string
+  showCNLink:
+    type: boolean
+  golfPros:
+    type: array
+    items:
+      $ref: ./GolfPro.yaml

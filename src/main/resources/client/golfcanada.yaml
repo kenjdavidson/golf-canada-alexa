@@ -278,6 +278,43 @@ paths:
         400:
           description: Invalid Request
 
+  /api/courses/getCourseHandicapInfo:
+    get:
+      summary: Retrieve course handicap information for a facility and individual
+      tags: ["Courses"]
+      operationId: getCourseHandicapInfo
+      parameters:
+        - name: facilityId
+          in: query
+          required: true
+          description: The unique identifier of the facility
+          schema:
+            type: integer
+            format: int64
+        - name: handicapPercent
+          in: query
+          required: true
+          description: Handicap percentage (typically 100)
+          schema:
+            type: integer
+        - name: individualId
+          in: query
+          required: true
+          description: The unique identifier of the individual
+          schema:
+            type: identifier
+      responses:
+        200:
+          description: Course handicap information retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: './models/CourseHandicapInfo.yaml'
+        400:
+          description: Invalid Request
+        404:
+          description: Facility or individual not found
+
 components:
   securitySchemes:
     bearerAuth:
@@ -333,3 +370,13 @@ components:
       $ref: './models/FacilitySearchResponse.yaml'
     FacilitySearchResult:
       $ref: './models/FacilitySearchResult.yaml'
+    CourseHandicapInfo:
+      $ref: './models/CourseHandicapInfo.yaml'
+    CourseHandicapFacility:
+      $ref: './models/CourseHandicapFacility.yaml'
+    CourseHandicapCourse:
+      $ref: './models/CourseHandicapCourse.yaml'
+    CourseHandicapTee:
+      $ref: './models/CourseHandicapTee.yaml'
+    GolfPro:
+      $ref: './models/GolfPro.yaml'
