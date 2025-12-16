@@ -1,0 +1,40 @@
+type: object
+properties:
+  id:
+    type: integer
+    format: int64
+  nationalAssociation:
+    type: string
+  name:
+    type: string
+  courses:
+    type: array
+    items:
+      $ref: ./CourseHandicapCourse.yaml
+  address1:
+    type: string
+    nullable: true
+  address2:
+    type: string
+    nullable: true
+  city:
+    type: string
+  region:
+    type: string
+  postalCode:
+    type: string
+  logoOdataMediaReadLink:
+    type: string
+    nullable: true
+    x-field-extra-annotation: "@com.squareup.moshi.Json(name = \"logo@odata.mediaReadLink\")"
+  website:
+    type: string
+    nullable: true
+  phone:
+    type: string
+  showCNLink:
+    type: boolean
+  golfPros:
+    type: array
+    items:
+      $ref: ./GolfPro.yaml
