@@ -2,6 +2,7 @@ package kjd.golfcanada.client.provider
 
 import kjd.golfcanada.client.api.AuthApi
 import kjd.golfcanada.client.api.CoursesApi
+import kjd.golfcanada.client.api.FacilitiesApi
 import kjd.golfcanada.client.api.MembersApi
 import kjd.golfcanada.client.api.ScoresApi
 import org.openapitools.client.infrastructure.ApiClient
@@ -60,6 +61,14 @@ class ApiClientWrapper internal constructor(private val apiClient: ApiClient) {
      */
     val courses: CoursesApi by lazy {
         CoursesApi(apiClient.baseUrl, apiClient.client)
+    }
+    
+    /**
+     * Lazy-loaded FacilitiesApi instance.
+     * Created once on first access and reused for subsequent calls.
+     */
+    val facilities: FacilitiesApi by lazy {
+        FacilitiesApi(apiClient.baseUrl, apiClient.client)
     }
     
     /**

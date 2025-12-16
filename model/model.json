@@ -163,7 +163,7 @@
           "name": "GOLFCANADA.CourseHandicap",
           "slots": [
             {
-              "name": "CourseName",
+              "name": "FacilityName",
               "type": "AMAZON.SearchQuery"
             },
             {
@@ -176,13 +176,13 @@
             "tell me my course handicap",
             "what's my course handicap",
             "get my course handicap",
-            "what is my handicap at {CourseName}",
-            "what's my course handicap at {CourseName}",
-            "tell me my course handicap at {CourseName}",
-            "what is my handicap for {CourseName}",
-            "get my course handicap for {CourseName}",
+            "what is my handicap at {FacilityName}",
+            "what's my course handicap at {FacilityName}",
+            "tell me my course handicap at {FacilityName}",
+            "what is my handicap for {FacilityName}",
+            "get my course handicap for {FacilityName}",
             "what is my expected score from the {TeeName} tees",
-            "what is my expected score at {CourseName} from the {TeeName} tees"
+            "what is my expected score at {FacilityName} from the {TeeName} tees"
           ]
         }
       ],

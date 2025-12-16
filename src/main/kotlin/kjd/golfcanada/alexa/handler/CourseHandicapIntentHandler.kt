@@ -50,14 +50,14 @@ class CourseHandicapIntentHandler(
         // Get user profile from session - validate once for all requests
         val user = input.getUserOrThrow()
 
-        val courseNameSlot = slots?.get("CourseName")
-        val courseName = courseNameSlot?.value
+        val facilityNameSlot = slots?.get("FacilityName")
+        val facilityName = facilityNameSlot?.value
         
         val teeNameSlot = slots?.get("TeeName")
         val teeName = teeNameSlot?.value
 
-        return if (courseName != null) {
-            handleSpecificCourse(input, user.id!!, courseName, teeName)
+        return if (facilityName != null) {
+            handleSpecificFacility(input, user.id!!, facilityName, teeName)
         } else {
             handleDefaultCourse(input, user.id!!)
         }
@@ -103,63 +103,59 @@ class CourseHandicapIntentHandler(
     }
 
     /**
-     * Handles the request for a course handicap at a specific course.
+     * Handles the request for a course handicap at a specific facility.
      * 
      * This method:
-     * 1. Fetches the user's course list
-     * 2. Searches for a matching course by name
-     * 3. Fetches course handicap information for the matched course
-     * 4. Filters by tee name if provided
-     * 5. Returns the tee's course handicap and expected score information
+     * 1. Searches for facilities matching the given name
+     * 2. Fetches course handicap information for the matched facility
+     * 3. Filters by tee name if provided
+     * 4. Returns the tee's course handicap and expected score information
      * 
      * @param input The handler input
      * @param userId The user's ID
-     * @param courseName The name of the course to search for
+     * @param facilityName The name of the facility to search for
      * @param teeName The name of the tee (optional) to filter by
      * @return Response with the course handicap information
      */
-    private fun handleSpecificCourse(input: HandlerInput, userId: Long, courseName: String, teeName: String? = null): Optional<Response> {
-        logger.info("Specific course handicap requested for: $courseName")
+    private fun handleSpecificFacility(input: HandlerInput, userId: Long, facilityName: String, teeName: String? = null): Optional<Response> {
+        logger.info("Specific course handicap requested for facility: $facilityName")
         
         try {
             return apiClientProvider.withAuthenticatedClient(input) { client ->
-                // Fetch user's course list
-                val courses = client.members.getCourseList(userId)
+                // Search for facilities matching the name
+                val searchResponse = client.facilities.searchFacilities(
+                    dollarTop = 10,
+                    nationalAssociation = null,
+                    text = facilityName
+                )
                 
-                logger.info("Retrieved ${courses.size} courses from user's course list")
+                logger.info("Retrieved ${searchResponse.facilities?.size ?: 0} facilities from search")
                 
-                if (courses.isEmpty()) {
-                    logger.info("No courses found in user's course list")
-                    return@withAuthenticatedClient input.generateTemplateResponse("CourseHandicapIntentNoCoursesResponse", emptyMap())
-                }
-                
-                // Find matching course - case-insensitive search
-                val matchingCourse = courses.find { course ->
-                    course.name?.contains(courseName, ignoreCase = true) == true
-                }
-                
-                if (matchingCourse == null) {
-                    logger.info("No matching course found for: $courseName")
+                if (searchResponse.facilities.isNullOrEmpty()) {
+                    logger.info("No facilities found matching: $facilityName")
                     val dataModel = mapOf(
-                        "courseName" to courseName
+                        "facilityName" to facilityName
                     )
-                    return@withAuthenticatedClient input.generateTemplateResponse("CourseHandicapIntentCourseNotFoundResponse", dataModel)
+                    return@withAuthenticatedClient input.generateTemplateResponse("CourseHandicapIntentFacilityNotFoundResponse", dataModel)
                 }
                 
-                logger.info("Found matching course: ${matchingCourse.name} (ID: ${matchingCourse.id})")
+                // Use the first matching facility
+                val matchingFacility = searchResponse.facilities.first()
                 
-                // Validate that the course has an ID
-                if (matchingCourse.id == null) {
-                    logger.error("Matching course has null ID: ${matchingCourse.name}")
+                logger.info("Found matching facility: ${matchingFacility.name} (ID: ${matchingFacility.id})")
+                
+                // Validate that the facility has an ID
+                if (matchingFacility.id == null) {
+                    logger.error("Matching facility has null ID: ${matchingFacility.name}")
                     val dataModel = mapOf(
-                        "courseName" to courseName
+                        "facilityName" to facilityName
                     )
-                    return@withAuthenticatedClient input.generateTemplateResponse("CourseHandicapIntentCourseNotFoundResponse", dataModel)
+                    return@withAuthenticatedClient input.generateTemplateResponse("CourseHandicapIntentFacilityNotFoundResponse", dataModel)
                 }
                 
-                // Fetch course handicap info for the matched course
+                // Fetch course handicap info for the matched facility
                 val courseHandicapInfo = client.courses.getCourseHandicapInfo(
-                    facilityId = matchingCourse.id,
+                    facilityId = matchingFacility.id,
                     handicapPercent = DEFAULT_HANDICAP_PERCENT,
                     individualId = userId
                 )
@@ -175,16 +171,16 @@ class CourseHandicapIntentHandler(
                 }
                 
                 if (tee == null && teeName != null) {
-                    logger.info("Tee '$teeName' not found at course")
+                    logger.info("Tee '$teeName' not found at facility")
                     val dataModel = mapOf(
-                        "courseName" to (courseHandicapInfo.facility?.name ?: courseName),
+                        "facilityName" to (courseHandicapInfo.facility?.name ?: facilityName),
                         "teeName" to teeName
                     )
                     return@withAuthenticatedClient input.generateTemplateResponse("CourseHandicapIntentTeeNotFoundResponse", dataModel)
                 }
                 
                 val dataModel = mutableMapOf<String, Any>()
-                courseHandicapInfo.facility?.name?.let { dataModel["courseName"] = it }
+                courseHandicapInfo.facility?.name?.let { dataModel["facilityName"] = it }
                 tee?.name?.let { dataModel["teeName"] = it }
                 tee?.handicap?.let { dataModel["courseHandicap"] = it }
                 tee?.playingHandicap?.let { dataModel["playingHandicap"] = it }
@@ -194,14 +190,14 @@ class CourseHandicapIntentHandler(
                 tee?.par?.let { dataModel["par"] = it }
                 
                 if (tee?.handicap == null) {
-                    logger.info("No course handicap available for course")
+                    logger.info("No course handicap available for facility")
                     input.generateTemplateResponse("CourseHandicapIntentNoCourseHandicapResponse", dataModel)
                 } else {
                     input.generateTemplateResponse("CourseHandicapIntentSpecificCourseResponse", dataModel)
                 }
             }
         } catch (e: Exception) {
-            logger.error("Failed to fetch course handicap for $courseName: ${e.message}", e)
+            logger.error("Failed to fetch course handicap for $facilityName: ${e.message}", e)
             throw GenericIntentException("Failed to fetch course handicap", e)
         }
     }

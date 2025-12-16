@@ -17,6 +17,7 @@ import kjd.golfcanada.alexa.exception.NoUserDetailsException
 import kjd.golfcanada.alexa.interceptor.UserProfileInterceptor
 import kjd.golfcanada.alexa.util.TemplateFactoryUtil
 import kjd.golfcanada.client.api.CoursesApi
+import kjd.golfcanada.client.api.FacilitiesApi
 import kjd.golfcanada.client.api.MembersApi
 import kjd.golfcanada.client.model.*
 import kjd.golfcanada.client.provider.ApiClientProvider
@@ -175,10 +176,10 @@ class CourseHandicapIntentHandlerTest : DescribeSpec({
             outputSpeech.text shouldContain "White"
         }
 
-        it("should return course handicap for specific course when course name is provided") {
+        it("should return course handicap for specific facility when facility name is provided") {
             val apiClientProvider = mockk<ApiClientProvider>(relaxed = true)
             val apiClientWrapper = mockk<ApiClientWrapper>(relaxed = true)
-            val membersApi = mockk<MembersApi>(relaxed = true)
+            val facilitiesApi = mockk<FacilitiesApi>(relaxed = true)
             val coursesApi = mockk<CoursesApi>(relaxed = true)
             
             val user = User(
@@ -188,14 +189,17 @@ class CourseHandicapIntentHandlerTest : DescribeSpec({
                 email = "john@example.com"
             )
             
-            val courses = listOf(
-                Course(
-                    id = 20679L,
-                    individualId = user.id!!,
-                    name = "Glen Abbey Golf Club",
-                    city = "Oakville",
-                    region = "ON"
-                )
+            val facilitySearchResult = FacilitySearchResult(
+                id = 20679L,
+                name = "Glen Abbey Golf Club",
+                city = "Oakville",
+                region = "ON",
+                nationalAssociation = "RCGA"
+            )
+            
+            val searchResponse = FacilitySearchResponse(
+                totalCount = 1,
+                facilities = listOf(facilitySearchResult)
             )
             
             val tee = CourseHandicapTee(
@@ -233,9 +237,9 @@ class CourseHandicapIntentHandlerTest : DescribeSpec({
                 facility = facility
             )
             
-            every { apiClientWrapper.members } returns membersApi
+            every { apiClientWrapper.facilities } returns facilitiesApi
             every { apiClientWrapper.courses } returns coursesApi
-            every { membersApi.getCourseList(user.id!!) } returns courses
+            every { facilitiesApi.searchFacilities(10, null, "Glen Abbey") } returns searchResponse
             every { coursesApi.getCourseHandicapInfo(20679L, 100, user.id!!) } returns courseHandicapInfo
             
             val attributesManager = mockk<AttributesManager>(relaxed = true)
@@ -244,8 +248,8 @@ class CourseHandicapIntentHandlerTest : DescribeSpec({
             )
             every { attributesManager.sessionAttributes } returns sessionAttributes
             
-            val courseNameSlot = Slot.builder()
-                .withName("CourseName")
+            val facilityNameSlot = Slot.builder()
+                .withName("FacilityName")
                 .withValue("Glen Abbey")
                 .build()
             
@@ -254,7 +258,7 @@ class CourseHandicapIntentHandlerTest : DescribeSpec({
                 .withRequest(IntentRequest.builder()
                     .withIntent(Intent.builder()
                         .withName("GOLFCANADA.CourseHandicap")
-                        .withSlots(mapOf("CourseName" to courseNameSlot))
+                        .withSlots(mapOf("FacilityName" to facilityNameSlot))
                         .build()
                     )
                     .build()
@@ -279,7 +283,7 @@ class CourseHandicapIntentHandlerTest : DescribeSpec({
                 
                 val text = when (templateName) {
                     "CourseHandicapIntentSpecificCourseResponse" -> 
-                        "Your course handicap at ${dataModel["courseName"]} from the ${dataModel["teeName"]} tees is ${dataModel["courseHandicap"]}."
+                        "Your course handicap at ${dataModel["facilityName"]} from the ${dataModel["teeName"]} tees is ${dataModel["courseHandicap"]}."
                     else -> "Unexpected template: $templateName"
                 }
                 
