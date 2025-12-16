@@ -1,0 +1,10 @@
+type: object
+properties:
+  individualId:
+    type: identifier
+  name:
+    type: string
+  handicapPercent:
+    type: integer
+  facility:
+    $ref: ./CourseHandicapFacility.yaml

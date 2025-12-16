@@ -1,0 +1,17 @@
+type: object
+properties:
+  name:
+    type: string
+  rating:
+    type: number
+    format: double
+  slope:
+    type: integer
+  par:
+    type: integer
+  handicap:
+    type: string
+  targetScore:
+    type: integer
+  playingHandicap:
+    type: string
