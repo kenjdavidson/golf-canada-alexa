@@ -165,6 +165,10 @@
             {
               "name": "CourseName",
               "type": "AMAZON.SearchQuery"
+            },
+            {
+              "name": "TeeName",
+              "type": "TeeName"
             }
           ],
           "samples": [
@@ -176,11 +180,54 @@
             "what's my course handicap at {CourseName}",
             "tell me my course handicap at {CourseName}",
             "what is my handicap for {CourseName}",
-            "get my course handicap for {CourseName}"
+            "get my course handicap for {CourseName}",
+            "what is my expected score from the {TeeName} tees",
+            "what is my expected score at {CourseName} from the {TeeName} tees"
           ]
         }
       ],
-      "types": []
+      "types": [
+        {
+          "name": "TeeName",
+          "values": [
+            {
+              "name": {
+                "value": "Green"
+              }
+            },
+            {
+              "name": {
+                "value": "Red"
+              }
+            },
+            {
+              "name": {
+                "value": "White"
+              }
+            },
+            {
+              "name": {
+                "value": "Blue"
+              }
+            },
+            {
+              "name": {
+                "value": "Silver"
+              }
+            },
+            {
+              "name": {
+                "value": "Black"
+              }
+            },
+            {
+              "name": {
+                "value": "Gold"
+              }
+            }
+          ]
+        }
+      ]
     }
   }
 }

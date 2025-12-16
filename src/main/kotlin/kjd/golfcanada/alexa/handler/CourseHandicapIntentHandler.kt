@@ -53,9 +53,12 @@ class CourseHandicapIntentHandler(
 
         val courseNameSlot = slots?.get("CourseName")
         val courseName = courseNameSlot?.value
+        
+        val teeNameSlot = slots?.get("TeeName")
+        val teeName = teeNameSlot?.value
 
         return if (courseName != null) {
-            handleSpecificCourse(input, user.id!!, courseName)
+            handleSpecificCourse(input, user.id!!, courseName, teeName)
         } else {
             handleDefaultCourse(input, user.id!!)
         }
@@ -110,14 +113,16 @@ class CourseHandicapIntentHandler(
      * 1. Fetches the user's course list
      * 2. Searches for a matching course by name
      * 3. Fetches course handicap information for the matched course
-     * 4. Returns the first tee's course handicap information
+     * 4. Filters by tee name if provided
+     * 5. Returns the tee's course handicap and expected score information
      * 
      * @param input The handler input
      * @param userId The user's ID
      * @param courseName The name of the course to search for
+     * @param teeName The name of the tee (optional) to filter by
      * @return Response with the course handicap information
      */
-    private fun handleSpecificCourse(input: HandlerInput, userId: Long, courseName: String): Optional<Response> {
+    private fun handleSpecificCourse(input: HandlerInput, userId: Long, courseName: String, teeName: String? = null): Optional<Response> {
         logger.info("Specific course handicap requested for: $courseName")
         
         try {
@@ -163,9 +168,24 @@ class CourseHandicapIntentHandler(
                     individualId = userId
                 )
                 
-                // Get the first course and first tee for the response
+                // Get the first course and filter tees if tee name is provided
                 val course = courseHandicapInfo.facility?.courses?.firstOrNull()
-                val tee = course?.tees?.firstOrNull()
+                val tee = if (teeName != null) {
+                    // Find matching tee by name (case-insensitive)
+                    course?.tees?.find { it.name?.equals(teeName, ignoreCase = true) == true }
+                } else {
+                    // Use first tee if no tee name specified
+                    course?.tees?.firstOrNull()
+                }
+                
+                if (tee == null && teeName != null) {
+                    logger.info("Tee '$teeName' not found at course")
+                    val dataModel = mapOf(
+                        "courseName" to (courseHandicapInfo.facility?.name ?: courseName),
+                        "teeName" to teeName
+                    )
+                    return@withAuthenticatedClient input.generateTemplateResponse("CourseHandicapIntentTeeNotFoundResponse", dataModel)
+                }
                 
                 val dataModel = mutableMapOf<String, Any>()
                 courseHandicapInfo.facility?.name?.let { dataModel["courseName"] = it }
@@ -174,6 +194,8 @@ class CourseHandicapIntentHandler(
                 tee?.playingHandicap?.let { dataModel["playingHandicap"] = it }
                 tee?.rating?.let { dataModel["rating"] = it }
                 tee?.slope?.let { dataModel["slope"] = it }
+                tee?.targetScore?.let { dataModel["targetScore"] = it }
+                tee?.par?.let { dataModel["par"] = it }
                 
                 if (tee?.handicap == null) {
                     logger.info("No course handicap available for course")
