@@ -23,10 +23,9 @@ properties:
     type: string
   postalCode:
     type: string
-  logoOdataMediaReadLink:
+  logo@odata.mediaReadLink:
     type: string
     nullable: true
-    x-field-extra-annotation: "@com.squareup.moshi.Json(name = \"logo@odata.mediaReadLink\")"
   website:
     type: string
     nullable: true
