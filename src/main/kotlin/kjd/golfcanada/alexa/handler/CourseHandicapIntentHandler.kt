@@ -32,6 +32,14 @@ class CourseHandicapIntentHandler(
 ) : RequestHandler {
 
     private val logger = LoggerFactory.getLogger(CourseHandicapIntentHandler::class.java)
+    
+    companion object {
+        /**
+         * Default handicap percentage used when fetching course handicap information.
+         * A value of 100 represents 100% of the player's handicap index.
+         */
+        private const val DEFAULT_HANDICAP_PERCENT = 100
+    }
 
     override fun canHandle(input: HandlerInput): Boolean =
         input.matches(intentName(IntentName.COURSE_HANDICAP.value))
@@ -139,11 +147,19 @@ class CourseHandicapIntentHandler(
                 
                 logger.info("Found matching course: ${matchingCourse.name} (ID: ${matchingCourse.id})")
                 
+                // Validate that the course has an ID
+                if (matchingCourse.id == null) {
+                    logger.error("Matching course has null ID: ${matchingCourse.name}")
+                    val dataModel = mapOf(
+                        "courseName" to courseName
+                    )
+                    return@withAuthenticatedClient input.generateTemplateResponse("CourseHandicapIntentCourseNotFoundResponse", dataModel)
+                }
+                
                 // Fetch course handicap info for the matched course
-                // Using 100% handicap as the default
                 val courseHandicapInfo = client.courses.getCourseHandicapInfo(
-                    facilityId = matchingCourse.id!!,
-                    handicapPercent = 100,
+                    facilityId = matchingCourse.id,
+                    handicapPercent = DEFAULT_HANDICAP_PERCENT,
                     individualId = userId
                 )
                 
