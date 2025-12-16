@@ -8,6 +8,7 @@ import com.amazon.ask.request.Predicates.intentName
 import kjd.golfcanada.alexa.IntentName
 import kjd.golfcanada.alexa.data.UserProfileSession
 import kjd.golfcanada.alexa.exception.GenericIntentException
+import kjd.golfcanada.alexa.exception.NoUserDetailsException
 import kjd.golfcanada.alexa.interceptor.UserProfileInterceptor
 import kjd.golfcanada.alexa.util.getUserOrThrow
 import kjd.golfcanada.client.model.User
@@ -52,6 +53,11 @@ class CourseHandicapIntentHandler(
 
         // Get user profile from session - validate once for all requests
         val user = input.getUserOrThrow()
+        
+        // Get user profile session for facility information
+        val sessionAttributes = input.attributesManager.sessionAttributes
+        val userProfile = sessionAttributes[UserProfileInterceptor.USER_SESSION_KEY] as? UserProfileSession
+            ?: throw NoUserDetailsException()
 
         val facilityNameSlot = slots?.get("FacilityName")
         val facilityName = facilityNameSlot?.value
@@ -62,7 +68,7 @@ class CourseHandicapIntentHandler(
         return if (facilityName != null) {
             handleSpecificFacility(input, user, facilityName, teeName)
         } else {
-            handleDefaultCourse(input, user)
+            handleDefaultCourse(input, user, userProfile)
         }
     }
 
@@ -70,24 +76,21 @@ class CourseHandicapIntentHandler(
      * Handles the request for the user's course handicap at their default/home course.
      * 
      * This method:
-     * 1. Retrieves the user's home facility information from session data
+     * 1. Uses the user's home facility information from session data
      * 2. Fetches course handicap information for the home facility
      * 3. Returns the course handicap
      * 
      * @param input The handler input
      * @param user The user object
+     * @param userProfile The user profile session containing facility information
      * @return Response with the user's default course handicap information
      */
-    private fun handleDefaultCourse(input: HandlerInput, user: User): Optional<Response> {
+    private fun handleDefaultCourse(input: HandlerInput, user: User, userProfile: UserProfileSession): Optional<Response> {
         logger.info("Default course handicap requested")
         
         try {
-            // Get user profile from session to access facilityId and facilityName
-            val sessionAttributes = input.attributesManager.sessionAttributes
-            val userProfile = sessionAttributes[UserProfileInterceptor.USER_SESSION_KEY] as? UserProfileSession
-            
-            val facilityId = userProfile?.facilityId
-            val facilityName = userProfile?.facilityName
+            val facilityId = userProfile.facilityId
+            val facilityName = userProfile.facilityName
             
             if (facilityId == null) {
                 logger.info("No default facility configured for user")
