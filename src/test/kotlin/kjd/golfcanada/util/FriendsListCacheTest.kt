@@ -10,6 +10,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kjd.golfcanada.alexa.data.FriendInfo
+import kjd.golfcanada.alexa.data.UserProfileSession
 import kjd.golfcanada.alexa.interceptor.UserProfileInterceptor
 import kjd.golfcanada.client.api.MembersApi
 import kjd.golfcanada.client.model.Friend
@@ -34,14 +35,14 @@ class FriendsListCacheTest : DescribeSpec({
             it("should fetch friends from API and cache them") {
                 // Arrange
                 val userId = 12345L
-                val user = User(id = userId)
+                val userProfileSession = UserProfileSession(id = userId)
                 val apiFriends = listOf(
                     Friend(individualId = 1001, name = "Dean Ellis", handicap = "8.5"),
                     Friend(individualId = 1002, name = "Jane Smith", handicap = "12.3")
                 )
                 
                 val sessionAttributes = mutableMapOf<String, Any>(
-                    UserProfileInterceptor.USER_SESSION_KEY to user
+                    UserProfileInterceptor.USER_SESSION_KEY to userProfileSession
                 )
                 val attributesManager = mockk<AttributesManager>()
                 every { attributesManager.sessionAttributes } returns sessionAttributes
@@ -83,11 +84,11 @@ class FriendsListCacheTest : DescribeSpec({
             it("should handle empty friends list from API") {
                 // Arrange
                 val userId = 12345L
-                val user = User(id = userId)
+                val userProfileSession = UserProfileSession(id = userId)
                 val apiFriends = emptyList<Friend>()
                 
                 val sessionAttributes = mutableMapOf<String, Any>(
-                    UserProfileInterceptor.USER_SESSION_KEY to user
+                    UserProfileInterceptor.USER_SESSION_KEY to userProfileSession
                 )
                 val attributesManager = mockk<AttributesManager>()
                 every { attributesManager.sessionAttributes } returns sessionAttributes
@@ -117,7 +118,7 @@ class FriendsListCacheTest : DescribeSpec({
             it("should only store memberId, name, and handicap, not full Friend DTO") {
                 // Arrange
                 val userId = 12345L
-                val user = User(id = userId)
+                val userProfileSession = UserProfileSession(id = userId)
                 val apiFriends = listOf(
                     Friend(
                         individualId = 1001,
@@ -133,7 +134,7 @@ class FriendsListCacheTest : DescribeSpec({
                 )
                 
                 val sessionAttributes = mutableMapOf<String, Any>(
-                    UserProfileInterceptor.USER_SESSION_KEY to user
+                    UserProfileInterceptor.USER_SESSION_KEY to userProfileSession
                 )
                 val attributesManager = mockk<AttributesManager>()
                 every { attributesManager.sessionAttributes } returns sessionAttributes
@@ -169,14 +170,14 @@ class FriendsListCacheTest : DescribeSpec({
             it("should return cached friends without calling API") {
                 // Arrange
                 val userId = 12345L
-                val user = User(id = userId)
+                val userProfileSession = UserProfileSession(id = userId)
                 val cachedFriends = listOf(
                     FriendInfo(memberId = 1001L, name = "Dean Ellis", handicap = "8.5"),
                     FriendInfo(memberId = 1002L, name = "Jane Smith", handicap = "12.3")
                 )
                 
                 val sessionAttributes = mutableMapOf<String, Any>(
-                    UserProfileInterceptor.USER_SESSION_KEY to user,
+                    UserProfileInterceptor.USER_SESSION_KEY to userProfileSession,
                     "friends_list" to cachedFriends
                 )
                 val attributesManager = mockk<AttributesManager>()

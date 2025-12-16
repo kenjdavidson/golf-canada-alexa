@@ -1,6 +1,7 @@
 package kjd.golfcanada.alexa.util
 
 import com.amazon.ask.dispatcher.request.handler.HandlerInput
+import kjd.golfcanada.alexa.data.UserProfileSession
 import kjd.golfcanada.alexa.exception.NoUserDetailsException
 import kjd.golfcanada.alexa.interceptor.UserProfileInterceptor
 import kjd.golfcanada.client.model.User
@@ -11,16 +12,28 @@ import kjd.golfcanada.client.model.User
  * This provides a consistent way to access user information across handlers,
  * ensuring proper exception handling when user details are not available.
  * 
- * @return The User object from session
+ * Note: This function looks for UserProfileSession in the session attributes and converts
+ * it to a User object for backward compatibility with existing handlers.
+ * 
+ * @return A User object constructed from the UserProfileSession
  * @throws NoUserDetailsException if user is not available in session or user ID is null
  */
 fun HandlerInput.getUserOrThrow(): User {
     val sessionAttributes = this.attributesManager.sessionAttributes
-    val user = sessionAttributes[UserProfileInterceptor.USER_SESSION_KEY] as? User
+    val userProfileSession = sessionAttributes[UserProfileInterceptor.USER_SESSION_KEY] as? UserProfileSession
     
-    if (user?.id == null) {
+    if (userProfileSession?.id == null) {
         throw NoUserDetailsException()
     }
     
-    return user
+    // Convert UserProfileSession to User for backward compatibility
+    return User(
+        id = userProfileSession.id,
+        firstName = userProfileSession.firstName,
+        lastName = userProfileSession.lastName,
+        email = null, // Not stored in session
+        membershipLevel = userProfileSession.membershipLevel,
+        golfCanadaCardId = userProfileSession.golfCanadaCardId,
+        expirationDate = userProfileSession.expirationDate
+    )
 }

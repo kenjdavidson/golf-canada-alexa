@@ -13,6 +13,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.mockk.every
 import io.mockk.mockk
+import kjd.golfcanada.alexa.data.UserProfileSession
 import kjd.golfcanada.alexa.exception.NoUserDetailsException
 import kjd.golfcanada.alexa.interceptor.UserProfileInterceptor
 import kjd.golfcanada.alexa.util.TemplateFactoryUtil
@@ -96,10 +97,10 @@ class CourseHandicapIntentHandlerTest : DescribeSpec({
             }
         }
 
-        it("should return default course handicap when no course name is provided") {
+        it("should return default course handicap when no facility name is provided") {
             val apiClientProvider = mockk<ApiClientProvider>(relaxed = true)
             val apiClientWrapper = mockk<ApiClientWrapper>(relaxed = true)
-            val membersApi = mockk<MembersApi>(relaxed = true)
+            val coursesApi = mockk<CoursesApi>(relaxed = true)
             
             val user = User(
                 id = 123456L,
@@ -108,18 +109,55 @@ class CourseHandicapIntentHandlerTest : DescribeSpec({
                 email = "john@example.com"
             )
             
-            val snapshot = MemberSnapshot(
-                homeCourse = "Blue Springs Golf Club",
-                courseHandicap = "12",
-                defaultTee = "White"
+            val userProfileSession = UserProfileSession(
+                id = 123456L,
+                firstName = "John",
+                lastName = "Doe",
+                facilityName = "Blue Springs Golf Club",
+                facilityId = 12345L
             )
             
-            every { apiClientWrapper.members } returns membersApi
-            every { membersApi.getSnapshot(user.id!!) } returns snapshot
+            val tee = CourseHandicapTee(
+                name = "White",
+                rating = 71.5,
+                slope = 125,
+                par = 72,
+                handicap = "12",
+                targetScore = 84,
+                playingHandicap = "10"
+            )
+            
+            val course = CourseHandicapCourse(
+                id = 1L,
+                name = "Championship",
+                status = "Active",
+                tees = listOf(tee)
+            )
+            
+            val facility = CourseHandicapFacility(
+                id = 12345L,
+                nationalAssociation = "RCGA",
+                name = "Blue Springs Golf Club",
+                courses = listOf(course),
+                city = "Anytown",
+                region = "ON",
+                postalCode = "A1A 1A1",
+                phone = "123-456-7890"
+            )
+            
+            val courseHandicapInfo = CourseHandicapInfo(
+                individualId = user.id!!,
+                name = "John Doe",
+                handicapPercent = 100,
+                facility = facility
+            )
+            
+            every { apiClientWrapper.courses } returns coursesApi
+            every { coursesApi.getCourseHandicapInfo(12345L, 100, user.id!!) } returns courseHandicapInfo
             
             val attributesManager = mockk<AttributesManager>(relaxed = true)
             val sessionAttributes: MutableMap<String, Any> = mutableMapOf(
-                UserProfileInterceptor.USER_SESSION_KEY to user
+                UserProfileInterceptor.USER_SESSION_KEY to userProfileSession
             )
             every { attributesManager.sessionAttributes } returns sessionAttributes
             
@@ -189,6 +227,12 @@ class CourseHandicapIntentHandlerTest : DescribeSpec({
                 email = "john@example.com"
             )
             
+            val userProfileSession = UserProfileSession(
+                id = 123456L,
+                firstName = "John",
+                lastName = "Doe"
+            )
+            
             val facilitySearchResult = FacilitySearchResult(
                 id = 20679L,
                 name = "Glen Abbey Golf Club",
@@ -244,7 +288,7 @@ class CourseHandicapIntentHandlerTest : DescribeSpec({
             
             val attributesManager = mockk<AttributesManager>(relaxed = true)
             val sessionAttributes: MutableMap<String, Any> = mutableMapOf(
-                UserProfileInterceptor.USER_SESSION_KEY to user
+                UserProfileInterceptor.USER_SESSION_KEY to userProfileSession
             )
             every { attributesManager.sessionAttributes } returns sessionAttributes
             

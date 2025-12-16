@@ -6,7 +6,9 @@ import com.amazon.ask.model.IntentRequest
 import com.amazon.ask.model.Response
 import com.amazon.ask.request.Predicates.intentName
 import kjd.golfcanada.alexa.IntentName
+import kjd.golfcanada.alexa.data.UserProfileSession
 import kjd.golfcanada.alexa.exception.GenericIntentException
+import kjd.golfcanada.alexa.interceptor.UserProfileInterceptor
 import kjd.golfcanada.alexa.util.getUserOrThrow
 import kjd.golfcanada.client.provider.ApiClientProvider
 import kjd.golfcanada.client.provider.withAuthenticatedClient
@@ -67,8 +69,9 @@ class CourseHandicapIntentHandler(
      * Handles the request for the user's course handicap at their default/home course.
      * 
      * This method:
-     * 1. Fetches the user's member snapshot to get the home course name
-     * 2. Returns the course handicap from the snapshot
+     * 1. Retrieves the user's home facility information from session data
+     * 2. Fetches course handicap information for the home facility
+     * 3. Returns the course handicap
      * 
      * @param input The handler input
      * @param userId The user's ID
@@ -78,19 +81,39 @@ class CourseHandicapIntentHandler(
         logger.info("Default course handicap requested")
         
         try {
+            // Get user profile from session to access facilityId and facilityName
+            val sessionAttributes = input.attributesManager.sessionAttributes
+            val userProfile = sessionAttributes[UserProfileInterceptor.USER_SESSION_KEY] as? UserProfileSession
+            
+            val facilityId = userProfile?.facilityId
+            val facilityName = userProfile?.facilityName
+            
+            if (facilityId == null) {
+                logger.info("No default facility configured for user")
+                return input.generateTemplateResponse("CourseHandicapIntentNoDefaultCourseResponse", emptyMap())
+            }
+            
+            logger.info("Using stored facility: $facilityName (ID: $facilityId)")
+            
             return apiClientProvider.withAuthenticatedClient(input) { client ->
-                // Fetch user's snapshot which contains home course and course handicap
-                val snapshot = client.members.getSnapshot(userId)
+                // Fetch course handicap info for the user's default facility
+                val courseHandicapInfo = client.courses.getCourseHandicapInfo(
+                    facilityId = facilityId,
+                    handicapPercent = DEFAULT_HANDICAP_PERCENT,
+                    individualId = userId
+                )
                 
-                logger.info("Retrieved member snapshot with home course: ${snapshot.homeCourse}")
+                // Get the first course and first tee for the default response
+                val course = courseHandicapInfo.facility?.courses?.firstOrNull()
+                val tee = course?.tees?.firstOrNull()
                 
                 val dataModel = mutableMapOf<String, Any>()
-                snapshot.homeCourse?.let { dataModel["courseName"] = it }
-                snapshot.courseHandicap?.let { dataModel["courseHandicap"] = it }
-                snapshot.defaultTee?.let { dataModel["defaultTee"] = it }
+                facilityName?.let { dataModel["courseName"] = it }
+                tee?.name?.let { dataModel["defaultTee"] = it }
+                tee?.handicap?.let { dataModel["courseHandicap"] = it }
                 
-                if (snapshot.courseHandicap == null || snapshot.homeCourse == null) {
-                    logger.info("No home course or course handicap available")
+                if (tee?.handicap == null) {
+                    logger.info("No course handicap available for default facility")
                     input.generateTemplateResponse("CourseHandicapIntentNoDefaultCourseResponse", emptyMap())
                 } else {
                     input.generateTemplateResponse("CourseHandicapIntentResponse", dataModel)
