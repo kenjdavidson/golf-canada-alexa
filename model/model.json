@@ -158,6 +158,26 @@
             "show me my course list",
             "what are my courses"
           ]
+        },
+        {
+          "name": "GOLFCANADA.CourseHandicap",
+          "slots": [
+            {
+              "name": "CourseName",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "what is my course handicap",
+            "tell me my course handicap",
+            "what's my course handicap",
+            "get my course handicap",
+            "what is my handicap at {CourseName}",
+            "what's my course handicap at {CourseName}",
+            "tell me my course handicap at {CourseName}",
+            "what is my handicap for {CourseName}",
+            "get my course handicap for {CourseName}"
+          ]
         }
       ],
       "types": []
