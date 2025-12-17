@@ -10,7 +10,8 @@ enum class IntentName(val value: String) {
     PLAYER_PROFILE_HISTORY("GOLFCANADA.PlayerProfileHistory"),
     FAVORITE_PLAYER_HISTORY("GOLFCANADA.FavoritePlayerHistory"),
     ADD_SCORECARD("GOLFCANADA.AddScorecard"),
-    FAVORITE_COURSES("GOLFCANADA.FavoriteCourses");
+    FAVORITE_COURSES("GOLFCANADA.FavoriteCourses"),
+    COURSE_HANDICAP("GOLFCANADA.CourseHandicap");
     
     override fun toString(): String = value
 }

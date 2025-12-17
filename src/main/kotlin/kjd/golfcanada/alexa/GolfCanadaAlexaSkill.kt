@@ -6,6 +6,7 @@ import com.amazon.ask.Skills
 import kjd.golfcanada.alexa.handler.AccountLinkingExceptionHandler
 import kjd.golfcanada.alexa.handler.AddScorecardIntentHandler
 import kjd.golfcanada.alexa.handler.CancelAndStopIntentHandler
+import kjd.golfcanada.alexa.handler.CourseHandicapIntentHandler
 import kjd.golfcanada.alexa.handler.FallbackIntentHandler
 import kjd.golfcanada.alexa.handler.FavoriteCoursesIntentHandler
 import kjd.golfcanada.alexa.handler.FavoritePlayerHistoryIntentHandler
@@ -15,6 +16,7 @@ import kjd.golfcanada.alexa.handler.HandicapIntentRequestHandler
 import kjd.golfcanada.alexa.handler.HelpIntentHandler
 import kjd.golfcanada.alexa.handler.LaunchRequestHandler
 import kjd.golfcanada.alexa.handler.NavigateHomeIntentHandler
+import kjd.golfcanada.alexa.handler.NoFacilityFoundExceptionHandler
 import kjd.golfcanada.alexa.handler.NoUserDetailsExceptionHandler
 import kjd.golfcanada.alexa.handler.PlayerProfileHistoryIntentHandler
 import kjd.golfcanada.alexa.handler.PlayerProfileMembershipIntentHandler
@@ -39,6 +41,7 @@ class GolfCanadaAlexaSkill: SkillStreamHandler(getSkills()) {
                     NavigateHomeIntentHandler(),
                     FallbackIntentHandler(),
                     HandicapIntentRequestHandler(apiClientProvider),
+                    CourseHandicapIntentHandler(apiClientProvider),
                     FavoritePlayerHistoryIntentHandler(),
                     FavoriteCoursesIntentHandler(apiClientProvider),
                     PlayerProfileMembershipIntentHandler(),
@@ -53,6 +56,7 @@ class GolfCanadaAlexaSkill: SkillStreamHandler(getSkills()) {
                 .addExceptionHandlers(
                     AccountLinkingExceptionHandler(),
                     NoUserDetailsExceptionHandler(),
+                    NoFacilityFoundExceptionHandler(),
                     GolfCanadaApiExceptionHandler(),
                     GenericIntentExceptionHandler()
                 )

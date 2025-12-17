@@ -6,13 +6,13 @@ import com.amazon.ask.model.IntentRequest
 import com.amazon.ask.model.Response
 import com.amazon.ask.request.Predicates.intentName
 import kjd.golfcanada.alexa.IntentName
+import kjd.golfcanada.alexa.data.HandicapSummaryData
+import kjd.golfcanada.alexa.data.UserProfileSession
 import kjd.golfcanada.alexa.exception.AccountLinkingException
 import kjd.golfcanada.alexa.exception.GenericIntentException
 import kjd.golfcanada.alexa.exception.GolfCanadaApiException
-import kjd.golfcanada.alexa.data.HandicapSummaryData
 import kjd.golfcanada.alexa.util.FriendNameMatcher
 import kjd.golfcanada.alexa.util.getUserOrThrow
-import kjd.golfcanada.client.model.User
 import kjd.golfcanada.client.provider.ApiClientProvider
 import kjd.golfcanada.client.provider.withAuthenticatedClient
 import kjd.golfcanada.util.FriendsListCache
@@ -48,7 +48,7 @@ class HandicapIntentRequestHandler(
         val slots = request.intent?.slots
 
         // Get user profile from session - validate once for all handicap requests
-        val user = input.getUserOrThrow()
+        val userProfile = input.getUserOrThrow()
 
         val friendFullNameSlot = slots?.get("FriendFullName")
         val friendFirstNameSlot = slots?.get("FriendFirstName")
@@ -58,7 +58,7 @@ class HandicapIntentRequestHandler(
         return if (friendQuery != null) {
             handleFriendHandicap(input, friendQuery)
         } else {
-            handleOwnHandicap(input, user)
+            handleOwnHandicap(input, userProfile)
         }
     }
 
@@ -66,17 +66,17 @@ class HandicapIntentRequestHandler(
      * Handles the request for the current user's handicap by making an API call.
      * 
      * @param input The handler input
-     * @param user The validated user from session
+     * @param userProfile The validated user profile session
      * @return Response with the user's handicap information
      */
-    private fun handleOwnHandicap(input: HandlerInput, user: User): Optional<Response> {
+    private fun handleOwnHandicap(input: HandlerInput, userProfile: UserProfileSession): Optional<Response> {
         logger.info("Own handicap requested")
         
         try {
             // Use the withAuthenticatedClient extension to simplify API client access
             return apiClientProvider.withAuthenticatedClient(input) { client ->
                 // Fetch user's handicap
-                val handicapCalculation = client.scores.getHandicapCalculation(user.id!!)
+                val handicapCalculation = client.scores.getHandicapCalculation(userProfile.id!!)
                 val handicapSummary = HandicapSummaryData.fromDTO(handicapCalculation)
 
                 logger.info("Returning own handicap")

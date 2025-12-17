@@ -35,12 +35,12 @@ class FavoriteCoursesIntentHandler(
         logger.info("Favorite courses requested")
         
         // Get user profile from session
-        val user = input.getUserOrThrow()
+        val userProfile = input.getUserOrThrow()
         
         // Use the withAuthenticatedClient extension to simplify API client access
         return apiClientProvider.withAuthenticatedClient(input) { client ->
             // Fetch user's course list
-            val courses = client.members.getCourseList(user.id!!)
+            val courses = client.members.getCourseList(userProfile.id!!)
             
             logger.info("Retrieved ${courses.size} favorite courses")
             
