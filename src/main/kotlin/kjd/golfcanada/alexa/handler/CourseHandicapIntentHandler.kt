@@ -161,41 +161,75 @@ class CourseHandicapIntentHandler(
     }
     
     /**
-     * Finds a tee by name in the course, handling name variations.
+     * Finds tees by name in the course, handling name variations.
+     * Returns all tees that match the search criteria.
+     * For example, searching for "Blue" will match both "Blue" and "Blue/White" tees.
      */
-    private fun findTeeByName(course: CourseHandicapCourse?, teeName: String): CourseHandicapTee? {
+    private fun findTeesByName(course: CourseHandicapCourse?, teeName: String): List<CourseHandicapTee> {
+        if (course?.tees == null) return emptyList()
+        
         val normalizedTeeName = normalizeTeeName(teeName)
-        return course?.tees?.find { 
-            val normalizedTee = it.name?.let { name -> normalizeTeeName(name) }
-            normalizedTee?.equals(normalizedTeeName, ignoreCase = true) == true ||
-            it.name?.equals(teeName, ignoreCase = true) == true
+        return course.tees.filter { tee ->
+            val normalizedTee = tee.name?.let { name -> normalizeTeeName(name) }
+            // Match if the normalized tee name contains the search term or vice versa
+            normalizedTee?.contains(normalizedTeeName, ignoreCase = true) == true ||
+            normalizedTeeName.contains(normalizedTee ?: "", ignoreCase = true) ||
+            tee.name?.contains(teeName, ignoreCase = true) == true ||
+            teeName.contains(tee.name ?: "", ignoreCase = true)
         }
     }
     
     /**
-     * Generates a response for a specific tee.
+     * Generates a response for one or more specific tees.
      */
-    private fun generateTeeResponse(
+    private fun generateTeesResponse(
         input: HandlerInput,
-        tee: CourseHandicapTee,
+        tees: List<CourseHandicapTee>,
         facilityName: String?
     ): Optional<Response> {
-        val dataModel = mutableMapOf<String, Any>()
-        facilityName?.let { dataModel["facilityName"] = it }
-        tee.name?.let { dataModel["teeName"] = it }
-        tee.handicap?.let { dataModel["courseHandicap"] = it }
-        tee.playingHandicap?.let { dataModel["playingHandicap"] = it }
-        tee.rating?.let { dataModel["rating"] = it }
-        tee.slope?.let { dataModel["slope"] = it }
-        tee.targetScore?.let { dataModel["targetScore"] = it }
-        tee.par?.let { dataModel["par"] = it }
-        
-        return if (tee.handicap == null) {
-            logger.info("No course handicap available for specified tee")
-            input.generateTemplateResponse("CourseHandicapIntentNoCourseHandicapResponse", dataModel)
-        } else {
-            input.generateTemplateResponse("CourseHandicapIntentSpecificCourseResponse", dataModel)
+        if (tees.isEmpty()) {
+            return input.generateTemplateResponse("CourseHandicapIntentNoCourseHandicapResponse", emptyMap())
         }
+        
+        // If single tee, use the specific tee response
+        if (tees.size == 1) {
+            val tee = tees[0]
+            val dataModel = mutableMapOf<String, Any>()
+            facilityName?.let { dataModel["facilityName"] = it }
+            tee.name?.let { dataModel["teeName"] = it }
+            tee.handicap?.let { dataModel["courseHandicap"] = it }
+            tee.playingHandicap?.let { dataModel["playingHandicap"] = it }
+            tee.rating?.let { dataModel["rating"] = it }
+            tee.slope?.let { dataModel["slope"] = it }
+            tee.targetScore?.let { dataModel["targetScore"] = it }
+            tee.par?.let { dataModel["par"] = it }
+            
+            return if (tee.handicap == null) {
+                logger.info("No course handicap available for specified tee")
+                input.generateTemplateResponse("CourseHandicapIntentNoCourseHandicapResponse", dataModel)
+            } else {
+                input.generateTemplateResponse("CourseHandicapIntentSpecificCourseResponse", dataModel)
+            }
+        }
+        
+        // Multiple tees - use the all tees response format
+        val dataModel = mutableMapOf<String, Any>()
+        facilityName?.let { dataModel["courseName"] = it }
+        
+        // Create a list of tees with their scores
+        val teeList = tees.mapNotNull { tee ->
+            if (tee.name != null && tee.targetScore != null) {
+                mapOf("name" to tee.name, "score" to tee.targetScore)
+            } else null
+        }
+        
+        if (teeList.isEmpty()) {
+            logger.info("No tee scores available for matched tees")
+            return input.generateTemplateResponse("CourseHandicapIntentNoCourseHandicapResponse", dataModel)
+        }
+        
+        dataModel["tees"] = teeList
+        return input.generateTemplateResponse("CourseHandicapIntentAllTeesResponse", dataModel)
     }
     
     /**
@@ -246,9 +280,10 @@ class CourseHandicapIntentHandler(
         val actualFacilityName = courseHandicapInfo.facility?.name ?: facilityName
         
         return if (teeName != null) {
-            val tee = findTeeByName(course, teeName)
+            // Find all matching tees (e.g., "Blue" matches both "Blue" and "Blue/White")
+            val matchingTees = findTeesByName(course, teeName)
             
-            if (tee == null) {
+            if (matchingTees.isEmpty()) {
                 logger.info("Tee '$teeName' not found at facility")
                 val dataModel = mapOf(
                     "facilityName" to (actualFacilityName ?: "the facility"),
@@ -256,9 +291,10 @@ class CourseHandicapIntentHandler(
                 )
                 input.generateTemplateResponse("CourseHandicapIntentTeeNotFoundResponse", dataModel)
             } else {
-                generateTeeResponse(input, tee, actualFacilityName)
+                generateTeesResponse(input, matchingTees, actualFacilityName)
             }
         } else {
+            // No tee specified - return all tees
             generateAllTeesResponse(input, course, actualFacilityName)
         }
     }
