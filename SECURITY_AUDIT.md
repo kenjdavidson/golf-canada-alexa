@@ -50,8 +50,8 @@ The `.idea/aws.xml` file was committed in the Git history and must be removed be
 ```bash
 # Install git-filter-repo (if not already installed)
 # On macOS: brew install git-filter-repo
-# On Ubuntu: apt-get install git-filter-repo
-# Or via pip: pip install git-filter-repo
+# On Ubuntu/Debian: pip3 install git-filter-repo
+# Or: pip install git-filter-repo
 
 # Clone a fresh copy of the repository
 git clone https://github.com/kenjdavidson/golf-canada-alexa.git
@@ -79,7 +79,7 @@ git push origin --force --tags
 git clone --mirror https://github.com/kenjdavidson/golf-canada-alexa.git
 
 # Run BFG to remove the file
-java -jar bfg.jar --delete-files aws.xml golf-canada-alexa.git
+java -jar bfg.jar --delete-files .idea/aws.xml golf-canada-alexa.git
 
 # Clean up and push
 cd golf-canada-alexa.git
