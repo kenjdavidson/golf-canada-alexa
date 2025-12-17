@@ -16,6 +16,7 @@ import kjd.golfcanada.alexa.handler.HandicapIntentRequestHandler
 import kjd.golfcanada.alexa.handler.HelpIntentHandler
 import kjd.golfcanada.alexa.handler.LaunchRequestHandler
 import kjd.golfcanada.alexa.handler.NavigateHomeIntentHandler
+import kjd.golfcanada.alexa.handler.NoFacilityFoundExceptionHandler
 import kjd.golfcanada.alexa.handler.NoUserDetailsExceptionHandler
 import kjd.golfcanada.alexa.handler.PlayerProfileHistoryIntentHandler
 import kjd.golfcanada.alexa.handler.PlayerProfileMembershipIntentHandler
@@ -55,6 +56,7 @@ class GolfCanadaAlexaSkill: SkillStreamHandler(getSkills()) {
                 .addExceptionHandlers(
                     AccountLinkingExceptionHandler(),
                     NoUserDetailsExceptionHandler(),
+                    NoFacilityFoundExceptionHandler(),
                     GolfCanadaApiExceptionHandler(),
                     GenericIntentExceptionHandler()
                 )

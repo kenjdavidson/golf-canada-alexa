@@ -8,11 +8,13 @@ import com.amazon.ask.request.Predicates.intentName
 import kjd.golfcanada.alexa.IntentName
 import kjd.golfcanada.alexa.data.UserProfileSession
 import kjd.golfcanada.alexa.exception.GenericIntentException
+import kjd.golfcanada.alexa.exception.NoFacilityFoundException
 import kjd.golfcanada.alexa.util.getUserOrThrow
 import kjd.golfcanada.client.model.CourseHandicapCourse
 import kjd.golfcanada.client.model.CourseHandicapInfo
 import kjd.golfcanada.client.model.CourseHandicapTee
 import kjd.golfcanada.client.provider.ApiClientProvider
+import kjd.golfcanada.client.provider.ApiClientWrapper
 import kjd.golfcanada.client.provider.withAuthenticatedClient
 import org.slf4j.LoggerFactory
 import java.util.*
@@ -60,17 +62,109 @@ class CourseHandicapIntentHandler(
         // Get user profile from session - validate once for all requests
         val userProfile = input.getUserOrThrow()
 
-        val facilityNameSlot = slots?.get("FacilityName")
-        val facilityName = facilityNameSlot?.value
-        
-        val teeNameSlot = slots?.get("TeeName")
-        val teeName = teeNameSlot?.value
+        // Parse slots
+        val facilityName = slots?.get("FacilityName")?.value
+        val teeName = slots?.get("TeeName")?.value
 
-        return if (facilityName != null) {
-            handleSpecificFacility(input, userProfile, facilityName, teeName)
-        } else {
-            handleDefaultCourse(input, userProfile, teeName)
+        try {
+            return apiClientProvider.withAuthenticatedClient(input) { client ->
+                // Get facility info (either default or specified)
+                val facilityInfo = getFacilityInfo(client, userProfile, facilityName)
+                
+                // Get course handicap for the facility
+                val courseHandicapInfo = getCourseHandicap(client, userProfile, facilityInfo)
+                
+                // Process and return response based on tee selection
+                processCourseHandicapInfo(input, courseHandicapInfo, teeName, facilityInfo.name)
+            }
+        } catch (e: NoFacilityFoundException) {
+            throw e  // Let the exception handler deal with it
+        } catch (e: Exception) {
+            logger.error("Failed to fetch course handicap: ${e.message}", e)
+            throw GenericIntentException("Failed to fetch course handicap", e)
         }
+    }
+    
+    /**
+     * Data class to hold facility information for handicap lookup.
+     */
+    private data class FacilityInfo(
+        val id: Long,
+        val name: String?
+    )
+    
+    /**
+     * Gets facility information either from the user's default or by searching for a specific facility.
+     * 
+     * @param client The API client wrapper
+     * @param userProfile The user profile session
+     * @param facilityName The name of the facility to search for, or null for default
+     * @return FacilityInfo containing the facility ID and name
+     * @throws NoFacilityFoundException if no facility is found
+     */
+    private fun getFacilityInfo(
+        client: ApiClientWrapper,
+        userProfile: UserProfileSession,
+        facilityName: String?
+    ): FacilityInfo {
+        return if (facilityName != null) {
+            // Search for the specified facility
+            logger.info("Searching for facility: $facilityName")
+            
+            val searchResponse = client.facilities.searchFacilities(
+                dollarTop = 10,
+                nationalAssociation = null,
+                text = facilityName
+            )
+            
+            logger.info("Retrieved ${searchResponse.facilities?.size ?: 0} facilities from search")
+            
+            if (searchResponse.facilities.isNullOrEmpty()) {
+                logger.info("No facilities found matching: $facilityName")
+                throw NoFacilityFoundException(facilityName)
+            }
+            
+            val matchingFacility = searchResponse.facilities.first()
+            logger.info("Found matching facility: ${matchingFacility.name} (ID: ${matchingFacility.id})")
+            
+            if (matchingFacility.id == null) {
+                logger.error("Matching facility has null ID: ${matchingFacility.name}")
+                throw NoFacilityFoundException(facilityName)
+            }
+            
+            FacilityInfo(matchingFacility.id, matchingFacility.name)
+        } else {
+            // Use default facility from user profile
+            val facilityId = userProfile.facilityId
+            
+            if (facilityId == null) {
+                logger.info("No default facility configured for user")
+                throw NoFacilityFoundException(null)
+            }
+            
+            logger.info("Using default facility: ${userProfile.facilityName} (ID: $facilityId)")
+            FacilityInfo(facilityId, userProfile.facilityName)
+        }
+    }
+    
+    /**
+     * Retrieves course handicap information for the specified facility.
+     * 
+     * @param client The API client wrapper
+     * @param userProfile The user profile session
+     * @param facilityInfo The facility information
+     * @return CourseHandicapInfo containing the handicap data
+     */
+    private fun getCourseHandicap(
+        client: ApiClientWrapper,
+        userProfile: UserProfileSession,
+        facilityInfo: FacilityInfo
+    ): CourseHandicapInfo {
+        return client.courses.getCourseHandicapInfo(
+            facilityId = facilityInfo.id,
+            handicapPercent = DEFAULT_HANDICAP_PERCENT,
+            individualId = userProfile.id!!
+        )
     }
     
     /**
@@ -176,108 +270,4 @@ class CourseHandicapIntentHandler(
         }
     }
 
-    /**
-     * Handles the request for the user's course handicap at their default/home course.
-     * 
-     * This method:
-     * 1. Uses the user's home facility information from session data
-     * 2. Fetches course handicap information for the home facility
-     * 3. Filters by tee name if provided, otherwise returns all tees
-     * 4. Returns the course handicap and expected score information
-     * 
-     * @param input The handler input
-     * @param userProfile The user profile session containing user and facility information
-     * @param teeName The name of the tee (optional) to filter by
-     * @return Response with the user's default course handicap information
-     */
-    private fun handleDefaultCourse(input: HandlerInput, userProfile: UserProfileSession, teeName: String? = null): Optional<Response> {
-        logger.info("Default course handicap requested" + if (teeName != null) " for tee: $teeName" else "")
-        
-        try {
-            val facilityId = userProfile.facilityId
-            val facilityName = userProfile.facilityName
-            
-            if (facilityId == null) {
-                logger.info("No default facility configured for user")
-                return input.generateTemplateResponse("CourseHandicapIntentNoDefaultCourseResponse", emptyMap())
-            }
-            
-            logger.info("Using stored facility: $facilityName (ID: $facilityId)")
-            
-            return apiClientProvider.withAuthenticatedClient(input) { client ->
-                val courseHandicapInfo = client.courses.getCourseHandicapInfo(
-                    facilityId = facilityId,
-                    handicapPercent = DEFAULT_HANDICAP_PERCENT,
-                    individualId = userProfile.id!!
-                )
-                
-                processCourseHandicapInfo(input, courseHandicapInfo, teeName, facilityName)
-            }
-        } catch (e: Exception) {
-            logger.error("Failed to fetch default course handicap: ${e.message}", e)
-            throw GenericIntentException("Failed to fetch default course handicap", e)
-        }
-    }
-
-    /**
-     * Handles the request for a course handicap at a specific facility.
-     * 
-     * This method:
-     * 1. Searches for facilities matching the given name
-     * 2. Fetches course handicap information for the matched facility
-     * 3. Filters by tee name if provided, otherwise returns all tees
-     * 4. Returns the tee's course handicap and expected score information
-     * 
-     * @param input The handler input
-     * @param userProfile The user profile session containing user information
-     * @param facilityName The name of the facility to search for
-     * @param teeName The name of the tee (optional) to filter by
-     * @return Response with the course handicap information
-     */
-    private fun handleSpecificFacility(input: HandlerInput, userProfile: UserProfileSession, facilityName: String, teeName: String? = null): Optional<Response> {
-        logger.info("Specific course handicap requested for facility: $facilityName" + if (teeName != null) ", tee: $teeName" else "")
-        
-        try {
-            return apiClientProvider.withAuthenticatedClient(input) { client ->
-                // Search for facilities matching the name
-                val searchResponse = client.facilities.searchFacilities(
-                    dollarTop = 10,
-                    nationalAssociation = null,
-                    text = facilityName
-                )
-                
-                logger.info("Retrieved ${searchResponse.facilities?.size ?: 0} facilities from search")
-                
-                if (searchResponse.facilities.isNullOrEmpty()) {
-                    logger.info("No facilities found matching: $facilityName")
-                    val dataModel = mapOf("facilityName" to facilityName)
-                    return@withAuthenticatedClient input.generateTemplateResponse("CourseHandicapIntentFacilityNotFoundResponse", dataModel)
-                }
-                
-                // Use the first matching facility
-                val matchingFacility = searchResponse.facilities.first()
-                
-                logger.info("Found matching facility: ${matchingFacility.name} (ID: ${matchingFacility.id})")
-                
-                // Validate that the facility has an ID
-                if (matchingFacility.id == null) {
-                    logger.error("Matching facility has null ID: ${matchingFacility.name}")
-                    val dataModel = mapOf("facilityName" to facilityName)
-                    return@withAuthenticatedClient input.generateTemplateResponse("CourseHandicapIntentFacilityNotFoundResponse", dataModel)
-                }
-                
-                // Fetch course handicap info for the matched facility
-                val courseHandicapInfo = client.courses.getCourseHandicapInfo(
-                    facilityId = matchingFacility.id,
-                    handicapPercent = DEFAULT_HANDICAP_PERCENT,
-                    individualId = userProfile.id!!
-                )
-                
-                processCourseHandicapInfo(input, courseHandicapInfo, teeName, facilityName)
-            }
-        } catch (e: Exception) {
-            logger.error("Failed to fetch course handicap for $facilityName: ${e.message}", e)
-            throw GenericIntentException("Failed to fetch course handicap", e)
-        }
-    }
 }
