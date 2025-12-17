@@ -224,6 +224,16 @@
               "name": {
                 "value": "Gold"
               }
+            },
+            {
+              "name": {
+                "value": "Blue White",
+                "synonyms": [
+                  "Blue/White",
+                  "Blue and White",
+                  "BlueWhite"
+                ]
+              }
             }
           ]
         }

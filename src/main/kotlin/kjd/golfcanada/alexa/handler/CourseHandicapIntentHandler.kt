@@ -182,7 +182,13 @@ class CourseHandicapIntentHandler(
                 val course = courseHandicapInfo.facility?.courses?.firstOrNull()
                 val tee = if (teeName != null) {
                     // Find matching tee by name (case-insensitive)
-                    course?.tees?.find { it.name?.equals(teeName, ignoreCase = true) == true }
+                    // Also normalize the tee name to handle variations like "Blue White" vs "Blue/White"
+                    val normalizedTeeName = teeName.replace(" ", "/").replace("and", "").trim()
+                    course?.tees?.find { 
+                        val normalizedTee = it.name?.replace(" ", "/")?.replace("and", "")?.trim()
+                        normalizedTee?.equals(normalizedTeeName, ignoreCase = true) == true ||
+                        it.name?.equals(teeName, ignoreCase = true) == true
+                    }
                 } else {
                     // Use first tee if no tee name specified
                     course?.tees?.firstOrNull()
