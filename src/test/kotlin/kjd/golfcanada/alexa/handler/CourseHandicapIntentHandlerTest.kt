@@ -192,6 +192,13 @@ class CourseHandicapIntentHandlerTest : DescribeSpec({
                 val text = when (templateName) {
                     "CourseHandicapIntentResponse" -> 
                         "Your course handicap at ${dataModel["courseName"]} from the ${dataModel["defaultTee"]} tees is ${dataModel["courseHandicap"]}."
+                    "CourseHandicapIntentAllTeesResponse" -> {
+                        val courseName = dataModel["courseName"]
+                        @Suppress("UNCHECKED_CAST")
+                        val tees = dataModel["tees"] as List<Map<String, Any>>
+                        val teeScores = tees.joinToString(", ") { "${it["name"]} tees ${it["score"]}" }
+                        "Your expected score at $courseName from each tee are: $teeScores."
+                    }
                     else -> "Unexpected template: $templateName"
                 }
                 
@@ -210,7 +217,7 @@ class CourseHandicapIntentHandlerTest : DescribeSpec({
             response.shouldEndSession shouldBe false
             outputSpeech.type shouldBe "PlainText"
             outputSpeech.text shouldContain "Blue Springs Golf Club"
-            outputSpeech.text shouldContain "12"
+            outputSpeech.text shouldContain "84"  // target score, not handicap
             outputSpeech.text shouldContain "White"
         }
 
@@ -328,6 +335,13 @@ class CourseHandicapIntentHandlerTest : DescribeSpec({
                 val text = when (templateName) {
                     "CourseHandicapIntentSpecificCourseResponse" -> 
                         "Your course handicap at ${dataModel["facilityName"]} from the ${dataModel["teeName"]} tees is ${dataModel["courseHandicap"]}."
+                    "CourseHandicapIntentAllTeesResponse" -> {
+                        val courseName = dataModel["courseName"]
+                        @Suppress("UNCHECKED_CAST")
+                        val tees = dataModel["tees"] as List<Map<String, Any>>
+                        val teeScores = tees.joinToString(", ") { "${it["name"]} tees ${it["score"]}" }
+                        "Your expected score at $courseName from each tee are: $teeScores."
+                    }
                     else -> "Unexpected template: $templateName"
                 }
                 
@@ -346,7 +360,7 @@ class CourseHandicapIntentHandlerTest : DescribeSpec({
             response.shouldEndSession shouldBe false
             outputSpeech.type shouldBe "PlainText"
             outputSpeech.text shouldContain "Glen Abbey Golf Club"
-            outputSpeech.text shouldContain "15"
+            outputSpeech.text shouldContain "87"  // target score, not handicap
             outputSpeech.text shouldContain "Blue"
         }
     }

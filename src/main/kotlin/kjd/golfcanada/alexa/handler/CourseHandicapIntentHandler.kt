@@ -9,6 +9,9 @@ import kjd.golfcanada.alexa.IntentName
 import kjd.golfcanada.alexa.data.UserProfileSession
 import kjd.golfcanada.alexa.exception.GenericIntentException
 import kjd.golfcanada.alexa.util.getUserOrThrow
+import kjd.golfcanada.client.model.CourseHandicapCourse
+import kjd.golfcanada.client.model.CourseHandicapInfo
+import kjd.golfcanada.client.model.CourseHandicapTee
 import kjd.golfcanada.client.provider.ApiClientProvider
 import kjd.golfcanada.client.provider.withAuthenticatedClient
 import org.slf4j.LoggerFactory
@@ -39,6 +42,12 @@ class CourseHandicapIntentHandler(
          * A value of 100 represents 100% of the player's handicap index.
          */
         private const val DEFAULT_HANDICAP_PERCENT = 100
+        
+        /**
+         * Normalizes tee name to handle variations like "Blue White" vs "Blue/White".
+         */
+        private fun normalizeTeeName(teeName: String): String =
+            teeName.replace(" ", "/").replace("and", "").trim()
     }
 
     override fun canHandle(input: HandlerInput): Boolean =
@@ -60,7 +69,110 @@ class CourseHandicapIntentHandler(
         return if (facilityName != null) {
             handleSpecificFacility(input, userProfile, facilityName, teeName)
         } else {
-            handleDefaultCourse(input, userProfile)
+            handleDefaultCourse(input, userProfile, teeName)
+        }
+    }
+    
+    /**
+     * Finds a tee by name in the course, handling name variations.
+     */
+    private fun findTeeByName(course: CourseHandicapCourse?, teeName: String): CourseHandicapTee? {
+        val normalizedTeeName = normalizeTeeName(teeName)
+        return course?.tees?.find { 
+            val normalizedTee = it.name?.let { name -> normalizeTeeName(name) }
+            normalizedTee?.equals(normalizedTeeName, ignoreCase = true) == true ||
+            it.name?.equals(teeName, ignoreCase = true) == true
+        }
+    }
+    
+    /**
+     * Generates a response for a specific tee.
+     */
+    private fun generateTeeResponse(
+        input: HandlerInput,
+        tee: CourseHandicapTee,
+        facilityName: String?
+    ): Optional<Response> {
+        val dataModel = mutableMapOf<String, Any>()
+        facilityName?.let { dataModel["facilityName"] = it }
+        tee.name?.let { dataModel["teeName"] = it }
+        tee.handicap?.let { dataModel["courseHandicap"] = it }
+        tee.playingHandicap?.let { dataModel["playingHandicap"] = it }
+        tee.rating?.let { dataModel["rating"] = it }
+        tee.slope?.let { dataModel["slope"] = it }
+        tee.targetScore?.let { dataModel["targetScore"] = it }
+        tee.par?.let { dataModel["par"] = it }
+        
+        return if (tee.handicap == null) {
+            logger.info("No course handicap available for specified tee")
+            input.generateTemplateResponse("CourseHandicapIntentNoCourseHandicapResponse", dataModel)
+        } else {
+            input.generateTemplateResponse("CourseHandicapIntentSpecificCourseResponse", dataModel)
+        }
+    }
+    
+    /**
+     * Generates a response for all tees at a facility.
+     */
+    private fun generateAllTeesResponse(
+        input: HandlerInput,
+        course: CourseHandicapCourse?,
+        facilityName: String?
+    ): Optional<Response> {
+        val tees = course?.tees ?: emptyList()
+        
+        if (tees.isEmpty()) {
+            logger.info("No tees available for facility")
+            val dataModel = facilityName?.let { mapOf("facilityName" to it) } ?: emptyMap()
+            return input.generateTemplateResponse("CourseHandicapIntentNoCourseHandicapResponse", dataModel)
+        }
+        
+        val dataModel = mutableMapOf<String, Any>()
+        facilityName?.let { dataModel["courseName"] = it }
+        
+        // Create a list of tees with their scores
+        val teeList = tees.mapNotNull { tee ->
+            if (tee.name != null && tee.targetScore != null) {
+                mapOf("name" to tee.name, "score" to tee.targetScore)
+            } else null
+        }
+        
+        if (teeList.isEmpty()) {
+            logger.info("No tee scores available for facility")
+            return input.generateTemplateResponse("CourseHandicapIntentNoCourseHandicapResponse", dataModel)
+        }
+        
+        dataModel["tees"] = teeList
+        return input.generateTemplateResponse("CourseHandicapIntentAllTeesResponse", dataModel)
+    }
+    
+    /**
+     * Processes course handicap info and generates appropriate response based on tee selection.
+     */
+    private fun processCourseHandicapInfo(
+        input: HandlerInput,
+        courseHandicapInfo: CourseHandicapInfo,
+        teeName: String?,
+        facilityName: String?
+    ): Optional<Response> {
+        val course = courseHandicapInfo.facility?.courses?.firstOrNull()
+        val actualFacilityName = courseHandicapInfo.facility?.name ?: facilityName
+        
+        return if (teeName != null) {
+            val tee = findTeeByName(course, teeName)
+            
+            if (tee == null) {
+                logger.info("Tee '$teeName' not found at facility")
+                val dataModel = mapOf(
+                    "facilityName" to (actualFacilityName ?: "the facility"),
+                    "teeName" to teeName
+                )
+                input.generateTemplateResponse("CourseHandicapIntentTeeNotFoundResponse", dataModel)
+            } else {
+                generateTeeResponse(input, tee, actualFacilityName)
+            }
+        } else {
+            generateAllTeesResponse(input, course, actualFacilityName)
         }
     }
 
@@ -70,14 +182,16 @@ class CourseHandicapIntentHandler(
      * This method:
      * 1. Uses the user's home facility information from session data
      * 2. Fetches course handicap information for the home facility
-     * 3. Returns the course handicap
+     * 3. Filters by tee name if provided, otherwise returns all tees
+     * 4. Returns the course handicap and expected score information
      * 
      * @param input The handler input
      * @param userProfile The user profile session containing user and facility information
+     * @param teeName The name of the tee (optional) to filter by
      * @return Response with the user's default course handicap information
      */
-    private fun handleDefaultCourse(input: HandlerInput, userProfile: UserProfileSession): Optional<Response> {
-        logger.info("Default course handicap requested")
+    private fun handleDefaultCourse(input: HandlerInput, userProfile: UserProfileSession, teeName: String? = null): Optional<Response> {
+        logger.info("Default course handicap requested" + if (teeName != null) " for tee: $teeName" else "")
         
         try {
             val facilityId = userProfile.facilityId
@@ -91,28 +205,13 @@ class CourseHandicapIntentHandler(
             logger.info("Using stored facility: $facilityName (ID: $facilityId)")
             
             return apiClientProvider.withAuthenticatedClient(input) { client ->
-                // Fetch course handicap info for the user's default facility
                 val courseHandicapInfo = client.courses.getCourseHandicapInfo(
                     facilityId = facilityId,
                     handicapPercent = DEFAULT_HANDICAP_PERCENT,
                     individualId = userProfile.id!!
                 )
                 
-                // Get the first course and first tee for the default response
-                val course = courseHandicapInfo.facility?.courses?.firstOrNull()
-                val tee = course?.tees?.firstOrNull()
-                
-                val dataModel = mutableMapOf<String, Any>()
-                facilityName?.let { dataModel["courseName"] = it }
-                tee?.name?.let { dataModel["defaultTee"] = it }
-                tee?.handicap?.let { dataModel["courseHandicap"] = it }
-                
-                if (tee?.handicap == null) {
-                    logger.info("No course handicap available for default facility")
-                    input.generateTemplateResponse("CourseHandicapIntentNoDefaultCourseResponse", emptyMap())
-                } else {
-                    input.generateTemplateResponse("CourseHandicapIntentResponse", dataModel)
-                }
+                processCourseHandicapInfo(input, courseHandicapInfo, teeName, facilityName)
             }
         } catch (e: Exception) {
             logger.error("Failed to fetch default course handicap: ${e.message}", e)
@@ -126,7 +225,7 @@ class CourseHandicapIntentHandler(
      * This method:
      * 1. Searches for facilities matching the given name
      * 2. Fetches course handicap information for the matched facility
-     * 3. Filters by tee name if provided
+     * 3. Filters by tee name if provided, otherwise returns all tees
      * 4. Returns the tee's course handicap and expected score information
      * 
      * @param input The handler input
@@ -136,7 +235,7 @@ class CourseHandicapIntentHandler(
      * @return Response with the course handicap information
      */
     private fun handleSpecificFacility(input: HandlerInput, userProfile: UserProfileSession, facilityName: String, teeName: String? = null): Optional<Response> {
-        logger.info("Specific course handicap requested for facility: $facilityName")
+        logger.info("Specific course handicap requested for facility: $facilityName" + if (teeName != null) ", tee: $teeName" else "")
         
         try {
             return apiClientProvider.withAuthenticatedClient(input) { client ->
@@ -151,9 +250,7 @@ class CourseHandicapIntentHandler(
                 
                 if (searchResponse.facilities.isNullOrEmpty()) {
                     logger.info("No facilities found matching: $facilityName")
-                    val dataModel = mapOf(
-                        "facilityName" to facilityName
-                    )
+                    val dataModel = mapOf("facilityName" to facilityName)
                     return@withAuthenticatedClient input.generateTemplateResponse("CourseHandicapIntentFacilityNotFoundResponse", dataModel)
                 }
                 
@@ -165,9 +262,7 @@ class CourseHandicapIntentHandler(
                 // Validate that the facility has an ID
                 if (matchingFacility.id == null) {
                     logger.error("Matching facility has null ID: ${matchingFacility.name}")
-                    val dataModel = mapOf(
-                        "facilityName" to facilityName
-                    )
+                    val dataModel = mapOf("facilityName" to facilityName)
                     return@withAuthenticatedClient input.generateTemplateResponse("CourseHandicapIntentFacilityNotFoundResponse", dataModel)
                 }
                 
@@ -178,47 +273,7 @@ class CourseHandicapIntentHandler(
                     individualId = userProfile.id!!
                 )
                 
-                // Get the first course and filter tees if tee name is provided
-                val course = courseHandicapInfo.facility?.courses?.firstOrNull()
-                val tee = if (teeName != null) {
-                    // Find matching tee by name (case-insensitive)
-                    // Also normalize the tee name to handle variations like "Blue White" vs "Blue/White"
-                    val normalizedTeeName = teeName.replace(" ", "/").replace("and", "").trim()
-                    course?.tees?.find { 
-                        val normalizedTee = it.name?.replace(" ", "/")?.replace("and", "")?.trim()
-                        normalizedTee?.equals(normalizedTeeName, ignoreCase = true) == true ||
-                        it.name?.equals(teeName, ignoreCase = true) == true
-                    }
-                } else {
-                    // Use first tee if no tee name specified
-                    course?.tees?.firstOrNull()
-                }
-                
-                if (tee == null && teeName != null) {
-                    logger.info("Tee '$teeName' not found at facility")
-                    val dataModel = mapOf(
-                        "facilityName" to (courseHandicapInfo.facility?.name ?: facilityName),
-                        "teeName" to teeName
-                    )
-                    return@withAuthenticatedClient input.generateTemplateResponse("CourseHandicapIntentTeeNotFoundResponse", dataModel)
-                }
-                
-                val dataModel = mutableMapOf<String, Any>()
-                courseHandicapInfo.facility?.name?.let { dataModel["facilityName"] = it }
-                tee?.name?.let { dataModel["teeName"] = it }
-                tee?.handicap?.let { dataModel["courseHandicap"] = it }
-                tee?.playingHandicap?.let { dataModel["playingHandicap"] = it }
-                tee?.rating?.let { dataModel["rating"] = it }
-                tee?.slope?.let { dataModel["slope"] = it }
-                tee?.targetScore?.let { dataModel["targetScore"] = it }
-                tee?.par?.let { dataModel["par"] = it }
-                
-                if (tee?.handicap == null) {
-                    logger.info("No course handicap available for facility")
-                    input.generateTemplateResponse("CourseHandicapIntentNoCourseHandicapResponse", dataModel)
-                } else {
-                    input.generateTemplateResponse("CourseHandicapIntentSpecificCourseResponse", dataModel)
-                }
+                processCourseHandicapInfo(input, courseHandicapInfo, teeName, facilityName)
             }
         } catch (e: Exception) {
             logger.error("Failed to fetch course handicap for $facilityName: ${e.message}", e)
