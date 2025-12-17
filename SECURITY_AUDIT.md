@@ -40,6 +40,8 @@ A comprehensive security audit was conducted on the `golf-canada-alexa` reposito
 
 1. ✅ Removed `.idea/aws.xml` file
 2. ✅ Updated `.gitignore` to exclude `.idea/*.xml` files
+   - **Security-first approach:** Excludes all IDE XML configuration files to prevent any potential leaks
+   - **Note:** If your team needs to share specific IDE configuration files (like `vcs.xml` or `misc.xml`), you can add exceptions with patterns like `!.idea/vcs.xml` after the exclusion rule
 3. ✅ Created this security audit documentation
 
 ## Git History Cleanup (REQUIRED BEFORE PUBLIC RELEASE)
