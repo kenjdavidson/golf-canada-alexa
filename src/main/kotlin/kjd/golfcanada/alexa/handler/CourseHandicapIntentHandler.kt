@@ -141,6 +141,44 @@ class CourseHandicapIntentHandler(
     }
     
     /**
+     * Processes course handicap info and generates appropriate response based on tee selection.
+     */
+    private fun processCourseHandicapInfo(
+        input: HandlerInput,
+        courseHandicapInfo: CourseHandicapInfo,
+        teeName: String?,
+        facilityName: String?
+    ): Optional<Response> {
+        val course = courseHandicapInfo.facility?.courses?.firstOrNull()
+        val actualFacilityName = courseHandicapInfo.facility?.name ?: facilityName
+        val allTees = course?.tees ?: emptyList()
+        
+        val filteredTees = if (teeName != null) {
+            val normalizedTeeName = normalizeTeeName(teeName)
+            allTees.filter { tee ->
+                val normalizedTee = tee.name?.let { name -> normalizeTeeName(name) }
+                normalizedTee?.contains(normalizedTeeName, ignoreCase = true) == true ||
+                normalizedTeeName.contains(normalizedTee ?: "", ignoreCase = true) ||
+                tee.name?.contains(teeName, ignoreCase = true) == true ||
+                teeName.contains(tee.name ?: "", ignoreCase = true)
+            }
+        } else {
+            allTees
+        }
+        
+        if (filteredTees.isEmpty()) {
+            logger.info("No tees found at facility")
+            val dataModel = mapOf(
+                "facilityName" to (actualFacilityName ?: "the facility"),
+                "teeName" to teeName
+            )
+            return input.generateTemplateResponse("CourseHandicapIntentTeeNotFoundResponse", dataModel)
+        }
+        
+        return generateTeesResponse(input, filteredTees, actualFacilityName)
+    }
+    
+    /**
      * Generates a response for the provided list of tees.
      */
     private fun generateTeesResponse(
@@ -177,44 +215,6 @@ class CourseHandicapIntentHandler(
         
         dataModel["tees"] = teeList
         return input.generateTemplateResponse("CourseHandicapIntentResponse", dataModel)
-    }
-    
-    /**
-     * Processes course handicap info and generates appropriate response based on tee selection.
-     */
-    private fun processCourseHandicapInfo(
-        input: HandlerInput,
-        courseHandicapInfo: CourseHandicapInfo,
-        teeName: String?,
-        facilityName: String?
-    ): Optional<Response> {
-        val course = courseHandicapInfo.facility?.courses?.firstOrNull()
-        val actualFacilityName = courseHandicapInfo.facility?.name ?: facilityName
-        val allTees = course?.tees ?: emptyList()
-        
-        val filteredTees = if (teeName != null) {
-            val normalizedTeeName = normalizeTeeName(teeName)
-            allTees.filter { tee ->
-                val normalizedTee = tee.name?.let { name -> normalizeTeeName(name) }
-                normalizedTee?.contains(normalizedTeeName, ignoreCase = true) == true ||
-                normalizedTeeName.contains(normalizedTee ?: "", ignoreCase = true) ||
-                tee.name?.contains(teeName, ignoreCase = true) == true ||
-                teeName.contains(tee.name ?: "", ignoreCase = true)
-            }
-        } else {
-            allTees
-        }
-        
-        if (filteredTees.isEmpty()) {
-            logger.info("No tees found at facility")
-            val dataModel = mapOf(
-                "facilityName" to (actualFacilityName ?: "the facility"),
-                "teeName" to teeName
-            )
-            return input.generateTemplateResponse("CourseHandicapIntentTeeNotFoundResponse", dataModel)
-        }
-        
-        return generateTeesResponse(input, filteredTees, actualFacilityName)
     }
 
 }
