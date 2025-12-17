@@ -161,38 +161,26 @@ class CourseHandicapIntentHandler(
     }
     
     /**
-     * Finds tees by name in the course, handling name variations.
-     * Returns all tees that match the search criteria.
-     * For example, searching for "Blue" will match both "Blue" and "Blue/White" tees.
-     */
-    private fun findTeesByName(course: CourseHandicapCourse?, teeName: String): List<CourseHandicapTee> {
-        if (course?.tees == null) return emptyList()
-        
-        val normalizedTeeName = normalizeTeeName(teeName)
-        return course.tees.filter { tee ->
-            val normalizedTee = tee.name?.let { name -> normalizeTeeName(name) }
-            // Match if the normalized tee name contains the search term or vice versa
-            normalizedTee?.contains(normalizedTeeName, ignoreCase = true) == true ||
-            normalizedTeeName.contains(normalizedTee ?: "", ignoreCase = true) ||
-            tee.name?.contains(teeName, ignoreCase = true) == true ||
-            teeName.contains(tee.name ?: "", ignoreCase = true)
-        }
-    }
-    
-    /**
-     * Generates a response for one or more specific tees.
+     * Generates a response for the provided list of tees.
+     * Handles single tee, multiple tees, or all tees with a unified approach.
+     * 
+     * @param useSingleTeeFormat If true and there's exactly one tee, uses the specific tee response format.
+     *                           Otherwise, uses the all-tees format regardless of tee count.
      */
     private fun generateTeesResponse(
         input: HandlerInput,
         tees: List<CourseHandicapTee>,
-        facilityName: String?
+        facilityName: String?,
+        useSingleTeeFormat: Boolean = false
     ): Optional<Response> {
         if (tees.isEmpty()) {
-            return input.generateTemplateResponse("CourseHandicapIntentNoCourseHandicapResponse", emptyMap())
+            logger.info("No tees available")
+            val dataModel = facilityName?.let { mapOf("facilityName" to it) } ?: emptyMap()
+            return input.generateTemplateResponse("CourseHandicapIntentNoCourseHandicapResponse", dataModel)
         }
         
-        // If single tee, use the specific tee response
-        if (tees.size == 1) {
+        // Use single tee format only if explicitly requested and there's exactly one tee
+        if (useSingleTeeFormat && tees.size == 1) {
             val tee = tees[0]
             val dataModel = mutableMapOf<String, Any>()
             facilityName?.let { dataModel["facilityName"] = it }
@@ -212,7 +200,7 @@ class CourseHandicapIntentHandler(
             }
         }
         
-        // Multiple tees - use the all tees response format
+        // Use the all-tees response format (for multiple tees or when single tee format not requested)
         val dataModel = mutableMapOf<String, Any>()
         facilityName?.let { dataModel["courseName"] = it }
         
@@ -224,42 +212,7 @@ class CourseHandicapIntentHandler(
         }
         
         if (teeList.isEmpty()) {
-            logger.info("No tee scores available for matched tees")
-            return input.generateTemplateResponse("CourseHandicapIntentNoCourseHandicapResponse", dataModel)
-        }
-        
-        dataModel["tees"] = teeList
-        return input.generateTemplateResponse("CourseHandicapIntentAllTeesResponse", dataModel)
-    }
-    
-    /**
-     * Generates a response for all tees at a facility.
-     */
-    private fun generateAllTeesResponse(
-        input: HandlerInput,
-        course: CourseHandicapCourse?,
-        facilityName: String?
-    ): Optional<Response> {
-        val tees = course?.tees ?: emptyList()
-        
-        if (tees.isEmpty()) {
-            logger.info("No tees available for facility")
-            val dataModel = facilityName?.let { mapOf("facilityName" to it) } ?: emptyMap()
-            return input.generateTemplateResponse("CourseHandicapIntentNoCourseHandicapResponse", dataModel)
-        }
-        
-        val dataModel = mutableMapOf<String, Any>()
-        facilityName?.let { dataModel["courseName"] = it }
-        
-        // Create a list of tees with their scores
-        val teeList = tees.mapNotNull { tee ->
-            if (tee.name != null && tee.targetScore != null) {
-                mapOf("name" to tee.name, "score" to tee.targetScore)
-            } else null
-        }
-        
-        if (teeList.isEmpty()) {
-            logger.info("No tee scores available for facility")
+            logger.info("No tee scores available")
             return input.generateTemplateResponse("CourseHandicapIntentNoCourseHandicapResponse", dataModel)
         }
         
@@ -278,25 +231,37 @@ class CourseHandicapIntentHandler(
     ): Optional<Response> {
         val course = courseHandicapInfo.facility?.courses?.firstOrNull()
         val actualFacilityName = courseHandicapInfo.facility?.name ?: facilityName
+        val allTees = course?.tees ?: emptyList()
         
-        return if (teeName != null) {
-            // Find all matching tees (e.g., "Blue" matches both "Blue" and "Blue/White")
-            val matchingTees = findTeesByName(course, teeName)
-            
-            if (matchingTees.isEmpty()) {
-                logger.info("Tee '$teeName' not found at facility")
-                val dataModel = mapOf(
-                    "facilityName" to (actualFacilityName ?: "the facility"),
-                    "teeName" to teeName
-                )
-                input.generateTemplateResponse("CourseHandicapIntentTeeNotFoundResponse", dataModel)
-            } else {
-                generateTeesResponse(input, matchingTees, actualFacilityName)
+        // Filter tees based on teeName (or include all if no teeName provided)
+        val filteredTees = if (teeName != null) {
+            val normalizedTeeName = normalizeTeeName(teeName)
+            allTees.filter { tee ->
+                val normalizedTee = tee.name?.let { name -> normalizeTeeName(name) }
+                // Match if the normalized tee name contains the search term or vice versa
+                normalizedTee?.contains(normalizedTeeName, ignoreCase = true) == true ||
+                normalizedTeeName.contains(normalizedTee ?: "", ignoreCase = true) ||
+                tee.name?.contains(teeName, ignoreCase = true) == true ||
+                teeName.contains(tee.name ?: "", ignoreCase = true)
             }
         } else {
-            // No tee specified - return all tees
-            generateAllTeesResponse(input, course, actualFacilityName)
+            allTees
         }
+        
+        // Handle case where tee was specified but not found
+        if (teeName != null && filteredTees.isEmpty()) {
+            logger.info("Tee '$teeName' not found at facility")
+            val dataModel = mapOf(
+                "facilityName" to (actualFacilityName ?: "the facility"),
+                "teeName" to teeName
+            )
+            return input.generateTemplateResponse("CourseHandicapIntentTeeNotFoundResponse", dataModel)
+        }
+        
+        // Generate response for the filtered tees
+        // Use single tee format only when a tee was specifically requested and exactly one match was found
+        val useSingleTeeFormat = teeName != null && filteredTees.size == 1
+        return generateTeesResponse(input, filteredTees, actualFacilityName, useSingleTeeFormat)
     }
 
 }
