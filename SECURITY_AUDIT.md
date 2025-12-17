@@ -27,8 +27,9 @@ A comprehensive security audit was conducted on the `golf-canada-alexa` reposito
 - **Risk Level:** Low (profile name only, no credentials)
 - **Action Taken:** 
   - File removed from repository
-  - `.gitignore` updated to exclude `.idea/*.xml` files
+  - `.gitignore` updated to exclude all `.idea/*.xml` files to prevent any IDE configuration leaks
   - Will need Git history cleanup (see below)
+- **Note:** The `.idea/*.xml` pattern excludes all XML configuration files in the `.idea` directory. Some teams prefer to commit specific IDE settings files like `vcs.xml` or `misc.xml` for consistency. If needed, these can be added back with specific exceptions using `!.idea/vcs.xml` patterns.
 
 #### 2. Contact Email Addresses (NO ACTION NEEDED)
 - **Files:** README.md, TERMS_OF_SERVICE.md, PRIVACY_POLICY.md, CONTRIBUTION.md
