@@ -190,14 +190,22 @@ class CourseHandicapIntentHandlerTest : DescribeSpec({
                 val dataModel = secondArg<Map<String, Any>>()
                 
                 val text = when (templateName) {
-                    "CourseHandicapIntentResponse" -> 
-                        "Your course handicap at ${dataModel["courseName"]} from the ${dataModel["defaultTee"]} tees is ${dataModel["courseHandicap"]}."
-                    "CourseHandicapIntentAllTeesResponse" -> {
-                        val courseName = dataModel["courseName"]
+                    "CourseHandicapIntentResponse" -> {
                         @Suppress("UNCHECKED_CAST")
-                        val tees = dataModel["tees"] as List<Map<String, Any>>
-                        val teeScores = tees.joinToString(", ") { "${it["name"]} tees ${it["score"]}" }
-                        "Your expected score at $courseName from each tee are: $teeScores."
+                        val tees = dataModel["tees"] as? List<Map<String, Any>>
+                        val facilityName = dataModel["facilityName"]
+                        
+                        if (tees != null && tees.size == 1 && tees[0]["courseHandicap"] != null) {
+                            val tee = tees[0]
+                            val handicapText = "Your course handicap at $facilityName from the ${tee["name"]} tees is ${tee["courseHandicap"]}."
+                            val scoreText = if (tee["targetScore"] != null) " Your expected score is ${tee["targetScore"]}." else ""
+                            handicapText + scoreText
+                        } else if (tees != null) {
+                            val teeScores = tees.joinToString(", ") { "${it["name"]} tees ${it["targetScore"]}" }
+                            "Your expected score at $facilityName from each tee are: $teeScores."
+                        } else {
+                            "Unexpected data model"
+                        }
                     }
                     else -> "Unexpected template: $templateName"
                 }
@@ -333,14 +341,22 @@ class CourseHandicapIntentHandlerTest : DescribeSpec({
                 val dataModel = secondArg<Map<String, Any>>()
                 
                 val text = when (templateName) {
-                    "CourseHandicapIntentSpecificCourseResponse" -> 
-                        "Your course handicap at ${dataModel["facilityName"]} from the ${dataModel["teeName"]} tees is ${dataModel["courseHandicap"]}."
-                    "CourseHandicapIntentAllTeesResponse" -> {
-                        val courseName = dataModel["courseName"]
+                    "CourseHandicapIntentResponse" -> {
                         @Suppress("UNCHECKED_CAST")
-                        val tees = dataModel["tees"] as List<Map<String, Any>>
-                        val teeScores = tees.joinToString(", ") { "${it["name"]} tees ${it["score"]}" }
-                        "Your expected score at $courseName from each tee are: $teeScores."
+                        val tees = dataModel["tees"] as? List<Map<String, Any>>
+                        val facilityName = dataModel["facilityName"]
+                        
+                        if (tees != null && tees.size == 1 && tees[0]["courseHandicap"] != null) {
+                            val tee = tees[0]
+                            val handicapText = "Your course handicap at $facilityName from the ${tee["name"]} tees is ${tee["courseHandicap"]}."
+                            val scoreText = if (tee["targetScore"] != null) " Your expected score is ${tee["targetScore"]}." else ""
+                            handicapText + scoreText
+                        } else if (tees != null) {
+                            val teeScores = tees.joinToString(", ") { "${it["name"]} tees ${it["targetScore"]}" }
+                            "Your expected score at $facilityName from each tee are: $teeScores."
+                        } else {
+                            "Unexpected data model"
+                        }
                     }
                     else -> "Unexpected template: $templateName"
                 }
