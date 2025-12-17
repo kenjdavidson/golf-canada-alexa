@@ -205,8 +205,8 @@ class CourseHandicapIntentHandler(
             allTees
         }
         
-        if (teeName != null && filteredTees.isEmpty()) {
-            logger.info("Tee '$teeName' not found at facility")
+        if (filteredTees.isEmpty()) {
+            logger.info("No tees found at facility")
             val dataModel = mapOf(
                 "facilityName" to (actualFacilityName ?: "the facility"),
                 "teeName" to teeName
