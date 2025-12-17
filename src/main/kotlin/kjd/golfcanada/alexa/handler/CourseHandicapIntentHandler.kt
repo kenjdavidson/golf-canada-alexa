@@ -66,22 +66,15 @@ class CourseHandicapIntentHandler(
         val facilityName = slots?.get("FacilityName")?.value
         val teeName = slots?.get("TeeName")?.value
 
-        try {
-            return apiClientProvider.withAuthenticatedClient(input) { client ->
-                // Get facility info (either default or specified)
-                val facilityInfo = getFacilityInfo(client, userProfile, facilityName)
-                
-                // Get course handicap for the facility
-                val courseHandicapInfo = getCourseHandicap(client, userProfile, facilityInfo)
-                
-                // Process and return response based on tee selection
-                processCourseHandicapInfo(input, courseHandicapInfo, teeName, facilityInfo.name)
-            }
-        } catch (e: NoFacilityFoundException) {
-            throw e  // Let the exception handler deal with it
-        } catch (e: Exception) {
-            logger.error("Failed to fetch course handicap: ${e.message}", e)
-            throw GenericIntentException("Failed to fetch course handicap", e)
+        return apiClientProvider.withAuthenticatedClient(input) { client ->
+            // Get facility info (either default or specified)
+            val facilityInfo = getFacilityInfo(client, userProfile, facilityName)
+            
+            // Get course handicap for the facility
+            val courseHandicapInfo = getCourseHandicap(client, userProfile, facilityInfo)
+            
+            // Process and return response based on tee selection
+            processCourseHandicapInfo(input, courseHandicapInfo, teeName, facilityInfo.name)
         }
     }
     

@@ -182,7 +182,13 @@
             "what is my handicap for {FacilityName}",
             "get my course handicap for {FacilityName}",
             "what is my expected score from the {TeeName} tees",
-            "what is my expected score at {FacilityName} from the {TeeName} tees"
+            "what is my expected score at {FacilityName} from the {TeeName} tees",
+            "what am I expected to shoot from the {TeeName} tees",
+            "what should I shoot from the {TeeName} tees",
+            "what am I expected to shoot at {FacilityName}",
+            "what should I shoot at {FacilityName}",
+            "what am I expected to shoot from the {TeeName} tees at {FacilityName}",
+            "what should I shoot from the {TeeName} tees at {FacilityName}"
           ]
         }
       ],
