@@ -42,9 +42,9 @@ class NoFacilityFoundExceptionHandler : ExceptionHandler {
         logger.error("Handling NoFacilityFoundException: ${exception.message}", exception)
 
         val templateName = if (exception.facilityName != null) {
-            "CourseHandicapIntentFacilityNotFoundResponse"
+            "FacilityNotFoundResponse"
         } else {
-            "CourseHandicapIntentNoDefaultCourseResponse"
+            "NoDefaultFacilityResponse"
         }
         
         val dataModel = exception.facilityName?.let { 
