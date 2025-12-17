@@ -109,15 +109,9 @@ class CourseHandicapIntentHandler(
                 throw NoFacilityFoundException(facilityName)
             }
             
-            val matchingFacility = searchResponse.facilities.first()
-            logger.info("Found matching facility: ${matchingFacility.name} (ID: ${matchingFacility.id})")
-            
-            if (matchingFacility.id == null) {
-                logger.error("Matching facility has null ID: ${matchingFacility.name}")
-                throw NoFacilityFoundException(facilityName)
+            searchResponse.facilities.first().let { facility ->
+                FacilityInfo(facility.id!!, facility.name)
             }
-            
-            FacilityInfo(matchingFacility.id, matchingFacility.name)
         } else {
             userProfile.facilityId?.let {
                 logger.info("Using default facility: ${userProfile.facilityName} (ID: $it)")
