@@ -144,12 +144,14 @@ class UserProfileInterceptor : RequestInterceptor {
      */
     internal fun mapUserToSession(user: User): UserProfileSession {
         return UserProfileSession(
+            id = user.id,
             firstName = user.firstName,
             lastName = user.lastName,
             membershipLevel = user.membershipLevel,
             golfCanadaCardId = user.golfCanadaCardId,
             expirationDate = user.expirationDate,
             facilityName = user.scoreDefaults?.facilityName,
+            facilityId = user.scoreDefaults?.facilityId?.toLong(),
             postHoleByHole = user.scoreDefaults?.postHoleByHole
         )
     }

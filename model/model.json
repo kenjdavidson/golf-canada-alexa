@@ -158,9 +158,92 @@
             "show me my course list",
             "what are my courses"
           ]
+        },
+        {
+          "name": "GOLFCANADA.CourseHandicap",
+          "slots": [
+            {
+              "name": "FacilityName",
+              "type": "AMAZON.SearchQuery"
+            },
+            {
+              "name": "TeeName",
+              "type": "TeeName"
+            }
+          ],
+          "samples": [
+            "what is my course handicap",
+            "tell me my course handicap",
+            "what's my course handicap",
+            "get my course handicap",
+            "what is my handicap at {FacilityName}",
+            "what's my course handicap at {FacilityName}",
+            "tell me my course handicap at {FacilityName}",
+            "what is my handicap for {FacilityName}",
+            "get my course handicap for {FacilityName}",
+            "what is my expected score from the {TeeName} tees",
+            "what is my expected score at {FacilityName} from the {TeeName} tees",
+            "what am I expected to shoot from the {TeeName} tees",
+            "what should I shoot from the {TeeName} tees",
+            "what am I expected to shoot at {FacilityName}",
+            "what should I shoot at {FacilityName}",
+            "what am I expected to shoot from the {TeeName} tees at {FacilityName}",
+            "what should I shoot from the {TeeName} tees at {FacilityName}"
+          ]
         }
       ],
-      "types": []
+      "types": [
+        {
+          "name": "TeeName",
+          "values": [
+            {
+              "name": {
+                "value": "Green"
+              }
+            },
+            {
+              "name": {
+                "value": "Red"
+              }
+            },
+            {
+              "name": {
+                "value": "White"
+              }
+            },
+            {
+              "name": {
+                "value": "Blue"
+              }
+            },
+            {
+              "name": {
+                "value": "Silver"
+              }
+            },
+            {
+              "name": {
+                "value": "Black"
+              }
+            },
+            {
+              "name": {
+                "value": "Gold"
+              }
+            },
+            {
+              "name": {
+                "value": "Blue White",
+                "synonyms": [
+                  "Blue/White",
+                  "Blue and White",
+                  "BlueWhite"
+                ]
+              }
+            }
+          ]
+        }
+      ]
     }
   }
 }
