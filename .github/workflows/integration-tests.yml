@@ -1,0 +1,82 @@
+name: Integration Tests
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  integration-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Set up Python (for AWS SAM CLI)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Install AWS SAM CLI
+        run: |
+          pip install --upgrade pip
+          pip install aws-sam-cli
+
+      - name: Verify SAM CLI installation
+        run: sam --version
+
+      - name: Build application
+        run: |
+          ./gradlew packageJar
+
+      - name: Build SAM application
+        run: |
+          sam build
+        env:
+          DOCKER_BUILDKIT: 1
+
+      - name: Run integration tests
+        run: |
+          ./gradlew integrationTest -PMOCK_API=true
+        env:
+          MOCK_API: true
+          SKILL_ID: test-skill-id
+          CLIENT_ID: test-client-id
+          CLIENT_SECRET: test-client-secret
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-results
+          path: build/reports/tests/integrationTest/
+          retention-days: 7
+
+      - name: Upload test logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-logs
+          path: build/test-results/integrationTest/
+          retention-days: 7
