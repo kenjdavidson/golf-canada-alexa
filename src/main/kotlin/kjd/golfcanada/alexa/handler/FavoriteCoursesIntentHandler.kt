@@ -6,7 +6,7 @@ import com.amazon.ask.model.Response
 import com.amazon.ask.request.Predicates.intentName
 import kjd.golfcanada.alexa.IntentName
 import kjd.golfcanada.alexa.util.getUserOrThrow
-import kjd.golfcanada.client.provider.ApiClientProvider
+import kjd.golfcanada.client.provider.IApiClientProvider
 import kjd.golfcanada.client.provider.withAuthenticatedClient
 import org.slf4j.LoggerFactory
 import java.util.*
@@ -23,7 +23,7 @@ import java.util.*
  * - "Tell me my course list"
  */
 class FavoriteCoursesIntentHandler(
-    private val apiClientProvider: ApiClientProvider
+    private val apiClientProvider: IApiClientProvider
 ) : RequestHandler {
 
     private val logger = LoggerFactory.getLogger(FavoriteCoursesIntentHandler::class.java)

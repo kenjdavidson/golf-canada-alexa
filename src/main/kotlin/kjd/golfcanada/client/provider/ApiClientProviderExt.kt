@@ -27,7 +27,7 @@ import kjd.golfcanada.client.model.extractAccessToken
  * @return The result of the lambda function
  * @throws AccountLinkingException if no access token is available in the request
  */
-inline fun <T> ApiClientProvider.withAuthenticatedClient(
+inline fun <T> IApiClientProvider.withAuthenticatedClient(
     input: HandlerInput,
     block: (ApiClientWrapper) -> T
 ): T {

@@ -42,7 +42,7 @@ private class ApiClientBuilder(
  * as a dependency to classes that need API client access. This makes it effectively a singleton
  * while allowing for better testability and dependency injection.
  */
-class ApiClientProvider {
+class ApiClientProvider : IApiClientProvider {
     
     /**
      * The base ApiClient with shared HTTP resources.
@@ -83,7 +83,7 @@ class ApiClientProvider {
      * @param accessToken The user-specific OAuth access token for this request
      * @return A new ApiClientWrapper with request-specific authentication
      */
-    fun getClient(accessToken: String): ApiClientWrapper {
+    override fun getClient(accessToken: String): ApiClientWrapper {
         // Create authenticated ApiClient by cloning the base client and adding the interceptor
         // Using newBuilder() on the base ApiClient ensures we reuse the same base URL,
         // connection pool, and configuration, while adding request-specific authentication

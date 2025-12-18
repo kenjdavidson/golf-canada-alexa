@@ -13,7 +13,7 @@ import kjd.golfcanada.alexa.exception.GenericIntentException
 import kjd.golfcanada.alexa.exception.GolfCanadaApiException
 import kjd.golfcanada.alexa.util.FriendNameMatcher
 import kjd.golfcanada.alexa.util.getUserOrThrow
-import kjd.golfcanada.client.provider.ApiClientProvider
+import kjd.golfcanada.client.provider.IApiClientProvider
 import kjd.golfcanada.client.provider.withAuthenticatedClient
 import kjd.golfcanada.util.FriendsListCache
 import org.slf4j.LoggerFactory
@@ -35,7 +35,7 @@ import java.util.*
  * - "Get handicap for player 12345"
  */
 class HandicapIntentRequestHandler(
-    private val apiClientProvider: ApiClientProvider
+    private val apiClientProvider: IApiClientProvider
 ) : RequestHandler {
 
     private val logger = LoggerFactory.getLogger(HandicapIntentRequestHandler::class.java)

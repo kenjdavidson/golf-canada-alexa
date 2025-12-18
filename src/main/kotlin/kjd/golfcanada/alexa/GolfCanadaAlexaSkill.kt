@@ -24,13 +24,20 @@ import kjd.golfcanada.alexa.handler.SessionEndedRequestHandler
 import kjd.golfcanada.alexa.interceptor.AuthenticationRequestInterceptor
 import kjd.golfcanada.alexa.interceptor.UserProfileInterceptor
 import kjd.golfcanada.client.provider.ApiClientProvider
+import kjd.golfcanada.client.provider.IApiClientProvider
+import kjd.golfcanada.client.provider.MockApiClientProvider
 
 class GolfCanadaAlexaSkill: SkillStreamHandler(getSkills()) {
     companion object {
         fun getSkills(): Skill {
             // Create a single instance of ApiClientProvider to be shared across all requests
             // This ensures HTTP client resources are reused while keeping tokens isolated per request
-            val apiClientProvider = ApiClientProvider()
+            // Use MockApiClientProvider if MOCK_API environment variable is set to "true"
+            val apiClientProvider: IApiClientProvider = if (System.getenv("MOCK_API")?.toBoolean() == true) {
+                MockApiClientProvider()
+            } else {
+                ApiClientProvider()
+            }
             
             return Skills.custom()
                 .withSkillId(System.getenv("SKILL_ID") ?: "ERROR - No SKILL_ID provided!!!")

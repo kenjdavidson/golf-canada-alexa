@@ -13,7 +13,7 @@ import kjd.golfcanada.alexa.util.getUserOrThrow
 import kjd.golfcanada.client.model.CourseHandicapCourse
 import kjd.golfcanada.client.model.CourseHandicapInfo
 import kjd.golfcanada.client.model.CourseHandicapTee
-import kjd.golfcanada.client.provider.ApiClientProvider
+import kjd.golfcanada.client.provider.IApiClientProvider
 import kjd.golfcanada.client.provider.ApiClientWrapper
 import kjd.golfcanada.client.provider.withAuthenticatedClient
 import org.slf4j.LoggerFactory
@@ -33,7 +33,7 @@ import java.util.*
  * - "What is my course handicap for Oakdale Golf Club?"
  */
 class CourseHandicapIntentHandler(
-    private val apiClientProvider: ApiClientProvider
+    private val apiClientProvider: IApiClientProvider
 ) : RequestHandler {
 
     private val logger = LoggerFactory.getLogger(CourseHandicapIntentHandler::class.java)
