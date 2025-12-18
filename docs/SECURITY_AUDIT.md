@@ -18,7 +18,7 @@ A comprehensive security audit was conducted on the `golf-canada-alexa` reposito
 2. **Environment Variables Properly Used:** `TEST_USERNAME` and `TEST_PASSWORD` are correctly used as environment variables only
 3. **GitHub Secrets Protected:** Workflow files properly use GitHub secrets (e.g., `GOLF_CANADA_CLIENT_SECRET`)
 4. **API Keys:** No API keys or tokens found in committed files
-5. **Test Data:** All test data uses mock/generic values (e.g., "KENJDAVIDSON", "TESTUSER")
+5. **Test Data:** All test data uses mock/generic values (e.g., "TESTUSER", "MOCKUSER")
 
 ### ⚠️ Minor Issues Addressed
 
@@ -106,7 +106,7 @@ Since the Git history has been rewritten, existing clones will need to be update
    ```bash
    cd ..
    rm -rf golf-canada-alexa
-   git clone https://github.com/kenjdavidson/golf-canada-alexa.git
+   git clone https://github.com/<owner>/golf-canada-alexa.git
    ```
 
 ## Checklist for Public Release
