@@ -43,10 +43,51 @@ sourceSets {
             srcDir("${buildDir}/generated/openapi/src/main/kotlin")
         }
     }
+    
+    // Integration test source set
+    create("integrationTest") {
+        kotlin {
+            compileClasspath += sourceSets["main"].output
+            runtimeClasspath += sourceSets["main"].output
+        }
+    }
+}
+
+// Configure integrationTest dependencies
+val integrationTestImplementation by configurations.getting {
+    extendsFrom(configurations["testImplementation"])
+}
+
+val integrationTestRuntimeOnly by configurations.getting {
+    extendsFrom(configurations["testRuntimeOnly"])
+}
+
+dependencies {
+    integrationTestImplementation("io.kotest:kotest-runner-junit5:5.7.2")
+    integrationTestImplementation("org.slf4j:slf4j-simple:2.0.9")
 }
 
 tasks.test {
     useJUnitPlatform()
+}
+
+// Integration test task
+val integrationTest = task<Test>("integrationTest") {
+    description = "Runs integration tests."
+    group = "verification"
+    
+    testClassesDirs = sourceSets["integrationTest"].output.classesDirs
+    classpath = sourceSets["integrationTest"].runtimeClasspath
+    
+    useJUnitPlatform()
+    
+    shouldRunAfter(tasks.test)
+    
+    // Set MOCK_API environment variable for integration tests
+    environment("MOCK_API", project.findProperty("MOCK_API") ?: "true")
+    environment("SKILL_ID", "test-skill-id")
+    environment("CLIENT_ID", "test-client-id")
+    environment("CLIENT_SECRET", "test-client-secret")
 }
 
 task("bundleOpenApiSpec", Exec::class) {
