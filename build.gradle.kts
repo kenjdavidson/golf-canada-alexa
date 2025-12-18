@@ -84,7 +84,9 @@ val integrationTest = task<Test>("integrationTest") {
     shouldRunAfter(tasks.test)
     
     // Set MOCK_API environment variable for integration tests
-    environment("MOCK_API", project.findProperty("MOCK_API") ?: "true")
+    // Note: Currently defaults to "true" but the mock implementation is not complete
+    // See MOCKING_FRAMEWORK.md for details on current limitations
+    environment("MOCK_API", project.findProperty("MOCK_API")?.toString() ?: "true")
     environment("SKILL_ID", "test-skill-id")
     environment("CLIENT_ID", "test-client-id")
     environment("CLIENT_SECRET", "test-client-secret")

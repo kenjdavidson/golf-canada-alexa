@@ -31,22 +31,28 @@ class MockApiClientProvider : IApiClientProvider {
     /**
      * Gets a mock API client wrapper.
      * 
-     * Note: Currently returns a standard ApiClientWrapper. Full mock implementation
-     * with JSON resource loading requires either making the generated API classes open
-     * or implementing mocking at the HTTP client level.
+     * IMPORTANT: This is currently a PLACEHOLDER implementation that returns a standard
+     * ApiClientWrapper backed by real API calls. The mock infrastructure is in place
+     * (MockResourceLoader, JSON files, etc.) but cannot be fully utilized because the
+     * OpenAPI-generated API classes are final and cannot be extended.
+     * 
+     * To implement full mocking, one of these approaches is needed:
+     * 1. HTTP interceptor at OkHttp level to intercept requests and return mock responses
+     * 2. Local mock server (e.g., WireMock) that returns predefined responses
+     * 3. Modify OpenAPI generator to create open classes or interfaces
+     * 
+     * Until then, setting MOCK_API=true will log but still make real API calls.
      * 
      * @param accessToken The user-specific OAuth access token
-     * @return A new ApiClientWrapper
+     * @return A new ApiClientWrapper (currently using real API, not mocked)
      */
     override fun getClient(accessToken: String): ApiClientWrapper {
-        logger.info("Mock API provider is enabled but not fully implemented yet")
-        logger.info("Returning standard API client - actual mocking TODO")
+        logger.warn("MockApiClientProvider is enabled but NOT FULLY IMPLEMENTED")
+        logger.warn("This will still make REAL API calls - mocking requires HTTP-level interception")
+        logger.warn("See MOCKING_FRAMEWORK.md for implementation details")
         
-        // For now, just use a regular provider
-        // Full implementation would require either:
-        // 1. Making generated API classes open
-        // 2. Implementing mock at OkHttp interceptor level
-        // 3. Using a local mock server
+        // TODO: Implement HTTP-level mocking via OkHttp interceptor
+        // For now, return a standard provider that makes real API calls
         val baseProvider = ApiClientProvider()
         return baseProvider.getClient(accessToken)
     }

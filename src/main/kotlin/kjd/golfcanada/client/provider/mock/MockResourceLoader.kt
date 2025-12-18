@@ -65,8 +65,8 @@ object MockResourceLoader {
             return parseJson(resource.readBytes().toString(Charsets.UTF_8), clazz)
         }
         
-        logger.warn("Mock resource not found for $serviceName.$methodName" + 
-                    (parameter?.let { " with parameter $it" } ?: ""))
+        val paramInfo = parameter?.let { " with parameter $it" } ?: ""
+        logger.warn("Mock resource not found for $serviceName.$methodName$paramInfo")
         return null
     }
     
