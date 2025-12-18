@@ -27,9 +27,10 @@ A comprehensive security audit was conducted on the `golf-canada-alexa` reposito
 - **Risk Level:** Low (profile name only, no credentials)
 - **Action Taken:** 
   - File removed from repository
-  - `.gitignore` updated to exclude all `.idea/*.xml` files to prevent any IDE configuration leaks
+  - `.gitignore` updated to exclude most `.idea/**` content while keeping useful team configurations
+  - Specifically excludes `.idea/aws.xml` and other personal state files
   - Will need Git history cleanup (see below)
-- **Note:** The `.idea/*.xml` pattern excludes all XML configuration files in the `.idea` directory. Some teams prefer to commit specific IDE settings files like `vcs.xml` or `misc.xml` for consistency. If needed, these can be added back with specific exceptions using `!.idea/vcs.xml` patterns.
+- **Note:** The `.gitignore` pattern now excludes all `.idea/**` content but allows team-useful directories like `runConfigurations/`, `codeStyles/`, and `inspectionProfiles/`, plus specific files like `vcs.xml` and `modules.xml`.
 
 #### 2. Contact Email Addresses (NO ACTION NEEDED)
 - **Files:** README.md, TERMS_OF_SERVICE.md, PRIVACY_POLICY.md, CONTRIBUTION.md
@@ -39,9 +40,11 @@ A comprehensive security audit was conducted on the `golf-canada-alexa` reposito
 ## Actions Taken
 
 1. ✅ Removed `.idea/aws.xml` file
-2. ✅ Updated `.gitignore` to exclude `.idea/*.xml` files
-   - **Security-first approach:** Excludes all IDE XML configuration files to prevent any potential leaks
-   - **Note:** If your team needs to share specific IDE configuration files (like `vcs.xml` or `misc.xml`), you can add exceptions with patterns like `!.idea/vcs.xml` after the exclusion rule
+2. ✅ Updated `.gitignore` with balanced approach:
+   - Excludes all `.idea/**` content by default
+   - Allows team-useful directories: `runConfigurations/`, `codeStyles/`, `inspectionProfiles/`
+   - Allows specific configuration files: `vcs.xml`, `modules.xml`
+   - Explicitly excludes personal/sensitive files: `workspace.xml`, `aws.xml`, `usage.statistics.xml`, `tasks.xml`, `shelf/`
 3. ✅ Created this security audit documentation
 
 ## Git History Cleanup (REQUIRED BEFORE PUBLIC RELEASE)

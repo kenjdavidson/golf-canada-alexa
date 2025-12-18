@@ -6,10 +6,24 @@ build/
 .aws-sam
 
 ### IntelliJ IDEA ###
-.idea/*.xml
-.idea/libraries/
-*.iws
+.idea/**
+!.idea/runConfigurations/
+!.idea/codeStyles/
+!.idea/inspectionProfiles/
+!.idea/vcs.xml
+!.idea/modules.xml
+
+# Ignore personal state files even if the folder is kept
+.idea/workspace.xml
+.idea/usage.statistics.xml
+.idea/tasks.xml
+.idea/shelf/
+.idea/aws.xml
+
+# Ignore all .iml files if using Gradle/Maven (they are regenerated)
 *.iml
+
+*.iws
 *.ipr
 out/
 !**/src/main/**/out/
