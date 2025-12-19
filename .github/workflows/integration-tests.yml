@@ -2,9 +2,9 @@ name: Integration Tests
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ main ]
   workflow_dispatch:
 
 permissions:
@@ -61,7 +61,7 @@ jobs:
           ./gradlew integrationTest -PMOCK_API=true
         env:
           MOCK_API: true
-          SKILL_ID: test-skill-id
+          SKILL_ID: amzn1.ask.skill.sample-skill-id
           CLIENT_ID: test-client-id
           CLIENT_SECRET: test-client-secret
 

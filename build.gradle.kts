@@ -87,7 +87,7 @@ val integrationTest = task<Test>("integrationTest") {
     // Note: Currently defaults to "true" but the mock implementation is not complete
     // See MOCKING_FRAMEWORK.md for details on current limitations
     environment("MOCK_API", project.findProperty("MOCK_API")?.toString() ?: "true")
-    environment("SKILL_ID", "test-skill-id")
+    environment("SKILL_ID", "amzn1.ask.skill.sample-skill-id")
     environment("CLIENT_ID", "test-client-id")
     environment("CLIENT_SECRET", "test-client-secret")
 }

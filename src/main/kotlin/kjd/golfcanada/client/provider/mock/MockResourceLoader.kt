@@ -33,25 +33,32 @@ object MockResourceLoader {
      * 
      * @param serviceName The API service name (e.g., "members", "scores", "auth")
      * @param methodName The API method name (e.g., "getFriendsList", "getHandicapCalculation")
-     * @param parameter Optional parameter to include in the file name (e.g., member ID)
+     * @param parameters Optional map of parameters to include in the file name (e.g., mapOf("memberId" to "1", "facilityName" to "oakdale"))
      * @param clazz The class type to deserialize the JSON into
      * @return The parsed object, or null if the resource file doesn't exist
      */
     fun <T> loadResource(
         serviceName: String,
         methodName: String,
-        parameter: String? = null,
+        parameters: Map<String, Any?>? = null,
         clazz: Class<T>
     ): T? {
         // Try parameter-specific file first
-        if (parameter != null) {
-            val parameterizedPath = "client/$serviceName/${methodName}_$parameter.json"
-            logger.debug("Attempting to load mock resource: $parameterizedPath")
+        if (!parameters.isNullOrEmpty()) {
+            // Build parameter suffix by joining all non-null parameter values with underscores
+            val paramSuffix = parameters.values
+                .filterNotNull()
+                .joinToString("_") { it.toString() }
             
-            val resource = this::class.java.classLoader.getResourceAsStream(parameterizedPath)
-            if (resource != null) {
-                logger.info("Loaded mock resource: $parameterizedPath")
-                return parseJson(resource.readBytes().toString(Charsets.UTF_8), clazz)
+            if (paramSuffix.isNotEmpty()) {
+                val parameterizedPath = "client/$serviceName/${methodName}_$paramSuffix.json"
+                logger.debug("Attempting to load mock resource: $parameterizedPath")
+                
+                val resource = this::class.java.classLoader.getResourceAsStream(parameterizedPath)
+                if (resource != null) {
+                    logger.info("Loaded mock resource: $parameterizedPath")
+                    return parseJson(resource.readBytes().toString(Charsets.UTF_8), clazz)
+                }
             }
         }
         
@@ -65,9 +72,34 @@ object MockResourceLoader {
             return parseJson(resource.readBytes().toString(Charsets.UTF_8), clazz)
         }
         
-        val paramInfo = parameter?.let { " with parameter $it" } ?: ""
+        val paramInfo = if (!parameters.isNullOrEmpty()) {
+            " with parameters ${parameters.values.filterNotNull().joinToString(", ")}"
+        } else ""
         logger.warn("Mock resource not found for $serviceName.$methodName$paramInfo")
         return null
+    }
+    
+    /**
+     * Convenience overload for single parameter calls.
+     * 
+     * @param serviceName The API service name
+     * @param methodName The API method name
+     * @param parameter Optional single parameter value
+     * @param clazz The class type to deserialize the JSON into
+     * @return The parsed object, or null if the resource file doesn't exist
+     */
+    fun <T> loadResource(
+        serviceName: String,
+        methodName: String,
+        parameter: String?,
+        clazz: Class<T>
+    ): T? {
+        return loadResource(
+            serviceName,
+            methodName,
+            parameter?.let { mapOf("param" to it) },
+            clazz
+        )
     }
     
     /**
