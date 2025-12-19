@@ -8,7 +8,7 @@ import kjd.golfcanada.client.provider.mock.MockResourceLoader
 import org.slf4j.LoggerFactory
 
 /**
- * Integration tests for the Golf Canada Alexa Skill mocking framework.
+ * Handler tests for the Golf Canada Alexa Skill with mocked API responses.
  * 
  * These tests verify that the mocking infrastructure is correctly set up:
  * - Environment variables are configured properly
@@ -18,9 +18,11 @@ import org.slf4j.LoggerFactory
  * 
  * The tests use the MOCK_API environment variable to enable mock mode, which returns data
  * from JSON files in src/main/resources/client/ instead of making real API calls.
+ * 
+ * Note: These are not true integration tests as all external dependencies are mocked.
  */
-class AlexaIntegrationTest : DescribeSpec({
-    val logger = LoggerFactory.getLogger(AlexaIntegrationTest::class.java)
+class AlexaSkillHandlerTest : DescribeSpec({
+    val logger = LoggerFactory.getLogger(AlexaSkillHandlerTest::class.java)
     
     describe("Mock Framework Integration Tests") {
         

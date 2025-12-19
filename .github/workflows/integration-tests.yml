@@ -1,4 +1,4 @@
-name: Integration Tests
+name: Alexa Skill Handler Tests
 
 on:
   push:
@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 jobs:
-  integration-test:
+  alexa-skill-handler-test:
     runs-on: ubuntu-latest
 
     steps:
@@ -56,9 +56,9 @@ jobs:
         env:
           DOCKER_BUILDKIT: 1
 
-      - name: Run integration tests
+      - name: Run Alexa Skill handler tests
         run: |
-          ./gradlew integrationTest -PMOCK_API=true
+          ./gradlew alexaSkillHandlerTest -PMOCK_API=true
         env:
           MOCK_API: true
           SKILL_ID: amzn1.ask.skill.sample-skill-id
@@ -69,14 +69,14 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: integration-test-results
-          path: build/reports/tests/integrationTest/
+          name: alexa-skill-handler-test-results
+          path: build/reports/tests/alexaSkillHandlerTest/
           retention-days: 7
 
       - name: Upload test logs
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: integration-test-logs
-          path: build/test-results/integrationTest/
+          name: alexa-skill-handler-test-logs
+          path: build/test-results/alexaSkillHandlerTest/
           retention-days: 7

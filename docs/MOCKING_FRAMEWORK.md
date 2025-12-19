@@ -1,6 +1,6 @@
-# Mocking Framework and Integration Testing
+# Mocking Framework and Handler Testing
 
-This document describes the local mocking framework and integration testing infrastructure for the Golf Canada Alexa Skill.
+This document describes the local mocking framework and handler testing infrastructure for the Golf Canada Alexa Skill.
 
 ## Overview
 
@@ -9,8 +9,8 @@ The mocking framework allows the Alexa Skill and Authentication handlers to run 
 1. **IApiClientProvider Interface**: An abstraction layer that allows switching between production and mock API client providers
 2. **MockApiClientProvider**: A mock implementation that can load responses from local JSON resource files
 3. **MockResourceLoader**: A utility that loads mock data from JSON files following a specific naming convention
-4. **Integration Test Suite**: Gradle-based integration tests that verify the mocking infrastructure
-5. **GitHub Actions Workflow**: Automated CI pipeline for running integration tests
+4. **Handler Test Suite**: Gradle-based tests that verify the mocking infrastructure with mocked dependencies
+5. **GitHub Actions Workflow**: Automated CI pipeline for running handler tests
 
 ## Architecture
 
@@ -72,29 +72,31 @@ The `MockResourceLoader` follows this naming convention:
 2. **Generic fallback**: `/resources/client/{serviceName}/{methodName}.json`
    - Example: `members/getFriends.json` for any user
 
-## Integration Tests
+## Handler Tests
 
-### Running Integration Tests Locally
+### Running Handler Tests Locally
 
 ```bash
 # Run with mock API enabled
-./gradlew integrationTest -PMOCK_API=true
+./gradlew alexaSkillHandlerTest -PMOCK_API=true
 
 # Or set environment variable
-MOCK_API=true ./gradlew integrationTest
+MOCK_API=true ./gradlew alexaSkillHandlerTest
 ```
 
 ### Test Structure
 
-Integration tests are located in `src/integrationTest/kotlin/` and verify:
+Handler tests are located in `src/alexaSkillHandlerTest/kotlin/` and verify:
 - Environment variables are configured correctly
 - Mock API client provider can be instantiated
 - Mock resource files can be loaded
 - The skill can be created with mock mode enabled
 
+Note: These are not true integration tests as all external dependencies (API calls) are mocked.
+
 ### Test Events
 
-Test Alexa events are stored in `src/integrationTest/resources/events/`:
+Test Alexa events are stored in `src/alexaSkillHandlerTest/resources/events/`:
 - `LaunchRequest.json`: Basic launch request event
 
 ## GitHub Actions Integration
@@ -104,7 +106,7 @@ The `.github/workflows/integration-tests.yml` workflow:
 2. Installs AWS SAM CLI
 3. Builds the application with Gradle
 4. Builds the SAM application
-5. Runs integration tests with `MOCK_API=true`
+5. Runs handler tests with `MOCK_API=true`
 6. Uploads test results and logs as artifacts
 
 ## Current Limitations
@@ -155,8 +157,8 @@ For full mocking functionality, consider:
 export MOCK_API=true
 sam local start-api
 
-# For integration tests
-MOCK_API=true ./gradlew integrationTest
+# For handler tests
+MOCK_API=true ./gradlew alexaSkillHandlerTest
 
 # For SAM local invoke
 sam local invoke GolfCanadaAlexaSkillFunction -e events/AlexaLaunchEvent.json --env-vars env.json
@@ -178,10 +180,10 @@ sam local invoke GolfCanadaAlexaSkillFunction -e events/AlexaLaunchEvent.json --
 
 3. The `MockResourceLoader` will automatically find and use these files
 
-### Writing Integration Tests
+### Writing Handler Tests
 
 ```kotlin
-class MyIntegrationTest : DescribeSpec({
+class MyHandlerTest : DescribeSpec({
     describe("My Feature") {
         it("should work with mock API") {
             val provider = MockApiClientProvider()
@@ -200,7 +202,7 @@ class MyIntegrationTest : DescribeSpec({
 3. **Reliable Tests**: Consistent mock data eliminates flakiness
 4. **Offline Development**: Work without internet connection
 5. **Cost Savings**: Reduce API calls during development and testing
-6. **CI/CD Ready**: Automated integration tests in GitHub Actions
+6. **CI/CD Ready**: Automated handler tests in GitHub Actions
 
 ## Future Enhancements
 
@@ -209,5 +211,5 @@ class MyIntegrationTest : DescribeSpec({
 - [ ] Support dynamic mock responses based on request parameters
 - [ ] Add mock error scenarios for testing error handling
 - [ ] Create SAM local testing examples
-- [ ] Add integration tests that invoke full skill handlers
+- [ ] Add handler tests that invoke full skill handlers
 - [ ] Document OAuth/Authentication mocking patterns

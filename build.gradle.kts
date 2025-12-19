@@ -44,8 +44,8 @@ sourceSets {
         }
     }
     
-    // Integration test source set
-    create("integrationTest") {
+    // Alexa Skill Handler test source set
+    create("alexaSkillHandlerTest") {
         kotlin {
             compileClasspath += sourceSets["main"].output
             runtimeClasspath += sourceSets["main"].output
@@ -53,39 +53,37 @@ sourceSets {
     }
 }
 
-// Configure integrationTest dependencies
-val integrationTestImplementation by configurations.getting {
+// Configure alexaSkillHandlerTest dependencies
+val alexaSkillHandlerTestImplementation by configurations.getting {
     extendsFrom(configurations["testImplementation"])
 }
 
-val integrationTestRuntimeOnly by configurations.getting {
+val alexaSkillHandlerTestRuntimeOnly by configurations.getting {
     extendsFrom(configurations["testRuntimeOnly"])
 }
 
 dependencies {
-    integrationTestImplementation("io.kotest:kotest-runner-junit5:5.7.2")
-    integrationTestImplementation("org.slf4j:slf4j-simple:2.0.9")
+    alexaSkillHandlerTestImplementation("io.kotest:kotest-runner-junit5:5.7.2")
+    alexaSkillHandlerTestImplementation("org.slf4j:slf4j-simple:2.0.9")
 }
 
 tasks.test {
     useJUnitPlatform()
 }
 
-// Integration test task
-val integrationTest = task<Test>("integrationTest") {
-    description = "Runs integration tests."
+// Alexa Skill Handler test task
+val alexaSkillHandlerTest = task<Test>("alexaSkillHandlerTest") {
+    description = "Runs Alexa Skill handler tests with mocked API responses."
     group = "verification"
     
-    testClassesDirs = sourceSets["integrationTest"].output.classesDirs
-    classpath = sourceSets["integrationTest"].runtimeClasspath
+    testClassesDirs = sourceSets["alexaSkillHandlerTest"].output.classesDirs
+    classpath = sourceSets["alexaSkillHandlerTest"].runtimeClasspath
     
     useJUnitPlatform()
     
     shouldRunAfter(tasks.test)
     
-    // Set MOCK_API environment variable for integration tests
-    // Note: Currently defaults to "true" but the mock implementation is not complete
-    // See MOCKING_FRAMEWORK.md for details on current limitations
+    // Set MOCK_API environment variable for handler tests
     environment("MOCK_API", project.findProperty("MOCK_API")?.toString() ?: "true")
     environment("SKILL_ID", "amzn1.ask.skill.sample-skill-id")
     environment("CLIENT_ID", "test-client-id")
