@@ -66,12 +66,20 @@ class AuthenticationRequestInterceptor : RequestInterceptor {
     /**
      * Checks if the user is authenticated by verifying the presence of an access token.
      *
+     * Checks both the Alexa account-linking access token and the static access token
+     * stored in request attributes (populated by [StaticCredentialInterceptor] when
+     * static credentials are configured).
+     *
      * @param input The handler input containing the request envelope
      * @return true if the user has an access token, false otherwise
      */
     fun isAuthenticated(input: HandlerInput): Boolean {
         val accessToken = input.requestEnvelope.context?.system?.user?.accessToken
-        return !accessToken.isNullOrBlank()
+        if (!accessToken.isNullOrBlank()) return true
+
+        val staticToken = input.attributesManager.requestAttributes
+            ?.get(StaticCredentialInterceptor.STATIC_TOKEN_KEY) as? String
+        return !staticToken.isNullOrBlank()
     }
 
     companion object {

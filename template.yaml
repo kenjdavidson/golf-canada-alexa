@@ -26,6 +26,26 @@ Parameters:
     Type: String
     Description: Alexa Skill ID for the Golf Canada skill
 
+  GolfCanadaUsername:
+    Type: String
+    Description: >
+      Golf Canada username for single-user static authentication mode.
+      When set together with GolfCanadaPassword, the skill authenticates directly
+      using these credentials instead of requiring Alexa Account Linking.
+      Leave empty to use the standard OAuth Account Linking flow.
+    Default: ''
+    NoEcho: true
+
+  GolfCanadaPassword:
+    Type: String
+    Description: >
+      Golf Canada password for single-user static authentication mode.
+      When set together with GolfCanadaUsername, the skill authenticates directly
+      using these credentials instead of requiring Alexa Account Linking.
+      Leave empty to use the standard OAuth Account Linking flow.
+    Default: ''
+    NoEcho: true
+
 Resources:
   GolfCanadaAuthenticationFunction:
     Type: AWS::Serverless::Function
@@ -92,6 +112,8 @@ Resources:
           SKILL_ID: !Ref SkillId
           CLIENT_ID: !Ref ClientId
           CLIENT_SECRET: !Ref ClientSecret
+          GOLF_CANADA_USERNAME: !Ref GolfCanadaUsername
+          GOLF_CANADA_PASSWORD: !Ref GolfCanadaPassword
       EventInvokeConfig:
         MaximumEventAgeInSeconds: 21600
         MaximumRetryAttempts: 2

@@ -2,16 +2,21 @@ package kjd.golfcanada.client.provider
 
 import com.amazon.ask.dispatcher.request.handler.HandlerInput
 import kjd.golfcanada.alexa.exception.AccountLinkingException
+import kjd.golfcanada.alexa.interceptor.StaticCredentialInterceptor
 import kjd.golfcanada.client.model.extractAccessToken
 
 /**
  * Extension function that provides a fluent way to execute API calls with an authenticated client.
  * 
  * This function handles the common pattern of:
- * 1. Extracting the access token from the HandlerInput
+ * 1. Extracting the access token from the HandlerInput (Alexa account linking or static credentials)
  * 2. Validating that the access token exists
  * 3. Creating an authenticated API client
  * 4. Executing the provided block with the authenticated client
+ * 
+ * The access token is resolved in priority order:
+ * 1. Alexa account-linking token (from the request context)
+ * 2. Static credential token (from request attributes, set by [StaticCredentialInterceptor])
  * 
  * Example usage:
  * ```kotlin
@@ -32,6 +37,8 @@ inline fun <T> ApiClientProvider.withAuthenticatedClient(
     block: (ApiClientWrapper) -> T
 ): T {
     val accessToken = input.requestEnvelope.context?.system?.user?.accessToken
+        ?: input.attributesManager.requestAttributes
+            ?.get(StaticCredentialInterceptor.STATIC_TOKEN_KEY) as? String
     
     if (accessToken.isNullOrBlank()) {
         throw AccountLinkingException()

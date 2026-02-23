@@ -93,7 +93,9 @@ jobs:
             --parameter-overrides \
               ClientId="${{ secrets.GOLF_CANADA_CLIENT_ID }}" \
               ClientSecret="${{ secrets.GOLF_CANADA_CLIENT_SECRET }}" \
-              SkillId="${{ secrets.ALEXA_SKILL_ID }}"
+              SkillId="${{ secrets.ALEXA_SKILL_ID }}" \
+              GolfCanadaUsername="${{ secrets.GOLF_CANADA_USERNAME }}" \
+              GolfCanadaPassword="${{ secrets.GOLF_CANADA_PASSWORD }}"
 
       - name: Output deployment information
         run: |

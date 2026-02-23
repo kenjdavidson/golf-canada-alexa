@@ -378,6 +378,7 @@ At this point I'm unsure whether the Wiki or Discussions will be available for t
 - [Architecture Documentation](docs/ARCHITECTURE.md)
 - [Available Features](docs/AVAILABLE_FEATURES.md)
 - [Deployment Guide](docs/DEPLOYMENT.md)
+- [Private Skill / Single-User Deployment](docs/PRIVATE_SKILL_SPIKE.md)
 - [Contribution Guidelines](CONTRIBUTION.md)
 - [Privacy Policy](PRIVACY_POLICY.md)
 - [Terms of Service](TERMS_OF_SERVICE.md)
