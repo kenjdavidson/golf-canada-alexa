@@ -20,6 +20,11 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # Only allow deployment from the main branch to prevent accidental deployments
+    # from topic branches and to protect secrets from being accessed by unauthorized workflows.
+    # If you have forked this repository for your own use, update this condition to match
+    # your default branch name (e.g., github.ref == 'refs/heads/main').
+    if: github.ref == 'refs/heads/main'
     
     steps:
       - name: Checkout code

@@ -15,6 +15,9 @@ This document captures the research and decisions made when investigating a "sta
 - [Alexa Private Skills: Research](#alexa-private-skills-research)
 - [Static Authentication Approach](#static-authentication-approach)
 - [Security Risks and Mitigations](#security-risks-and-mitigations)
+  - [Credential Storage Alternatives](#credential-storage-alternatives)
+  - [IAM Single-User Configuration](#iam-single-user-configuration)
+  - [Recommendations](#recommendations)
 - [Implementation Summary](#implementation-summary)
 - [Setup Guide for Individual Users](#setup-guide-for-individual-users)
 
@@ -57,6 +60,8 @@ The `GolfCanadaAuthenticationFunction` is necessary because Golf Canada doesn't 
 
 For a single-user personal deployment, maintaining this OAuth wrapper adds complexity. The user's credentials could be provided directly to the Skill Lambda instead.
 
+> ⚠️ **Legal and Data Liability Warning:** This approach stores your own Golf Canada credentials inside a Lambda environment variable. You are personally responsible for the security of those credentials. If your GitHub account, AWS account, or Lambda function is compromised and credentials leak, you bear the liability for any resulting harm. **This must only ever be used with your own personal credentials.** Deploying a version of this skill that asks other users to enter their Golf Canada login credentials would create unacceptable legal and data-liability exposure — you would be handling third-party credentials without a formal data processing agreement with Golf Canada or your users, and without any consent mechanism. Golf Canada's own terms of service likely prohibit such use of their platform.
+
 ### The Solution: Static Credentials Mode
 
 When the `GOLF_CANADA_USERNAME` and `GOLF_CANADA_PASSWORD` environment variables are set on the Skill Lambda, the skill bypasses Alexa Account Linking entirely. Instead:
@@ -95,27 +100,121 @@ GitHub Secrets are encrypted at rest and are not exposed in workflow logs. They 
 
 **Risks:**
 
-| Risk | Severity | Mitigation |
-|------|----------|------------|
-| Credentials exposed if GitHub account is compromised | High | Use a strong password and 2FA on your GitHub account. Consider a dedicated Golf Canada account for this purpose. |
-| Credentials visible in Lambda environment variables to any IAM user with `GetFunctionConfiguration` permission | Medium | Apply least-privilege IAM policies; restrict who can view Lambda configuration. |
-| Credentials exposed in Lambda logs if accidentally logged | Medium | The code is careful not to log credentials; maintain this practice. |
-| Token rotation — if Golf Canada password changes, Lambda stops working | Low | Update `GOLF_CANADA_PASSWORD` GitHub Secret and re-deploy. |
-| A malicious workflow in a fork could exfiltrate secrets | High | Only run workflows from trusted branches; avoid running workflows from fork PRs against secrets. |
-| Credentials in Lambda environment are not re-encrypted | Low | Lambda encrypts environment variables using the AWS-managed key by default. Use a customer-managed KMS key for higher assurance. |
+| Risk | Severity | Mitigation | Completed |
+|------|----------|------------|-----------|
+| Credentials exposed if GitHub account is compromised | High → Medium | Use a strong password and 2FA on your GitHub account. Consider a dedicated Golf Canada account for this purpose. | ✅ 2FA enabled — reduces effective severity to Medium |
+| Credentials visible in Lambda environment variables to any IAM user with `GetFunctionConfiguration` permission | Medium | Apply least-privilege IAM policies; restrict who can view Lambda configuration. Single-user accounts should avoid creating additional IAM users. See [IAM Single-User Configuration](#iam-single-user-configuration). | ⬜ See setup guide |
+| Credentials exposed in Lambda logs if accidentally logged | Medium | The code is careful not to log credentials; maintain this practice. | ✅ Code review confirms no credential logging |
+| Token rotation — if Golf Canada password changes, Lambda stops working | Low | Update `GOLF_CANADA_PASSWORD` GitHub Secret and re-deploy. | ✅ Re-deploy process documented |
+| A malicious workflow in a fork could exfiltrate secrets | High | Only run workflows from protected branches in the original repository. GitHub Actions secrets are scoped per-repository — a fork's workflow uses only the fork's own secrets. `workflow_dispatch` cannot be triggered by external contributors. The `deploy.yml` workflow enforces a branch restriction (`main` only). | ✅ Branch restriction added to workflow |
+| Credentials in Lambda environment are not re-encrypted by default | Low | Lambda encrypts environment variables using the AWS-managed key by default. Use a customer-managed KMS key for higher assurance. See [Credential Storage Alternatives](#credential-storage-alternatives). | ⬜ Optional — see alternatives |
+
+### Credential Storage Alternatives
+
+The table above shows the baseline approach (credentials in Lambda env vars via GitHub Secrets). The following alternatives offer stronger security at the cost of additional complexity:
+
+#### Option 1: Customer-Managed KMS Key for Lambda Environment Variables
+
+AWS Lambda supports encrypting environment variables using a **customer-managed KMS key** (CMK) instead of the default AWS-managed key. This adds an extra layer of encryption:
+
+1. Create a KMS key in AWS Key Management Service
+2. In Lambda → Configuration → Environment variables, click **Encryption configuration** and select your CMK
+3. Update the IAM role to allow `kms:Decrypt` for the Lambda execution role
+
+This means an attacker who can view the Lambda configuration still cannot read the plaintext credentials without also having KMS key access.
+
+**Reference:** [Lambda environment variable encryption](https://docs.aws.amazon.com/lambda/latest/dg/configuration-envvars.html#configuration-envvars-encryption)
+
+#### Option 2: AWS Secrets Manager
+
+Instead of passing credentials as environment variables, store them in [AWS Secrets Manager](https://docs.aws.amazon.com/secretsmanager/latest/userguide/intro.html). The Lambda function retrieves them at runtime:
+
+1. Create a secret in AWS Secrets Manager:
+   ```bash
+   aws secretsmanager create-secret \
+     --name "golf-canada-alexa/credentials" \
+     --secret-string '{"username":"your@email.com","password":"yourpassword"}'
+   ```
+2. Add `secretsmanager:GetSecretValue` permission to the Lambda execution role
+3. Modify `StaticCredentialInterceptor` to call `GetSecretValue` on startup instead of reading env vars
+
+**Pros:** Credentials are not visible in Lambda configuration at all; supports automatic rotation; full audit trail  
+**Cons:** Additional AWS cost; adds latency on cold start; more complex setup
+
+**Reference:** [AWS Secrets Manager User Guide](https://docs.aws.amazon.com/secretsmanager/latest/userguide/intro.html)
+
+#### Option 3: Application-Level Credential Encoding
+
+The `GOLF_CANADA_USERNAME` and `GOLF_CANADA_PASSWORD` could be stored obfuscated in environment variables, with the application decoding them at runtime using a key that is only embedded in the compiled JAR. This approach is called "security through obscurity":
+
+- An attacker who gets the env var value sees only encoded bytes
+- To recover credentials they must also obtain the Lambda JAR, reverse-engineer it, and find the decoding key
+
+This provides **marginal** additional protection — it raises the bar for a casual attacker, but a determined attacker with access to both the Lambda configuration and the JAR can always recover the credentials. **AWS Secrets Manager is preferred.** This option is documented here for completeness only.
+
+### IAM Single-User Configuration
+
+For a personal AWS account with a single user, the key concern is ensuring that no additional IAM user (created by mistake, or in future) can read the Lambda environment variables.
+
+**Step 1: Identify your IAM user or root account**
+
+For a personal account, you likely operate as either:
+- The root account (not recommended for day-to-day use) — secure with MFA
+- A single IAM administrator user — ensure MFA is enabled
+
+**Step 2: Verify no unnecessary IAM users exist**
+
+In the AWS IAM Console → Users, confirm only your own user is listed.
+
+**Step 3: Restrict the GitHub Actions deployment role**
+
+The IAM role used by GitHub Actions for deployment (`AWS_ROLE_ARN`) should have **only the permissions needed for deployment** — it does not need `lambda:GetFunctionConfiguration`. The trust policy should already restrict this role to your specific repository and branch (see [docs/DEPLOYMENT.md](DEPLOYMENT.md)).
+
+If you want to explicitly deny `GetFunctionConfiguration` from the deployment role:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Deny",
+      "Action": [
+        "lambda:GetFunctionConfiguration"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+Add this as an inline policy on the GitHub Actions role. This means even the deployment workflow cannot read back the credentials it just deployed.
+
+**Step 4: Enable CloudTrail**
+
+Enable [AWS CloudTrail](https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-user-guide.html) to log all calls to `GetFunctionConfiguration`. If credentials are read by an unexpected actor, you will have an audit trail.
+
+**Reference:** [AWS IAM Best Practices](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html)
 
 **Versus Account Linking:**
 
-Account Linking avoids storing credentials entirely — the user authenticates through the Alexa app, and Alexa manages the OAuth tokens. The static approach is a deliberate trade-off of security for simplicity in single-user personal deployments.
+Account Linking avoids storing credentials entirely — the user authenticates through the Alexa app, and Alexa manages the OAuth tokens. However, publishing this skill publicly in Account Linking mode also introduces significant data and legal concerns:
+
+- This skill acts as an OAuth *wrapper* around Golf Canada's authentication — it is not a first-party integration. Publishing it publicly would mean collecting Golf Canada credentials from users on your infrastructure, creating liability without a formal agreement with Golf Canada.
+- Maintaining a public version of the skill also means ongoing AWS service costs that are harder to control, as any Alexa user could enable the skill.
+- Golf Canada could terminate access to their API at any time, making a public skill non-functional.
+
+The static approach is a deliberate trade-off of security for simplicity in **single-user personal deployments only**.
 
 ### Recommendations
 
 1. **Use a dedicated Golf Canada account** for the personal Alexa skill deployment, not your primary account. This limits exposure if credentials are compromised.
+   > ⚠️ **Beta testing is not feasible for other Golf Canada users.** Inviting other users to test the skill in standard Account Linking mode would require them to enter their credentials into an OAuth wrapper you control — this creates the same legal and data-liability risks described above. The skill should remain personal.
 2. **Never commit credentials** to source control. Always use GitHub Secrets.
-3. **Restrict Lambda IAM access** so only authorized users can view the Lambda configuration.
+3. **Restrict Lambda IAM access** so only authorized users can view the Lambda configuration. See [IAM Single-User Configuration](#iam-single-user-configuration) above for step-by-step instructions.
 4. **Enable AWS CloudTrail** to audit who accesses the Lambda configuration.
-5. **Keep the skill in Development mode** and do not publish it. A published skill would be available to all Alexa users but would not have valid credentials for their accounts.
+5. **Keep the skill in Development mode** and do not publish it. A published skill would be available to all Alexa users but would not have valid credentials for their accounts — and would create the legal/liability problems noted above.
 6. **Rotate credentials periodically** — update the GitHub Secret and redeploy.
+7. **Consider AWS Secrets Manager** for stronger credential protection. See [Credential Storage Alternatives](#credential-storage-alternatives) above.
 
 ---
 
@@ -123,21 +222,22 @@ Account Linking avoids storing credentials entirely — the user authenticates t
 
 The following changes were made to support static individual-user deployment:
 
+> **Static mode is a developer/personal-use mode only.** When `GOLF_CANADA_USERNAME` and `GOLF_CANADA_PASSWORD` are **not** set (the default), the `StaticCredentialInterceptor` is a complete no-op and the skill falls back to the standard Alexa Account Linking flow. This means the same deployment can evolve: you can use static mode for personal testing today, and later add the full OAuth Lambda for a proper Account Linking flow without removing any code.
+
 ### New: `StaticCredentialInterceptor`
 
 **File:** `src/main/kotlin/kjd/golfcanada/alexa/interceptor/StaticCredentialInterceptor.kt`
 
 A new request interceptor that:
 - Checks for `GOLF_CANADA_USERNAME` and `GOLF_CANADA_PASSWORD` environment variables.
-- Authenticates with Golf Canada using the Password grant type.
-- Caches the token in-memory with TTL-based expiration.
-- Stores the token in request attributes for downstream use.
+- **If credentials are absent (default):** is a no-op, preserving the normal OAuth Account Linking flow.
+- **If credentials are present:** authenticates with Golf Canada using the Password grant type, caches the token in-memory with TTL-based expiration, and stores the token in request attributes for downstream use.
 
 ### Modified: `AuthenticationRequestInterceptor`
 
 **File:** `src/main/kotlin/kjd/golfcanada/alexa/interceptor/AuthenticationRequestInterceptor.kt`
 
-Updated `isAuthenticated()` to also check request attributes for a static token, so that requests with a static token are treated as authenticated.
+Updated `isAuthenticated()` to also check request attributes for a static token, so that requests with a static token are treated as authenticated. When no static token is present and no Alexa account-linking token is present, the normal unauthenticated flow applies.
 
 ### Modified: `UserProfileInterceptor`
 
@@ -163,7 +263,9 @@ Added optional `GolfCanadaUsername` and `GolfCanadaPassword` parameters (default
 
 ### Modified: `.github/workflows/deploy.yml`
 
-The deployment workflow now passes `GOLF_CANADA_USERNAME` and `GOLF_CANADA_PASSWORD` secrets as SAM parameters. These are optional — if the secrets are not set, the parameters default to empty strings and static mode is disabled.
+The deployment workflow now:
+- Passes `GOLF_CANADA_USERNAME` and `GOLF_CANADA_PASSWORD` secrets as SAM parameters (these are optional — if the secrets are not set, the parameters default to empty strings and static mode is disabled).
+- Restricts deployment to the `main` branch only via a job-level `if` condition, preventing deployment from topic branches and protecting against secret exfiltration from PRs.
 
 ---
 
