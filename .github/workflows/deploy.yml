@@ -20,11 +20,20 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    # Only allow deployment from the main branch to prevent accidental deployments
-    # from topic branches and to protect secrets from being accessed by unauthorized workflows.
-    # If you have forked this repository for your own use, update this condition to match
-    # your default branch name (e.g., github.ref == 'refs/heads/main').
-    if: github.ref == 'refs/heads/main'
+    # Restrict deployments to the original repository only (not forks), and only from either:
+    #   - the main branch (for ad-hoc manual deployments), or
+    #   - a version tag matching 'v*' (e.g. v1.0.0, for tagged release deployments).
+    #
+    # GitHub Actions secrets are scoped per-repository, so a fork already uses only its own
+    # secrets — the fork check here adds defense-in-depth by preventing the workflow from
+    # running at all in forked copies.
+    #
+    # If you have forked this repository for your own personal use, remove the fork check
+    # and update the ref conditions to match your own branching/tagging strategy:
+    #   if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    if: |
+      github.event.repository.fork == false &&
+      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
     
     steps:
       - name: Checkout code

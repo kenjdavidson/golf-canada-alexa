@@ -106,7 +106,7 @@ GitHub Secrets are encrypted at rest and are not exposed in workflow logs. They 
 | Credentials visible in Lambda environment variables to any IAM user with `GetFunctionConfiguration` permission | Medium | Apply least-privilege IAM policies; restrict who can view Lambda configuration. Single-user accounts should avoid creating additional IAM users. See [IAM Single-User Configuration](#iam-single-user-configuration). | ⬜ See setup guide |
 | Credentials exposed in Lambda logs if accidentally logged | Medium | The code is careful not to log credentials; maintain this practice. | ✅ Code review confirms no credential logging |
 | Token rotation — if Golf Canada password changes, Lambda stops working | Low | Update `GOLF_CANADA_PASSWORD` GitHub Secret and re-deploy. | ✅ Re-deploy process documented |
-| A malicious workflow in a fork could exfiltrate secrets | High | Only run workflows from protected branches in the original repository. GitHub Actions secrets are scoped per-repository — a fork's workflow uses only the fork's own secrets. `workflow_dispatch` cannot be triggered by external contributors. The `deploy.yml` workflow enforces a branch restriction (`main` only). | ✅ Branch restriction added to workflow |
+| A malicious workflow in a fork could exfiltrate secrets | High | Only run workflows from protected branches/tags in the original repository. GitHub Actions secrets are scoped per-repository — a fork's workflow uses only the fork's own secrets. `workflow_dispatch` cannot be triggered by external contributors. The `deploy.yml` workflow enforces both a fork check (`github.event.repository.fork == false`) and a ref restriction (`main` branch or `v*` version tags). | ✅ Fork guard and branch/tag restriction added to workflow |
 | Credentials in Lambda environment are not re-encrypted by default | Low | Lambda encrypts environment variables using the AWS-managed key by default. Use a customer-managed KMS key for higher assurance. See [Credential Storage Alternatives](#credential-storage-alternatives). | ⬜ Optional — see alternatives |
 
 ### Credential Storage Alternatives
@@ -123,7 +123,19 @@ AWS Lambda supports encrypting environment variables using a **customer-managed 
 
 This means an attacker who can view the Lambda configuration still cannot read the plaintext credentials without also having KMS key access.
 
-**Reference:** [Lambda environment variable encryption](https://docs.aws.amazon.com/lambda/latest/dg/configuration-envvars.html#configuration-envvars-encryption)
+**Pros:**
+- Credentials are never returned in plaintext via `lambda:GetFunctionConfiguration` — even an IAM user with that permission sees only the encrypted ciphertext
+- KMS key access is controlled as a separate IAM permission (`kms:Decrypt`)
+- Every decryption is logged in CloudTrail, giving a full audit trail for credential use
+- Lambda automatically caches the decrypted values in memory — KMS is only called on a cold start, so there is no per-request overhead
+
+**Cons:**
+- **Cost**: AWS KMS charges a flat **$1.00 USD/month per CMK** (customer-managed key), plus **$0.03 per 10,000 API calls** (each Lambda cold start counts as one call). For a low-traffic personal skill with a few cold starts per month, the cost is effectively $1/month.
+- Additional IAM setup complexity — the Lambda execution role must be granted `kms:Decrypt` for the specific key
+- If the KMS key is accidentally deleted or its key policy is misconfigured, the Lambda function will fail to start until the issue is resolved
+
+**Reference:** [Lambda environment variable encryption](https://docs.aws.amazon.com/lambda/latest/dg/configuration-envvars.html#configuration-envvars-encryption)  
+**KMS Pricing:** [AWS Key Management Service Pricing](https://aws.amazon.com/kms/pricing/)
 
 #### Option 2: AWS Secrets Manager
 
