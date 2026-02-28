@@ -96,6 +96,14 @@ jobs:
 
       - name: Deploy to AWS
         run: |
+          # Set DeployAuthentication based on target:
+          # - 'skill' target: false (static mode, auth Lambda not needed)
+          # - 'authentication' or 'both' targets: true
+          DEPLOY_AUTH="true"
+          if [[ "${{ inputs.deployment_target }}" == "skill" ]]; then
+            DEPLOY_AUTH="false"
+          fi
+          
           sam deploy \
             --template-file .aws-sam/build/template.yaml \
             --no-confirm-changeset \
@@ -109,7 +117,8 @@ jobs:
               ClientSecret="${{ secrets.GOLF_CANADA_CLIENT_SECRET }}" \
               SkillId="${{ secrets.ALEXA_SKILL_ID }}" \
               GolfCanadaUsername="${{ secrets.GOLF_CANADA_USERNAME }}" \
-              GolfCanadaPassword="${{ secrets.GOLF_CANADA_PASSWORD }}"
+              GolfCanadaPassword="${{ secrets.GOLF_CANADA_PASSWORD }}" \
+              DeployAuthentication="$DEPLOY_AUTH"
 
       - name: Output deployment information
         run: |
