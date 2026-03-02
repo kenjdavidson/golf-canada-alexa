@@ -22,6 +22,7 @@ import kjd.golfcanada.alexa.handler.PlayerProfileHistoryIntentHandler
 import kjd.golfcanada.alexa.handler.PlayerProfileMembershipIntentHandler
 import kjd.golfcanada.alexa.handler.SessionEndedRequestHandler
 import kjd.golfcanada.alexa.interceptor.AuthenticationRequestInterceptor
+import kjd.golfcanada.alexa.interceptor.StaticCredentialInterceptor
 import kjd.golfcanada.alexa.interceptor.UserProfileInterceptor
 import kjd.golfcanada.client.provider.ApiClientProvider
 
@@ -50,6 +51,7 @@ class GolfCanadaAlexaSkill: SkillStreamHandler(getSkills()) {
                     SessionEndedRequestHandler()
                 )
                 .addRequestInterceptors(
+                    StaticCredentialInterceptor.fromEnvironment(),
                     AuthenticationRequestInterceptor(),
                     UserProfileInterceptor()
                 )

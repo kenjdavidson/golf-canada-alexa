@@ -24,9 +24,10 @@ class UserProfileInterceptor : RequestInterceptor {
     /**
      * Processes the incoming request to extract user profile from the JWT id_token.
      *
-     * If an access token is present and a user profile is not already in session attributes,
-     * this interceptor will extract the id_token from the concatenated access token and
-     * decode the JWT to store the extracted user profile.
+     * If an access token is present (from Alexa account linking or static credentials)
+     * and a user profile is not already in session attributes, this interceptor will
+     * extract the id_token from the concatenated access token and decode the JWT to
+     * store the extracted user profile.
      * 
      * The access token is expected to be in the format: access_token#id_token
      * If the delimiter is not present (no id_token), user profile extraction is skipped.
@@ -35,6 +36,8 @@ class UserProfileInterceptor : RequestInterceptor {
      */
     override fun process(input: HandlerInput) {
         val accessToken = input.requestEnvelope.context?.system?.user?.accessToken
+            ?: input.attributesManager.requestAttributes
+                ?.get(StaticCredentialInterceptor.STATIC_TOKEN_KEY) as? String
 
         if (accessToken.isNullOrBlank()) {
             logger.debug("No access token present, skipping user profile extraction")

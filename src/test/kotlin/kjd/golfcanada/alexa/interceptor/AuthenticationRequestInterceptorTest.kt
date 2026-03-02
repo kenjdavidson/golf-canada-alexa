@@ -1,5 +1,6 @@
 package kjd.golfcanada.alexa.interceptor
 
+import com.amazon.ask.attributes.AttributesManager
 import com.amazon.ask.dispatcher.request.handler.HandlerInput
 import com.amazon.ask.model.Context
 import com.amazon.ask.model.Intent
@@ -12,6 +13,8 @@ import com.amazon.ask.model.interfaces.system.SystemState
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
+import io.mockk.every
+import io.mockk.mockk
 import kjd.golfcanada.alexa.exception.AccountLinkingException
 
 class AuthenticationRequestInterceptorTest : DescribeSpec({
@@ -208,6 +211,36 @@ class AuthenticationRequestInterceptorTest : DescribeSpec({
                         .build()
                 )
                 .build()
+
+            interceptor.isAuthenticated(input) shouldBe false
+        }
+
+        it("should return true when static token is present in request attributes") {
+            val attributesManager = mockk<AttributesManager>()
+            every { attributesManager.requestAttributes } returns mutableMapOf<String, Any>(
+                StaticCredentialInterceptor.STATIC_TOKEN_KEY to "static-access-token#static-id-token"
+            )
+
+            val input = mockk<HandlerInput>()
+            every { input.requestEnvelope } returns RequestEnvelope.builder()
+                .withRequest(LaunchRequest.builder().build())
+                .build()
+            every { input.attributesManager } returns attributesManager
+
+            interceptor.isAuthenticated(input) shouldBe true
+        }
+
+        it("should return false when static token in request attributes is blank") {
+            val attributesManager = mockk<AttributesManager>()
+            every { attributesManager.requestAttributes } returns mutableMapOf<String, Any>(
+                StaticCredentialInterceptor.STATIC_TOKEN_KEY to ""
+            )
+
+            val input = mockk<HandlerInput>()
+            every { input.requestEnvelope } returns RequestEnvelope.builder()
+                .withRequest(LaunchRequest.builder().build())
+                .build()
+            every { input.attributesManager } returns attributesManager
 
             interceptor.isAuthenticated(input) shouldBe false
         }

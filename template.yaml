@@ -26,9 +26,45 @@ Parameters:
     Type: String
     Description: Alexa Skill ID for the Golf Canada skill
 
+  GolfCanadaUsername:
+    Type: String
+    Description: >
+      Golf Canada username for single-user static authentication mode.
+      When set together with GolfCanadaPassword, the skill authenticates directly
+      using these credentials instead of requiring Alexa Account Linking.
+      Leave empty to use the standard OAuth Account Linking flow.
+    Default: ''
+    NoEcho: true
+
+  GolfCanadaPassword:
+    Type: String
+    Description: >
+      Golf Canada password for single-user static authentication mode.
+      When set together with GolfCanadaUsername, the skill authenticates directly
+      using these credentials instead of requiring Alexa Account Linking.
+      Leave empty to use the standard OAuth Account Linking flow.
+    Default: ''
+    NoEcho: true
+
+  DeployAuthentication:
+    Type: String
+    Default: 'true'
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Description: >
+      Set to 'false' to remove the GolfCanadaAuthenticationFunction from the stack.
+      Use this when deploying in static single-user mode where the OAuth Lambda is not needed.
+      When switching from 'true' to 'false', CloudFormation will cleanly delete the function,
+      its Lambda URL, and the SSL certificate layer.
+
+Conditions:
+  IncludeAuthentication: !Equals [!Ref DeployAuthentication, 'true']
+
 Resources:
   GolfCanadaAuthenticationFunction:
     Type: AWS::Serverless::Function
+    Condition: IncludeAuthentication
     Properties:
       CodeUri: .
       Description: 'Provides OAuth wrapper for Golf Canada authentication'
@@ -92,6 +128,8 @@ Resources:
           SKILL_ID: !Ref SkillId
           CLIENT_ID: !Ref ClientId
           CLIENT_SECRET: !Ref ClientSecret
+          GOLF_CANADA_USERNAME: !Ref GolfCanadaUsername
+          GOLF_CANADA_PASSWORD: !Ref GolfCanadaPassword
       EventInvokeConfig:
         MaximumEventAgeInSeconds: 21600
         MaximumRetryAttempts: 2
@@ -120,6 +158,7 @@ Resources:
   # This provides the /opts/cacerts/cacerts file to replace the Java 21 standard cacerts
   Layer1:
     Type: AWS::Serverless::LayerVersion
+    Condition: IncludeAuthentication
     Properties:
       ContentUri: ./GolfCanadaAuthenticationCertLayer
       LayerName: GolfCanadaAuthenticationCertLayer
@@ -128,6 +167,7 @@ Resources:
 
 Outputs:
   GolfCanadaAuthenticationFunctionUrl:
+    Condition: IncludeAuthentication
     Description: 'URL for the Golf Canada Authentication Function'
     Value: !GetAtt GolfCanadaAuthenticationFunctionUrl.FunctionUrl
     Export:

@@ -1,0 +1,116 @@
+name: Undeploy from AWS
+
+on:
+  workflow_dispatch:
+    inputs:
+      undeploy_target:
+        description: >
+          Select what to undeploy.
+          'authentication' removes only the GolfCanadaAuthenticationFunction and its SSL cert layer
+          from the existing stack (the Skill Lambda keeps running).
+          'stack' tears down the entire CloudFormation stack including all Lambda functions.
+        required: true
+        type: choice
+        options:
+          - 'authentication'
+          - 'stack'
+        default: 'authentication'
+
+permissions:
+  contents: read
+  id-token: write    # Required for AWS OIDC authentication
+
+jobs:
+  undeploy:
+    runs-on: ubuntu-latest
+    # Restrict to the original repository only, from the main branch or a version tag.
+    # If you have forked this repository for your own personal use, remove the fork check.
+    if: |
+      github.event.repository.fork == false &&
+      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup AWS SAM CLI
+        uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # ── Undeploy: Authentication only ───────────────────────────────────────
+      # Re-deploys the stack with DeployAuthentication=false.
+      # CloudFormation will delete the GolfCanadaAuthenticationFunction, its Lambda
+      # URL, and the SSL certificate layer while leaving the Skill Lambda untouched.
+      # This is the recommended option when switching to static single-user mode.
+      - name: Set up JDK 21
+        if: inputs.undeploy_target == 'authentication'
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        if: inputs.undeploy_target == 'authentication'
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Grant execute permission for gradlew
+        if: inputs.undeploy_target == 'authentication'
+        run: chmod +x gradlew
+
+      - name: Build with Gradle
+        if: inputs.undeploy_target == 'authentication'
+        run: ./gradlew packageJar
+
+      - name: SAM Build (Skill function only)
+        if: inputs.undeploy_target == 'authentication'
+        run: sam build GolfCanadaAlexaSkillFunction
+
+      - name: Remove Authentication function via SAM deploy
+        if: inputs.undeploy_target == 'authentication'
+        run: |
+          sam deploy \
+            --template-file .aws-sam/build/template.yaml \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset \
+            --stack-name ${{ secrets.STACK_NAME }} \
+            --capabilities CAPABILITY_IAM \
+            --resolve-s3 \
+            --region ${{ secrets.AWS_REGION }} \
+            --parameter-overrides \
+              ClientId="${{ secrets.GOLF_CANADA_CLIENT_ID }}" \
+              ClientSecret="${{ secrets.GOLF_CANADA_CLIENT_SECRET }}" \
+              SkillId="${{ secrets.ALEXA_SKILL_ID }}" \
+              GolfCanadaUsername="${{ secrets.GOLF_CANADA_USERNAME }}" \
+              GolfCanadaPassword="${{ secrets.GOLF_CANADA_PASSWORD }}" \
+              DeployAuthentication="false"
+
+      # ── Undeploy: Entire stack ───────────────────────────────────────────────
+      # Deletes the entire CloudFormation stack, removing all Lambda functions,
+      # IAM roles, Lambda URLs, and the SSL certificate layer.
+      # Use this only when you want to fully tear down the deployment.
+      - name: Delete entire CloudFormation stack
+        if: inputs.undeploy_target == 'stack'
+        run: |
+          aws cloudformation delete-stack \
+            --stack-name ${{ secrets.STACK_NAME }} \
+            --region ${{ secrets.AWS_REGION }}
+          
+          echo "⏳ Waiting for stack deletion to complete..."
+          aws cloudformation wait stack-delete-complete \
+            --stack-name ${{ secrets.STACK_NAME }} \
+            --region ${{ secrets.AWS_REGION }}
+
+      - name: Output undeploy information
+        run: |
+          echo "✅ Undeploy completed successfully!"
+          echo "🗑️  Undeploy target: ${{ inputs.undeploy_target }}"
+          echo "🌿 Branch: ${{ github.ref_name }}"
+          echo "📚 Stack: ${{ secrets.STACK_NAME }}"
+          echo "🌍 Region: ${{ secrets.AWS_REGION }}"

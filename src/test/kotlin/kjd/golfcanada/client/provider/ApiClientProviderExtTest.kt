@@ -1,5 +1,6 @@
 package kjd.golfcanada.client.provider
 
+import com.amazon.ask.attributes.AttributesManager
 import com.amazon.ask.dispatcher.request.handler.HandlerInput
 import com.amazon.ask.model.Context
 import com.amazon.ask.model.RequestEnvelope
@@ -90,12 +91,15 @@ class ApiClientProviderExtTest : DescribeSpec({
             val mockContext = mockk<Context>()
             val mockSystemState = mockk<SystemState>()
             val mockUser = mockk<User>()
+            val mockAttributesManager = mockk<AttributesManager>()
             
             every { mockInput.requestEnvelope } returns mockRequestEnvelope
             every { mockRequestEnvelope.context } returns mockContext
             every { mockContext.system } returns mockSystemState
             every { mockSystemState.user } returns mockUser
             every { mockUser.accessToken } returns null
+            every { mockInput.attributesManager } returns mockAttributesManager
+            every { mockAttributesManager.requestAttributes } returns mutableMapOf()
             
             shouldThrow<AccountLinkingException> {
                 provider.withAuthenticatedClient(mockInput) { _ ->
@@ -111,12 +115,15 @@ class ApiClientProviderExtTest : DescribeSpec({
             val mockContext = mockk<Context>()
             val mockSystemState = mockk<SystemState>()
             val mockUser = mockk<User>()
+            val mockAttributesManager = mockk<AttributesManager>()
             
             every { mockInput.requestEnvelope } returns mockRequestEnvelope
             every { mockRequestEnvelope.context } returns mockContext
             every { mockContext.system } returns mockSystemState
             every { mockSystemState.user } returns mockUser
             every { mockUser.accessToken } returns "   "
+            every { mockInput.attributesManager } returns mockAttributesManager
+            every { mockAttributesManager.requestAttributes } returns mutableMapOf()
             
             shouldThrow<AccountLinkingException> {
                 provider.withAuthenticatedClient(mockInput) { _ ->
@@ -132,12 +139,15 @@ class ApiClientProviderExtTest : DescribeSpec({
             val mockContext = mockk<Context>()
             val mockSystemState = mockk<SystemState>()
             val mockUser = mockk<User>()
+            val mockAttributesManager = mockk<AttributesManager>()
             
             every { mockInput.requestEnvelope } returns mockRequestEnvelope
             every { mockRequestEnvelope.context } returns mockContext
             every { mockContext.system } returns mockSystemState
             every { mockSystemState.user } returns mockUser
             every { mockUser.accessToken } returns ""
+            every { mockInput.attributesManager } returns mockAttributesManager
+            every { mockAttributesManager.requestAttributes } returns mutableMapOf()
             
             shouldThrow<AccountLinkingException> {
                 provider.withAuthenticatedClient(mockInput) { _ ->

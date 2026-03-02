@@ -30,7 +30,7 @@ class GameTrackerApiTest : AuthenticatedApiTest({
         summary = gameTrackerApi.getGameTrackerSummary(
             courseId = courseId,
             individualId = userId,
-            range = "YTD"
+            range = "2025"
         )
     }
     

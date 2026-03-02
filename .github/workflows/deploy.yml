@@ -20,6 +20,20 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # Restrict deployments to the original repository only (not forks), and only from either:
+    #   - the main branch (for ad-hoc manual deployments), or
+    #   - a version tag matching 'v*' (e.g. v1.0.0, for tagged release deployments).
+    #
+    # GitHub Actions secrets are scoped per-repository, so a fork already uses only its own
+    # secrets — the fork check here adds defense-in-depth by preventing the workflow from
+    # running at all in forked copies.
+    #
+    # If you have forked this repository for your own personal use, remove the fork check
+    # and update the ref conditions to match your own branching/tagging strategy:
+    #   if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    if: |
+      github.event.repository.fork == false &&
+      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
     
     steps:
       - name: Checkout code
@@ -82,6 +96,14 @@ jobs:
 
       - name: Deploy to AWS
         run: |
+          # Set DeployAuthentication based on target:
+          # - 'skill' target: false (static mode, auth Lambda not needed)
+          # - 'authentication' or 'both' targets: true
+          DEPLOY_AUTH="true"
+          if [[ "${{ inputs.deployment_target }}" == "skill" ]]; then
+            DEPLOY_AUTH="false"
+          fi
+          
           sam deploy \
             --template-file .aws-sam/build/template.yaml \
             --no-confirm-changeset \
@@ -93,7 +115,10 @@ jobs:
             --parameter-overrides \
               ClientId="${{ secrets.GOLF_CANADA_CLIENT_ID }}" \
               ClientSecret="${{ secrets.GOLF_CANADA_CLIENT_SECRET }}" \
-              SkillId="${{ secrets.ALEXA_SKILL_ID }}"
+              SkillId="${{ secrets.ALEXA_SKILL_ID }}" \
+              GolfCanadaUsername="${{ secrets.GOLF_CANADA_USERNAME }}" \
+              GolfCanadaPassword="${{ secrets.GOLF_CANADA_PASSWORD }}" \
+              DeployAuthentication="$DEPLOY_AUTH"
 
       - name: Output deployment information
         run: |
