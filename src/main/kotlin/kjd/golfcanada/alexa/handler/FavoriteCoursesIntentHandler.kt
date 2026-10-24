@@ -1,4 +1,5 @@
 package kjd.golfcanada.alexa.handler
+import jakarta.inject.Singleton
 
 import com.amazon.ask.dispatcher.request.handler.HandlerInput
 import com.amazon.ask.dispatcher.request.handler.RequestHandler
@@ -22,6 +23,7 @@ import java.util.*
  * - "List my favorite courses"
  * - "Tell me my course list"
  */
+@Singleton
 class FavoriteCoursesIntentHandler(
     private val apiClientProvider: ApiClientProvider
 ) : RequestHandler {

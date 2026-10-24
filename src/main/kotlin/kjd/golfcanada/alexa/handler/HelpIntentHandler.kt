@@ -1,4 +1,5 @@
 package kjd.golfcanada.alexa.handler
+import jakarta.inject.Singleton
 
 import com.amazon.ask.dispatcher.request.handler.HandlerInput
 import com.amazon.ask.dispatcher.request.handler.RequestHandler
@@ -9,6 +10,7 @@ import java.util.*
 /**
  * Provides information on what is currently available for the application.
  */
+@Singleton
 class HelpIntentHandler : RequestHandler {
     override fun canHandle(input: HandlerInput): Boolean =
         input.matches(intentName("AMAZON.HelpIntent"))

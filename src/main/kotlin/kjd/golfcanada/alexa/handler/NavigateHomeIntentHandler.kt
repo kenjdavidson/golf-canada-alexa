@@ -1,4 +1,5 @@
 package kjd.golfcanada.alexa.handler
+import jakarta.inject.Singleton
 
 import com.amazon.ask.dispatcher.request.handler.HandlerInput
 import com.amazon.ask.dispatcher.request.handler.RequestHandler
@@ -9,6 +10,7 @@ import java.util.*
 /**
  * Handles navigation to home screen.
  */
+@Singleton
 class NavigateHomeIntentHandler : RequestHandler {
     override fun canHandle(input: HandlerInput): Boolean =
         input.matches(intentName("AMAZON.NavigateHomeIntent"))

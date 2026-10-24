@@ -1,4 +1,5 @@
 package kjd.golfcanada.alexa.handler
+import jakarta.inject.Singleton
 
 import com.amazon.ask.dispatcher.request.handler.HandlerInput
 import com.amazon.ask.model.LaunchRequest
@@ -14,6 +15,7 @@ import java.util.*
  * - hi golf canada
  * - etc
  */
+@Singleton
 class LaunchRequestHandler : com.amazon.ask.dispatcher.request.handler.impl.LaunchRequestHandler {
     override fun canHandle(input: HandlerInput?, request: LaunchRequest?): Boolean =
         true

@@ -1,4 +1,5 @@
 package kjd.golfcanada.alexa.handler
+import jakarta.inject.Singleton
 
 import com.amazon.ask.dispatcher.request.handler.HandlerInput
 import com.amazon.ask.dispatcher.request.handler.RequestHandler
@@ -9,6 +10,7 @@ import java.util.*
 /**
  * Handles fallback intent when Alexa doesn't understand the request.
  */
+@Singleton
 class FallbackIntentHandler : RequestHandler {
     override fun canHandle(input: HandlerInput): Boolean =
         input.matches(intentName("AMAZON.FallbackIntent"))

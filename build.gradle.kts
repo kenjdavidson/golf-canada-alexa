@@ -1,7 +1,9 @@
 
 plugins {
     kotlin("jvm") version "1.9.23"
-
+    kotlin("kapt") version "1.9.23"
+    id("io.micronaut.application") version "4.4.2"
+    id("io.micronaut.aot") version "4.4.2"
     id("org.openapi.generator") version("7.8.0")
 }
 
@@ -12,7 +14,38 @@ repositories {
     mavenCentral()
 }
 
+micronaut {
+    version("4.6.3")
+    runtime("lambda_java")
+    testRuntime("junit5")
+    processing {
+        incremental(true)
+        annotations("kjd.golfcanada.*")
+    }
+    aot {
+        optimizeServiceLoading.set(false)
+        convertYamlToJava.set(false)
+        precomputeOperations.set(true)
+        cacheEnvironment.set(true)
+        optimizeClassLoading.set(true)
+        deduceEnvironment.set(true)
+    }
+}
+
+application {
+    mainClass.set("kjd.golfcanada.alexa.GolfCanadaAlexaSkill")
+}
 dependencies {
+    kapt("io.micronaut:micronaut-inject-java")
+    kapt("io.micronaut.serde:micronaut-serde-processor")
+
+    implementation("io.micronaut.aws:micronaut-function-aws")
+    implementation("io.micronaut.aws:micronaut-function-aws-alexa")
+    implementation("io.micronaut.serde:micronaut-serde-jackson")
+    implementation("io.micronaut.kotlin:micronaut-kotlin-runtime")
+
+    runtimeOnly("org.yaml:snakeyaml")
+
     testImplementation(kotlin("test"))
     testImplementation("io.kotest:kotest-runner-junit5:5.7.2")
     testImplementation("io.mockk:mockk:1.13.13")
@@ -30,7 +63,6 @@ dependencies {
     implementation("com.amazonaws:aws-lambda-java-log4j2:1.6.0")
 
     implementation("org.apache.commons:commons-lang3:3.3.2")
-    implementation("org.openapitools:openapi-generator-gradle-plugin:6.6.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.moshi:moshi:1.15.0")
     implementation("com.squareup.moshi:moshi-kotlin:1.15.0")
@@ -52,15 +84,15 @@ tasks.test {
 task("bundleOpenApiSpec", Exec::class) {
     group = "openapi"
     description = "Bundle modular OpenAPI spec into a single file"
-    
-    commandLine("npx", "@apidevtools/swagger-cli@4.0.4", "bundle",  
+
+    commandLine("npx", "@apidevtools/swagger-cli@4.0.4", "bundle",
         "$rootDir/src/main/resources/client/golfcanada.yaml",
         "-o", "${buildDir}/openapi/golfcanada-bundled.yaml",
         "-t", "yaml")
-    
+
     inputs.dir("$rootDir/src/main/resources/client")
     outputs.file("${buildDir}/openapi/golfcanada-bundled.yaml")
-    
+
     doFirst {
         mkdir("${buildDir}/openapi")
     }
@@ -82,17 +114,10 @@ tasks.named("openApiGenerate") {
     dependsOn("bundleOpenApiSpec")
 }
 
-task("packageJar", Zip::class) {
-    group = "release"
-
-    into("lib") {
-        from(tasks.jar)
-        from(configurations.runtimeClasspath)
-    }
-
-    dependsOn(tasks.test)
-}
-
 tasks.compileKotlin {
     dependsOn("openApiGenerate")
+}
+
+afterEvaluate {
+    tasks.findByName("kaptGenerateStubsKotlin")?.dependsOn("openApiGenerate")
 }

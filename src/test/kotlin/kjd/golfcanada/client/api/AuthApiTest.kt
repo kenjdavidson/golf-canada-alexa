@@ -6,9 +6,10 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldContain
-import kjd.golfcanada.TestContext
 import kjd.golfcanada.auth.AuthenticationHandler
 import kjd.golfcanada.auth.AuthenticationHandler.Companion.DEFAULT_SCOPES
+import kjd.golfcanada.auth.impl.ProdAuthenticator
+import kjd.golfcanada.auth.impl.TokenRepositoryMapImpl
 import kjd.golfcanada.client.api.AuthApi.GrantTypeGetAuthToken
 import kjd.golfcanada.client.model.code
 import kjd.golfcanada.util.buildBody
@@ -81,7 +82,8 @@ class AuthApiTest: DescribeSpec({
             authToken.expiresIn shouldBe 3600
 
             val uuid = UUID.randomUUID().toString()
-            val handler = AuthenticationHandler(AuthApi(), uuid, uuid)
+            val api = AuthApi()
+            val handler = AuthenticationHandler(ProdAuthenticator(api), api, uuid, uuid, TokenRepositoryMapImpl())
 
             val event = apiGatewayHttpEventBuilder("POST", "/code")
                 .withBody(buildBody(mapOf(
@@ -95,7 +97,7 @@ class AuthApiTest: DescribeSpec({
                     "password" to password
                 )))
                 .build()
-            val response = handler.handleRequest(event, TestContext())
+            val response = handler.handleRequest(event)
 
             response.statusCode shouldBe 301
             response.body shouldContain "https://redirect_uri.com?code="

@@ -1,4 +1,5 @@
 package kjd.golfcanada.alexa.handler
+import jakarta.inject.Singleton
 
 import com.amazon.ask.dispatcher.request.handler.HandlerInput
 import com.amazon.ask.dispatcher.request.handler.RequestHandler
@@ -32,6 +33,7 @@ import java.util.*
  * - "What is my handicap at Glen Abbey?"
  * - "What is my course handicap for Oakdale Golf Club?"
  */
+@Singleton
 class CourseHandicapIntentHandler(
     private val apiClientProvider: ApiClientProvider
 ) : RequestHandler {

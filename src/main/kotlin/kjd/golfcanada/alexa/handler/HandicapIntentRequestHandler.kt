@@ -1,4 +1,5 @@
 package kjd.golfcanada.alexa.handler
+import jakarta.inject.Singleton
 
 import com.amazon.ask.dispatcher.request.handler.HandlerInput
 import com.amazon.ask.dispatcher.request.handler.RequestHandler
@@ -34,6 +35,7 @@ import java.util.*
  * - "What is John's handicap?"
  * - "Get handicap for player 12345"
  */
+@Singleton
 class HandicapIntentRequestHandler(
     private val apiClientProvider: ApiClientProvider
 ) : RequestHandler {

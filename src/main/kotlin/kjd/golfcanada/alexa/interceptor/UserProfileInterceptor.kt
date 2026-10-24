@@ -1,4 +1,6 @@
 package kjd.golfcanada.alexa.interceptor
+import io.micronaut.core.annotation.Order
+import jakarta.inject.Singleton
 
 import com.amazon.ask.dispatcher.request.handler.HandlerInput
 import com.amazon.ask.dispatcher.request.interceptor.RequestInterceptor
@@ -17,6 +19,8 @@ import java.util.Base64
  *
  * The JWT payload contains claims that are mapped to the UserProfileSession model properties.
  */
+@Order(3)
+@Singleton
 class UserProfileInterceptor : RequestInterceptor {
 
     private val logger = LoggerFactory.getLogger(UserProfileInterceptor::class.java)
