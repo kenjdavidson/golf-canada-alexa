@@ -30,10 +30,29 @@ This project is an Alexa skill that connects to Golf Canada for the purpose of l
 The project uses:
 
 - **Kotlin/JVM (Java 21)** - Primary programming language
+- **Micronaut Framework** - Dependency injection and application lifecycle management
 - **AWS SAM (Serverless Application Model)** - Infrastructure as code for Lambda deployment
-- **Gradle** - Build tool with OpenAPI code generation
+- **Gradle** - Build tool with OpenAPI code generation and Micronaut AOT optimizations
 - **Amazon Alexa SDK** - For skill development
 - **OkHttp/Moshi** - HTTP client and JSON serialization
+
+### Dependency Injection
+
+All Lambda handlers, request interceptors, and exception handlers are managed as Micronaut `@Singleton` beans. The two Lambda entry points are:
+
+- `GolfCanadaAlexaSkill` — extends `MicronautSkillStreamHandler`; Micronaut automatically discovers and wires all Alexa request/exception handler beans into the skill.
+- `AuthenticationLambdaHandler` — extends `MicronautRequestHandler`; delegates to the injected `AuthenticationHandler` bean.
+
+#### Credential Modes
+
+Authentication uses two conditional beans selected at startup based on the presence of the `GOLF_CANADA_USERNAME` environment variable:
+
+| Bean | Condition | Behaviour |
+|---|---|---|
+| `DevAuthenticator` | `GOLF_CANADA_USERNAME` **is set** | Authenticates to Golf Canada using the configured static credentials and returns a token |
+| `ProdAuthenticator` | `GOLF_CANADA_USERNAME` **is not set** | Passes the user-supplied credentials from the Alexa account-linking payload through to Golf Canada |
+
+Set `GOLF_CANADA_USERNAME` (and `GOLF_CANADA_PASSWORD`) in your local environment or SAM `env.json` to use dev mode; leave them unset for production pass-through behaviour.
 
 ### Authentication Flow
 
@@ -303,7 +322,7 @@ The project includes two Lambda functions that are deployed together:
 
 1. **Build the deployment package:**
    ```shell
-   ./gradlew packageJar
+   ./gradlew build
    sam build
    ```
 
