@@ -45,14 +45,14 @@ All Lambda handlers, request interceptors, and exception handlers are managed as
 
 #### Credential Modes
 
-Authentication uses two conditional beans selected at startup based on the presence of the `GOLF_CANADA_USERNAME` environment variable:
+Authentication uses two conditional beans selected at startup based on the presence of the `GOLF_CANADA_USERNAME` environment variable. This allows two distinct deployment patterns — a **personal deployment** where the operator's own Golf Canada credentials are baked in, and a **shared/public deployment** where each user links their own account through Alexa Account Linking:
 
-| Bean | Condition | Behaviour |
+| Bean | Condition | Use case |
 |---|---|---|
-| `DevAuthenticator` | `GOLF_CANADA_USERNAME` **is set** | Authenticates to Golf Canada using the configured static credentials and returns a token |
-| `ProdAuthenticator` | `GOLF_CANADA_USERNAME` **is not set** | Passes the user-supplied credentials from the Alexa account-linking payload through to Golf Canada |
+| `DevAuthenticator` | `GOLF_CANADA_USERNAME` **is set** | **Personal deployment** — the skill always authenticates using the operator's own Golf Canada credentials. Users of the skill don't need to link an account. |
+| `ProdAuthenticator` | `GOLF_CANADA_USERNAME` **is not set** | **Shared/public deployment** — each user links their own Golf Canada account through Alexa Account Linking; their credentials are passed through at runtime. |
 
-Set `GOLF_CANADA_USERNAME` (and `GOLF_CANADA_PASSWORD`) in your local environment or SAM `env.json` to use dev mode; leave them unset for production pass-through behaviour.
+Set `GOLF_CANADA_USERNAME` (and `GOLF_CANADA_PASSWORD`) in your SAM parameter overrides or `env.json` for a personal single-user deployment. Leave them unset to require Alexa Account Linking for each individual user.
 
 ### Authentication Flow
 
