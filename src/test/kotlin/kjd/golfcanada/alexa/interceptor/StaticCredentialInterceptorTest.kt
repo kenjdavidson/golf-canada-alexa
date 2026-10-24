@@ -27,27 +27,27 @@ class StaticCredentialInterceptorTest : DescribeSpec({
 
     context("isEnabled") {
         it("should be true when both username and password are set") {
-            val interceptor = StaticCredentialInterceptor("user@example.com", "password123")
+            val interceptor = StaticCredentialInterceptor("user@example.com", "password123", mockk<AuthApi>(relaxed = true))
             interceptor.isEnabled shouldBe true
         }
 
-        it("should be false when username is null") {
-            val interceptor = StaticCredentialInterceptor(null, "password123")
+        it("should be false when username is null or empty") {
+            val interceptor = StaticCredentialInterceptor("", "password123", mockk<AuthApi>(relaxed = true))
             interceptor.isEnabled shouldBe false
         }
 
-        it("should be false when password is null") {
-            val interceptor = StaticCredentialInterceptor("user@example.com", null)
+        it("should be false when password is null or empty") {
+            val interceptor = StaticCredentialInterceptor("user@example.com", "", mockk<AuthApi>(relaxed = true))
             interceptor.isEnabled shouldBe false
         }
 
         it("should be false when username is blank") {
-            val interceptor = StaticCredentialInterceptor("", "password123")
+            val interceptor = StaticCredentialInterceptor("", "password123", mockk<AuthApi>(relaxed = true))
             interceptor.isEnabled shouldBe false
         }
 
         it("should be false when password is blank") {
-            val interceptor = StaticCredentialInterceptor("user@example.com", "")
+            val interceptor = StaticCredentialInterceptor("user@example.com", "", mockk<AuthApi>(relaxed = true))
             interceptor.isEnabled shouldBe false
         }
     }
@@ -100,7 +100,7 @@ class StaticCredentialInterceptorTest : DescribeSpec({
 
         it("should return null when static credentials are not configured") {
             val authApi = mockk<AuthApi>()
-            val interceptor = StaticCredentialInterceptor(null, null, authApi)
+            val interceptor = StaticCredentialInterceptor("", "", authApi)
 
             val token = interceptor.getValidToken()
 
@@ -147,7 +147,7 @@ class StaticCredentialInterceptorTest : DescribeSpec({
             val input = mockk<HandlerInput>()
             every { input.attributesManager } returns attributesManager
 
-            val interceptor = StaticCredentialInterceptor(null, null, authApi)
+            val interceptor = StaticCredentialInterceptor("", "", authApi)
             interceptor.process(input)
 
             verify(exactly = 0) { attributesManager.requestAttributes }

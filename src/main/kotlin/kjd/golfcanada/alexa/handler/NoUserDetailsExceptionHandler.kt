@@ -1,4 +1,5 @@
 package kjd.golfcanada.alexa.handler
+import jakarta.inject.Singleton
 
 import com.amazon.ask.dispatcher.exception.ExceptionHandler
 import com.amazon.ask.dispatcher.request.handler.HandlerInput
@@ -14,6 +15,7 @@ import java.util.Optional
  * This handler uses the FreeMarker template system to generate appropriate responses
  * in the user's preferred language.
  */
+@Singleton
 class NoUserDetailsExceptionHandler : ExceptionHandler {
 
     private val logger = LoggerFactory.getLogger(NoUserDetailsExceptionHandler::class.java)

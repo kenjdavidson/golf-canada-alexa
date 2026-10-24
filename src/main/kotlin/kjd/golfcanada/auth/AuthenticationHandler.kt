@@ -1,13 +1,12 @@
 package kjd.golfcanada.auth
 
-import com.amazonaws.services.lambda.runtime.Context
-import com.amazonaws.services.lambda.runtime.RequestHandler
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent
+import io.micronaut.context.annotation.Value
+import jakarta.inject.Singleton
 import kjd.golfcanada.auth.ext.assertHttpMethod
 import kjd.golfcanada.auth.ext.assertQueryParameter
 import kjd.golfcanada.auth.ext.assertValue
-import kjd.golfcanada.auth.impl.TokenRepositoryMapImpl
 import kjd.golfcanada.client.api.AuthApi
 import kjd.golfcanada.client.model.AuthToken
 import kjd.golfcanada.client.model.code
@@ -41,36 +40,31 @@ import java.util.*
  * - https://developer.amazon.com/en-US/docs/alexa/account-linking/account-linking-concepts.html
  * - https://developer.amazon.com/en-US/docs/alexa/account-linking/configure-authorization-code-grant.html
  * - https://docs.aws.amazon.com/lambda/latest/dg/urls-invocation.html
+ *
+ * @param authenticator conditional bean that handles Golf Canada credential authentication
+ * @param authApi Golf Canada API client used for token refresh operations
+ * @param clientId OAuth client ID (injected from [CLIENT_ID] environment variable)
+ * @param clientSecret OAuth client secret (injected from [CLIENT_SECRET] environment variable)
+ * @param tokenRepository in-memory store that holds short-lived authorization codes
  */
-class AuthenticationHandler internal constructor(
+@Singleton
+class AuthenticationHandler(
+    private val authenticator: GolfCanadaAuthenticator,
     private val authApi: AuthApi,
-    private val clientId: String,
-    private val clientSecret: String,
-    private val tokenRepository: TokenRepository<AuthTokenKey, AuthToken> = TokenRepositoryMapImpl()
-): RequestHandler<APIGatewayV2HTTPEvent, APIGatewayProxyResponseEvent> {
+    @Value("\${client.id}") private val clientId: String,
+    @Value("\${client.secret}") private val clientSecret: String,
+    private val tokenRepository: TokenRepository<AuthTokenKey, AuthToken>
+) {
     private val loginPage = getLoginPageTemplate()
     private val logger: Logger = LoggerFactory.getLogger(AuthenticationHandler::class.java)
-
-    /**
-     * Default constructor used during creation
-     */
-    @Suppress("unused")
-    constructor() : this(
-        AuthApi(),
-        System.getenv("CLIENT_ID"),
-        System.getenv("CLIENT_SECRET")
-    ) {
-        logger.info("Building AuthenticationHandler with client credentials")
-    }
 
     /**
      * Main entry point provides routing for the expected requests and "global" error handling.
      *
      * @param event simulated API Gateway event from Lambda URL
-     * @param context Lambda context
      * @returns API Gateway response matching Alexa Account Linking requirements
      */
-    override fun handleRequest(event: APIGatewayV2HTTPEvent, context: Context): APIGatewayProxyResponseEvent {
+    fun handleRequest(event: APIGatewayV2HTTPEvent): APIGatewayProxyResponseEvent {
         logger.debug("Processing authentication request for path: {}", event.rawPath)
 
         return try {
@@ -209,12 +203,7 @@ class AuthenticationHandler internal constructor(
             }.trim()
 
             logger.info("Attempting login with provided credentials and scopes")
-            val authToken = authApi.getAuthToken(
-                AuthApi.GrantTypeGetAuthToken.PASSWORD,
-                scopes,
-                username,
-                password
-            )
+            val authToken = authenticator.authenticate(username, password, scopes)
 
             val code = authToken.code()
             tokenRepository.store(AuthTokenKey(state, code), authToken)

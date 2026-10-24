@@ -9,7 +9,7 @@ import io.kotest.matchers.string.shouldContain
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import kjd.golfcanada.TestContext
+import kjd.golfcanada.auth.GolfCanadaAuthenticator
 import kjd.golfcanada.auth.AuthenticationHandler.Companion.COOKIE_STATE
 import kjd.golfcanada.auth.AuthenticationHandler.Companion.DEFAULT_SCOPES
 import kjd.golfcanada.auth.impl.TokenRepositoryMapImpl
@@ -25,6 +25,7 @@ import org.openapitools.client.infrastructure.ClientException
 import java.util.*
 
 class AuthenticationHandlerTest : DescribeSpec({
+    lateinit var authenticator: GolfCanadaAuthenticator
     lateinit var authApi: AuthApi
     lateinit var tokenRepository: TokenRepository<AuthTokenKey, AuthToken>
 
@@ -33,6 +34,7 @@ class AuthenticationHandlerTest : DescribeSpec({
     val state = "1234567890"
 
     beforeEach {
+        authenticator = mockk<GolfCanadaAuthenticator>()
         authApi = mockk<AuthApi>()
         tokenRepository = mockk<TokenRepository<AuthTokenKey, AuthToken>>()
     }
@@ -43,9 +45,11 @@ class AuthenticationHandlerTest : DescribeSpec({
                 // TODO: find an Enum somewhere to use values for
                 listOf("POST", "PUT", "PATCH", "DELETE", "OPTION").forEach { method ->
                     val handler = AuthenticationHandler(
+                        authenticator,
                         authApi,
                         clientId,
-                        clientSecret
+                        clientSecret,
+                        tokenRepository
                     )
 
                     val invalidClientId = UUID.randomUUID().toString()
@@ -64,7 +68,7 @@ class AuthenticationHandlerTest : DescribeSpec({
                             )
                         )
                         .build()
-                    val response = handler.handleRequest(event, TestContext())
+                    val response = handler.handleRequest(event)
 
                     response shouldNotBe null
                     response.statusCode shouldBe 400
@@ -77,9 +81,11 @@ class AuthenticationHandlerTest : DescribeSpec({
 
             it("should return 400 when invalid client_id") {
                 val handler = AuthenticationHandler(
+                    authenticator,
                     authApi,
                     clientId,
-                    clientSecret
+                    clientSecret,
+                    tokenRepository
                 )
 
                 val invalidClientId = UUID.randomUUID().toString()
@@ -96,7 +102,7 @@ class AuthenticationHandlerTest : DescribeSpec({
                         )
                     )
                     .build()
-                val response = handler.handleRequest(event, TestContext())
+                val response = handler.handleRequest(event)
 
                 response shouldNotBe null
                 response.statusCode shouldBe 400
@@ -109,9 +115,11 @@ class AuthenticationHandlerTest : DescribeSpec({
             // TODO clean this test the hell up!
             it("should return the login page") {
                 val handler = AuthenticationHandler(
+                    authenticator,
                     authApi,
                     clientId,
-                    clientSecret
+                    clientSecret,
+                    tokenRepository
                 )
 
                 val event = apiGatewayHttpEventBuilder(
@@ -124,7 +132,7 @@ class AuthenticationHandlerTest : DescribeSpec({
                     )
                 )
                     .build()
-                val response = handler.handleRequest(event, TestContext())
+                val response = handler.handleRequest(event)
 
                 response shouldNotBe null
                 response.statusCode shouldBe 200
@@ -146,13 +154,15 @@ class AuthenticationHandlerTest : DescribeSpec({
                 // TODO: find an Enum somewhere to use values for
                 listOf("GET", "PUT", "PATCH", "DELETE", "OPTION").forEach { method ->
                     val handler = AuthenticationHandler(
+                        authenticator,
                         authApi,
                         clientId,
-                        clientSecret
+                        clientSecret,
+                        tokenRepository
                     )
 
                     val event = apiGatewayHttpEventBuilder(method, "/code").build()
-                    val response = handler.handleRequest(event, TestContext())
+                    val response = handler.handleRequest(event)
 
                     response shouldNotBe null
                     response.statusCode shouldBe 400
@@ -165,13 +175,15 @@ class AuthenticationHandlerTest : DescribeSpec({
 
             it("should return 400 when body is not provided") {
                 val handler = AuthenticationHandler(
+                    authenticator,
                     authApi,
                     clientId,
-                    clientSecret
+                    clientSecret,
+                    tokenRepository
                 )
 
                 val event = apiGatewayHttpEventBuilder("POST", "/code").build()
-                val response = handler.handleRequest(event, TestContext())
+                val response = handler.handleRequest(event)
 
                 response shouldNotBe null
                 response.statusCode shouldBe 400
@@ -183,15 +195,17 @@ class AuthenticationHandlerTest : DescribeSpec({
 
             it("should return 400 when invalid client_id") {
                 val handler = AuthenticationHandler(
+                    authenticator,
                     authApi,
                     clientId,
-                    clientSecret
+                    clientSecret,
+                    tokenRepository
                 )
 
                 val event = apiGatewayHttpEventBuilder("POST", "/code",  clientId)
                     .withBody(buildBody(mapOf("username" to "username")))
                     .build()
-                val response = handler.handleRequest(event, TestContext())
+                val response = handler.handleRequest(event)
 
                 response shouldNotBe null
                 response.statusCode shouldBe 400
@@ -203,9 +217,11 @@ class AuthenticationHandlerTest : DescribeSpec({
 
             it("should return 400 when invalid response_type") {
                 val handler = AuthenticationHandler(
+                    authenticator,
                     authApi,
                     clientId,
-                    clientSecret
+                    clientSecret,
+                    tokenRepository
                 )
 
                 val event = apiGatewayHttpEventBuilder("POST", "/code", clientId)
@@ -215,7 +231,7 @@ class AuthenticationHandlerTest : DescribeSpec({
                         "response_type" to "something"
                     )))
                     .build()
-                val response = handler.handleRequest(event, TestContext())
+                val response = handler.handleRequest(event)
 
                 response shouldNotBe null
                 response.statusCode shouldBe 400
@@ -227,9 +243,11 @@ class AuthenticationHandlerTest : DescribeSpec({
 
             it("should return 400 when missing redirect uri") {
                 val handler = AuthenticationHandler(
+                    authenticator,
                     authApi,
                     clientId,
-                    clientSecret
+                    clientSecret,
+                    tokenRepository
                 )
 
                 val event = apiGatewayHttpEventBuilder("POST", "/code", clientId)
@@ -239,7 +257,7 @@ class AuthenticationHandlerTest : DescribeSpec({
                         "response_type" to "code"
                     )))
                     .build()
-                val response = handler.handleRequest(event, TestContext())
+                val response = handler.handleRequest(event)
 
                 response shouldNotBe null
                 response.statusCode shouldBe 400
@@ -251,9 +269,11 @@ class AuthenticationHandlerTest : DescribeSpec({
 
             it("should return 400 when missing scope") {
                 val handler = AuthenticationHandler(
+                    authenticator,
                     authApi,
                     clientId,
-                    clientSecret
+                    clientSecret,
+                    tokenRepository
                 )
 
                 val event = apiGatewayHttpEventBuilder("POST", "/code", clientId)
@@ -264,7 +284,7 @@ class AuthenticationHandlerTest : DescribeSpec({
                         "redirect_uri" to "https://redirect-uri.com"
                     )))
                     .build()
-                val response = handler.handleRequest(event, TestContext())
+                val response = handler.handleRequest(event)
 
                 response shouldNotBe null
                 response.statusCode shouldBe 400
@@ -276,9 +296,11 @@ class AuthenticationHandlerTest : DescribeSpec({
 
             it("should return 400 when missing state") {
                 val handler = AuthenticationHandler(
+                    authenticator,
                     authApi,
                     clientId,
-                    clientSecret
+                    clientSecret,
+                    tokenRepository
                 )
 
                 val event = apiGatewayHttpEventBuilder("POST", "/code", clientId)
@@ -290,7 +312,7 @@ class AuthenticationHandlerTest : DescribeSpec({
                         "scope" to "some scopes here"
                     )))
                     .build()
-                val response = handler.handleRequest(event, TestContext())
+                val response = handler.handleRequest(event)
 
                 response shouldNotBe null
                 response.statusCode shouldBe 400
@@ -302,20 +324,16 @@ class AuthenticationHandlerTest : DescribeSpec({
 
             it ("should return invalid authorization when AuthApi fails") {
                 val handler = AuthenticationHandler(
+                    authenticator,
                     authApi,
                     clientId,
-                    clientSecret
+                    clientSecret,
+                    tokenRepository
                 )
 
                 val authToken = authToken()
                 every {
-                    authApi.getAuthToken(
-                        AuthApi.GrantTypeGetAuthToken.PASSWORD,
-                        DEFAULT_SCOPES,
-                        "username",
-                        "password",
-                        null
-                    )
+                    authenticator.authenticate("username", "password", DEFAULT_SCOPES)
                 } throws ClientException("Invalid Request", 400)
 
                 val event = apiGatewayHttpEventBuilder("POST", "/code", clientId)
@@ -329,7 +347,7 @@ class AuthenticationHandlerTest : DescribeSpec({
                         "state" to state
                     )))
                     .build()
-                val response = handler.handleRequest(event, TestContext())
+                val response = handler.handleRequest(event)
 
                 response shouldNotBe null
                 response.statusCode shouldBe 400
@@ -339,13 +357,7 @@ class AuthenticationHandlerTest : DescribeSpec({
 }"""
 
                 verify(exactly = 1) {
-                    authApi.getAuthToken(
-                        AuthApi.GrantTypeGetAuthToken.PASSWORD,
-                        DEFAULT_SCOPES,
-                        "username",
-                        "password",
-                        null
-                    )
+                    authenticator.authenticate("username", "password", DEFAULT_SCOPES)
                 }
                 verify(exactly = 0) {
                     tokenRepository.store(
@@ -357,6 +369,7 @@ class AuthenticationHandlerTest : DescribeSpec({
 
             it("should authorize and redirect") {
                 val handler = AuthenticationHandler(
+                    authenticator,
                     authApi,
                     clientId,
                     clientSecret,
@@ -365,13 +378,7 @@ class AuthenticationHandlerTest : DescribeSpec({
 
                 val authToken = authToken()
                 every {
-                    authApi.getAuthToken(
-                        AuthApi.GrantTypeGetAuthToken.PASSWORD,
-                        DEFAULT_SCOPES,
-                        "username",
-                        "password",
-                        null
-                    )
+                    authenticator.authenticate("username", "password", DEFAULT_SCOPES)
                 } returns authToken
                 every {
                     tokenRepository
@@ -389,20 +396,14 @@ class AuthenticationHandlerTest : DescribeSpec({
                         "state" to state
                     )))
                     .build()
-                val response = handler.handleRequest(event, TestContext())
+                val response = handler.handleRequest(event)
 
                 response shouldNotBe null
                 response.statusCode shouldBe 301
                 response.body shouldBe "https://redirect_uri.com?code=${authToken.code()}&state=1234567890"
 
                 verify(exactly = 1) {
-                    authApi.getAuthToken(
-                        AuthApi.GrantTypeGetAuthToken.PASSWORD,
-                        DEFAULT_SCOPES,
-                        "username",
-                        "password",
-                        null
-                    )
+                    authenticator.authenticate("username", "password", DEFAULT_SCOPES)
                 }
                 verify(exactly = 1) {
                     tokenRepository.store(
@@ -418,9 +419,11 @@ class AuthenticationHandlerTest : DescribeSpec({
                 // TODO: find an Enum somewhere to use values for
                 listOf("GET", "PUT", "PATCH", "DELETE", "OPTION").forEach { method ->
                     val handler = AuthenticationHandler(
+                        authenticator,
                         authApi,
                         clientId,
-                        clientSecret
+                        clientSecret,
+                        tokenRepository
                     )
 
                     val event = APIGatewayV2HTTPEvent.builder()
@@ -433,7 +436,7 @@ class AuthenticationHandlerTest : DescribeSpec({
                         )
                         .withRawPath("/authToken")
                         .build()
-                    val response = handler.handleRequest(event, TestContext())
+                    val response = handler.handleRequest(event)
 
                     response shouldNotBe null
                     response.statusCode shouldBe 400
@@ -446,9 +449,11 @@ class AuthenticationHandlerTest : DescribeSpec({
 
             it("should return 400 when invalid client_id") {
                 val handler = AuthenticationHandler(
+                    authenticator,
                     authApi,
                     clientId,
-                    clientSecret
+                    clientSecret,
+                    tokenRepository
                 )
 
                 val invalidClientId = UUID.randomUUID().toString()
@@ -457,7 +462,7 @@ class AuthenticationHandlerTest : DescribeSpec({
                         "client_id" to invalidClientId,
                     )))
                     .build()
-                val response = handler.handleRequest(event, TestContext())
+                val response = handler.handleRequest(event)
 
                 response shouldNotBe null
                 response.statusCode shouldBe 400
@@ -469,9 +474,11 @@ class AuthenticationHandlerTest : DescribeSpec({
 
             it("should return 400 when invalid client_id in header") {
                 val handler = AuthenticationHandler(
+                    authenticator,
                     authApi,
                     clientId,
-                    clientSecret
+                    clientSecret,
+                    tokenRepository
                 )
 
                 val invalidClientId = UUID.randomUUID().toString()
@@ -480,7 +487,7 @@ class AuthenticationHandlerTest : DescribeSpec({
                     .withHeaders(mapOf("Authorization" to "Basic $authorization"))
                     .withBody("")
                     .build()
-                val response = handler.handleRequest(event, TestContext())
+                val response = handler.handleRequest(event)
 
                 response shouldNotBe null
                 response.statusCode shouldBe 400
@@ -492,9 +499,11 @@ class AuthenticationHandlerTest : DescribeSpec({
 
             it("should return 400 when invalid client_secret") {
                 val handler = AuthenticationHandler(
+                    authenticator,
                     authApi,
                     clientId,
-                    clientSecret
+                    clientSecret,
+                    tokenRepository
                 )
 
                 val event = apiGatewayHttpEventBuilder("POST", "/authToken", clientId)
@@ -503,7 +512,7 @@ class AuthenticationHandlerTest : DescribeSpec({
                         "client_secret" to ""
                     )))
                     .build()
-                val response = handler.handleRequest(event, TestContext())
+                val response = handler.handleRequest(event)
 
                 response shouldNotBe null
                 response.statusCode shouldBe 400
@@ -515,9 +524,11 @@ class AuthenticationHandlerTest : DescribeSpec({
 
             it("should return 400 when invalid client_secret in header") {
                 val handler = AuthenticationHandler(
+                    authenticator,
                     authApi,
                     clientId,
-                    clientSecret
+                    clientSecret,
+                    tokenRepository
                 )
 
                 val invalidSecret = UUID.randomUUID().toString()
@@ -526,7 +537,7 @@ class AuthenticationHandlerTest : DescribeSpec({
                     .withHeaders(mapOf("Authorization" to "Basic $authorization"))
                     .withBody("")
                     .build()
-                val response = handler.handleRequest(event, TestContext())
+                val response = handler.handleRequest(event)
 
                 response shouldNotBe null
                 response.statusCode shouldBe 400
@@ -538,9 +549,11 @@ class AuthenticationHandlerTest : DescribeSpec({
 
             it ("should throw authentication error when no grant_type found") {
                 val handler = AuthenticationHandler(
+                    authenticator,
                     authApi,
                     clientId,
-                    clientSecret
+                    clientSecret,
+                    tokenRepository
                 )
 
                 val event = apiGatewayHttpEventBuilder("POST", "/authToken", clientId)
@@ -549,7 +562,7 @@ class AuthenticationHandlerTest : DescribeSpec({
                         "client_secret" to clientSecret,
                     )))
                     .build()
-                val response = handler.handleRequest(event, TestContext())
+                val response = handler.handleRequest(event)
 
                 response shouldNotBe null
                 response.statusCode shouldBe 400
@@ -561,9 +574,11 @@ class AuthenticationHandlerTest : DescribeSpec({
 
             it ("should throw authentication error when no state found") {
                 val handler = AuthenticationHandler(
+                    authenticator,
                     authApi,
                     clientId,
-                    clientSecret
+                    clientSecret,
+                    tokenRepository
                 )
 
                 val event = apiGatewayHttpEventBuilder("POST", "/authToken", clientId)
@@ -573,7 +588,7 @@ class AuthenticationHandlerTest : DescribeSpec({
                         "grant_type" to "authorization_code"
                     )))
                     .build()
-                val response = handler.handleRequest(event, TestContext())
+                val response = handler.handleRequest(event)
 
                 response shouldNotBe null
                 response.statusCode shouldBe 400
@@ -585,9 +600,11 @@ class AuthenticationHandlerTest : DescribeSpec({
 
             it("should throw authentication error when no code found") {
                 val handler = AuthenticationHandler(
+                    authenticator,
                     authApi,
                     clientId,
-                    clientSecret
+                    clientSecret,
+                    tokenRepository
                 )
 
                 val event = apiGatewayHttpEventBuilder("POST", "/authToken", clientId)
@@ -597,7 +614,7 @@ class AuthenticationHandlerTest : DescribeSpec({
                         "state" to state,
                     )))
                     .build()
-                val response = handler.handleRequest(event, TestContext())
+                val response = handler.handleRequest(event)
 
                 response shouldNotBe null
                 response.statusCode shouldBe 400
@@ -609,9 +626,11 @@ class AuthenticationHandlerTest : DescribeSpec({
 
             it("should throw authentication error when state does not match") {
                 val handler = AuthenticationHandler(
+                    authenticator,
                     authApi,
                     clientId,
-                    clientSecret
+                    clientSecret,
+                    tokenRepository
                 )
 
                 val authToken = authToken()
@@ -625,7 +644,7 @@ class AuthenticationHandlerTest : DescribeSpec({
                         "grant_type" to "authorization_code"
                     )))
                     .build()
-                val response = handler.handleRequest(event, TestContext())
+                val response = handler.handleRequest(event)
 
                 response shouldNotBe null
                 response.statusCode shouldBe 400
@@ -638,6 +657,7 @@ class AuthenticationHandlerTest : DescribeSpec({
             it("should return AuthToken when found") {
                 val tokenRepo = TokenRepositoryMapImpl()
                 val handler = AuthenticationHandler(
+                    authenticator,
                     authApi,
                     clientId,
                     clientSecret,
@@ -657,7 +677,7 @@ class AuthenticationHandlerTest : DescribeSpec({
                         "grant_type" to "authorization_code"
                     )))
                     .build()
-                val response = handler.handleRequest(event, TestContext())
+                val response = handler.handleRequest(event)
 
                 response shouldNotBe null
                 response.statusCode shouldBe 200
@@ -668,6 +688,7 @@ class AuthenticationHandlerTest : DescribeSpec({
 
             it("should attempt to refresh_code when requested") {
                 val handler = AuthenticationHandler(
+                    authenticator,
                     authApi,
                     clientId,
                     clientSecret,
@@ -691,7 +712,7 @@ class AuthenticationHandlerTest : DescribeSpec({
                         "refresh_token" to "${authToken.refreshToken}"
                     )))
                     .build()
-                val response = handler.handleRequest(event, TestContext())
+                val response = handler.handleRequest(event)
 
                 response shouldNotBe null
                 response.statusCode shouldBe 200
@@ -712,13 +733,15 @@ class AuthenticationHandlerTest : DescribeSpec({
         describe("invalid requests") {
             it("should return 400 when invalid path") {
                 val handler = AuthenticationHandler(
+                    authenticator,
                     authApi,
                     clientId,
-                    clientSecret
+                    clientSecret,
+                    tokenRepository
                 )
 
                 val event = apiGatewayHttpEventBuilder("GET", "/").build()
-                val response = handler.handleRequest(event, TestContext())
+                val response = handler.handleRequest(event)
 
                 response shouldNotBe null
                 response.statusCode shouldBe 400

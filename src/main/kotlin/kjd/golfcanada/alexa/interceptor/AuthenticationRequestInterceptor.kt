@@ -1,4 +1,6 @@
 package kjd.golfcanada.alexa.interceptor
+import io.micronaut.core.annotation.Order
+import jakarta.inject.Singleton
 
 import com.amazon.ask.dispatcher.request.handler.HandlerInput
 import com.amazon.ask.dispatcher.request.interceptor.RequestInterceptor
@@ -18,6 +20,8 @@ import org.slf4j.LoggerFactory
  * When authentication is required but not available, this interceptor throws an
  * [AccountLinkingException] which should be handled by the AccountLinkingExceptionHandler.
  */
+@Order(2)
+@Singleton
 class AuthenticationRequestInterceptor : RequestInterceptor {
 
     private val logger = LoggerFactory.getLogger(AuthenticationRequestInterceptor::class.java)

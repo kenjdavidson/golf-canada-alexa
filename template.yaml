@@ -70,7 +70,7 @@ Resources:
       Description: 'Provides OAuth wrapper for Golf Canada authentication'
       MemorySize: 512
       Timeout: 120
-      Handler: kjd.golfcanada.auth.AuthenticationHandler::handleRequest
+      Handler: kjd.golfcanada.auth.AuthenticationLambdaHandler::handleRequest
       Runtime: java21
       Architectures:
         - x86_64

@@ -1,5 +1,6 @@
 package kjd.golfcanada.client.provider
 
+import jakarta.inject.Singleton
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
@@ -37,11 +38,12 @@ private class ApiClientBuilder(
  * 1. The expensive HTTP client resources (connection pools, etc.) are initialized only once per instance
  * 2. User-specific access tokens are never stored in static memory or shared between requests
  * 3. Each request gets its own client instance with a request-specific AuthInterceptor
- * 
+ *
  * Instances of this class should be created once (e.g., in the Skill initialization) and passed
  * as a dependency to classes that need API client access. This makes it effectively a singleton
  * while allowing for better testability and dependency injection.
  */
+@Singleton
 class ApiClientProvider {
     
     /**

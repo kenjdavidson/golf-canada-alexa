@@ -1,4 +1,5 @@
 package kjd.golfcanada.alexa.handler
+import jakarta.inject.Singleton
 
 import com.amazon.ask.dispatcher.request.handler.HandlerInput
 import com.amazon.ask.dispatcher.request.handler.RequestHandler
@@ -7,6 +8,7 @@ import com.amazon.ask.model.SessionEndedRequest
 import com.amazon.ask.request.Predicates.requestType
 import java.util.*
 
+@Singleton
 class SessionEndedRequestHandler: RequestHandler {
     override fun canHandle(input: HandlerInput): Boolean =
         input.matches(requestType(SessionEndedRequest::class.java))

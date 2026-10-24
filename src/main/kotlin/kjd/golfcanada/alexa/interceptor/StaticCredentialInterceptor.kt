@@ -2,6 +2,9 @@ package kjd.golfcanada.alexa.interceptor
 
 import com.amazon.ask.dispatcher.request.handler.HandlerInput
 import com.amazon.ask.dispatcher.request.interceptor.RequestInterceptor
+import io.micronaut.context.annotation.Value
+import io.micronaut.core.annotation.Order
+import jakarta.inject.Singleton
 import kjd.golfcanada.client.api.AuthApi
 import kjd.golfcanada.client.model.AuthToken
 import kjd.golfcanada.client.model.withConcatenatedToken
@@ -35,10 +38,12 @@ import java.util.concurrent.atomic.AtomicReference
  * @param password Golf Canada password (from [STATIC_PASSWORD_ENV] env var)
  * @param authApi Golf Canada authentication API client
  */
+@Singleton
+@Order(1)
 class StaticCredentialInterceptor(
-    private val username: String?,
-    private val password: String?,
-    private val authApi: AuthApi = AuthApi()
+    @Value("\${golf.canada.username:}") private val username: String,
+    @Value("\${golf.canada.password:}") private val password: String,
+    private val authApi: AuthApi
 ) : RequestInterceptor {
 
     private val logger = LoggerFactory.getLogger(StaticCredentialInterceptor::class.java)
@@ -51,7 +56,7 @@ class StaticCredentialInterceptor(
      * Returns true when static credentials are configured (both username and password set).
      */
     val isEnabled: Boolean
-        get() = !username.isNullOrBlank() && !password.isNullOrBlank()
+        get() = username.isNotBlank() && password.isNotBlank()
 
     /**
      * Authenticates with static credentials and stores the resulting access token
@@ -129,15 +134,5 @@ class StaticCredentialInterceptor(
 
         private const val DEFAULT_EXPIRY_SECONDS = 3600L
         private const val EXPIRY_BUFFER_SECONDS = 60L
-
-        /**
-         * Creates a [StaticCredentialInterceptor] from environment variables.
-         */
-        fun fromEnvironment(authApi: AuthApi = AuthApi()): StaticCredentialInterceptor =
-            StaticCredentialInterceptor(
-                username = System.getenv(STATIC_USERNAME_ENV),
-                password = System.getenv(STATIC_PASSWORD_ENV),
-                authApi = authApi
-            )
     }
 }

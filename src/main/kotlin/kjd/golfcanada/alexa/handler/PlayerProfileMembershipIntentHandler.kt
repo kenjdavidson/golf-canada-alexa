@@ -1,4 +1,5 @@
 package kjd.golfcanada.alexa.handler
+import jakarta.inject.Singleton
 
 import com.amazon.ask.dispatcher.request.handler.HandlerInput
 import com.amazon.ask.dispatcher.request.handler.RequestHandler
@@ -13,6 +14,7 @@ import java.util.*
 /**
  * Handles requests about player's membership information.
  */
+@Singleton
 class PlayerProfileMembershipIntentHandler : RequestHandler {
     override fun canHandle(input: HandlerInput): Boolean =
         input.matches(intentName(IntentName.PLAYER_PROFILE_MEMBERSHIP.value))

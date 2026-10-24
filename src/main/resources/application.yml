@@ -1,0 +1,7 @@
+micronaut:
+  application:
+    name: golf-canada-alexa
+
+alexa:
+  skill:
+    id: ${SKILL_ID:}

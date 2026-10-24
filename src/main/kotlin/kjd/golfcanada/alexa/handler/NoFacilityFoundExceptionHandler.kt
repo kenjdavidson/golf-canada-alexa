@@ -1,4 +1,5 @@
 package kjd.golfcanada.alexa.handler
+import jakarta.inject.Singleton
 
 import com.amazon.ask.dispatcher.exception.ExceptionHandler
 import com.amazon.ask.dispatcher.request.handler.HandlerInput
@@ -14,6 +15,7 @@ import java.util.Optional
  * This handler logs the error and uses the FreeMarker template system to generate
  * appropriate error responses based on whether a facility name was specified.
  */
+@Singleton
 class NoFacilityFoundExceptionHandler : ExceptionHandler {
 
     private val logger = LoggerFactory.getLogger(NoFacilityFoundExceptionHandler::class.java)

@@ -1,68 +1,17 @@
 package kjd.golfcanada.alexa
 
-import com.amazon.ask.Skill
-import com.amazon.ask.SkillStreamHandler
-import com.amazon.ask.Skills
-import kjd.golfcanada.alexa.handler.AccountLinkingExceptionHandler
-import kjd.golfcanada.alexa.handler.AddScorecardIntentHandler
-import kjd.golfcanada.alexa.handler.CancelAndStopIntentHandler
-import kjd.golfcanada.alexa.handler.CourseHandicapIntentHandler
-import kjd.golfcanada.alexa.handler.FallbackIntentHandler
-import kjd.golfcanada.alexa.handler.FavoriteCoursesIntentHandler
-import kjd.golfcanada.alexa.handler.FavoritePlayerHistoryIntentHandler
-import kjd.golfcanada.alexa.handler.GenericIntentExceptionHandler
-import kjd.golfcanada.alexa.handler.GolfCanadaApiExceptionHandler
-import kjd.golfcanada.alexa.handler.HandicapIntentRequestHandler
-import kjd.golfcanada.alexa.handler.HelpIntentHandler
-import kjd.golfcanada.alexa.handler.LaunchRequestHandler
-import kjd.golfcanada.alexa.handler.NavigateHomeIntentHandler
-import kjd.golfcanada.alexa.handler.NoFacilityFoundExceptionHandler
-import kjd.golfcanada.alexa.handler.NoUserDetailsExceptionHandler
-import kjd.golfcanada.alexa.handler.PlayerProfileHistoryIntentHandler
-import kjd.golfcanada.alexa.handler.PlayerProfileMembershipIntentHandler
-import kjd.golfcanada.alexa.handler.SessionEndedRequestHandler
-import kjd.golfcanada.alexa.interceptor.AuthenticationRequestInterceptor
-import kjd.golfcanada.alexa.interceptor.StaticCredentialInterceptor
-import kjd.golfcanada.alexa.interceptor.UserProfileInterceptor
-import kjd.golfcanada.client.provider.ApiClientProvider
+import io.micronaut.aws.alexa.MicronautSkillStreamHandler
 
-class GolfCanadaAlexaSkill: SkillStreamHandler(getSkills()) {
-    companion object {
-        fun getSkills(): Skill {
-            // Create a single instance of ApiClientProvider to be shared across all requests
-            // This ensures HTTP client resources are reused while keeping tokens isolated per request
-            val apiClientProvider = ApiClientProvider()
-            
-            return Skills.custom()
-                .withSkillId(System.getenv("SKILL_ID") ?: "ERROR - No SKILL_ID provided!!!")
-                .addRequestHandlers(
-                    LaunchRequestHandler(),
-                    HelpIntentHandler(),
-                    CancelAndStopIntentHandler(),
-                    NavigateHomeIntentHandler(),
-                    FallbackIntentHandler(),
-                    HandicapIntentRequestHandler(apiClientProvider),
-                    CourseHandicapIntentHandler(apiClientProvider),
-                    FavoritePlayerHistoryIntentHandler(),
-                    FavoriteCoursesIntentHandler(apiClientProvider),
-                    PlayerProfileMembershipIntentHandler(),
-                    PlayerProfileHistoryIntentHandler(),
-                    AddScorecardIntentHandler(),
-                    SessionEndedRequestHandler()
-                )
-                .addRequestInterceptors(
-                    StaticCredentialInterceptor.fromEnvironment(),
-                    AuthenticationRequestInterceptor(),
-                    UserProfileInterceptor()
-                )
-                .addExceptionHandlers(
-                    AccountLinkingExceptionHandler(),
-                    NoUserDetailsExceptionHandler(),
-                    NoFacilityFoundExceptionHandler(),
-                    GolfCanadaApiExceptionHandler(),
-                    GenericIntentExceptionHandler()
-                )
-                .build()
-        }
-    }
-}
+/**
+ * AWS Lambda entry point for the Golf Canada Alexa Skill.
+ *
+ * Extends [MicronautSkillStreamHandler] so that Micronaut bootstraps the application context,
+ * discovers all [com.amazon.ask.dispatcher.request.handler.RequestHandler],
+ * [com.amazon.ask.dispatcher.request.interceptor.RequestInterceptor], and
+ * [com.amazon.ask.dispatcher.exception.ExceptionHandler] singletons, and wires them into the
+ * [com.amazon.ask.Skill] automatically.
+ *
+ * The skill ID is configured via the `SKILL_ID` environment variable, which maps to the
+ * `alexa.skill.id` property defined in `application.yml`.
+ */
+class GolfCanadaAlexaSkill : MicronautSkillStreamHandler()

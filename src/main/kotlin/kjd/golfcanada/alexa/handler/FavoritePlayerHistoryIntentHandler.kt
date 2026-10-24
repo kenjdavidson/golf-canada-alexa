@@ -1,4 +1,5 @@
 package kjd.golfcanada.alexa.handler
+import jakarta.inject.Singleton
 
 import com.amazon.ask.dispatcher.request.handler.HandlerInput
 import com.amazon.ask.dispatcher.request.handler.RequestHandler
@@ -10,6 +11,7 @@ import java.util.*
 /**
  * Handles requests about favorite player's score history.
  */
+@Singleton
 class FavoritePlayerHistoryIntentHandler : RequestHandler {
     override fun canHandle(input: HandlerInput): Boolean =
         input.matches(intentName(IntentName.FAVORITE_PLAYER_HISTORY.value))
