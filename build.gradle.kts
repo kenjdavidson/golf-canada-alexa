@@ -32,6 +32,9 @@ micronaut {
     }
 }
 
+application {
+    mainClass.set("kjd.golfcanada.alexa.GolfCanadaAlexaSkill")
+}
 dependencies {
     kapt("io.micronaut:micronaut-inject-java")
     kapt("io.micronaut.serde:micronaut-serde-processor")
@@ -40,6 +43,8 @@ dependencies {
     implementation("io.micronaut.aws:micronaut-function-aws-alexa")
     implementation("io.micronaut.serde:micronaut-serde-jackson")
     implementation("io.micronaut.kotlin:micronaut-kotlin-runtime")
+
+    runtimeOnly("org.yaml:snakeyaml")
 
     testImplementation(kotlin("test"))
     testImplementation("io.kotest:kotest-runner-junit5:5.7.2")
@@ -111,4 +116,8 @@ tasks.named("openApiGenerate") {
 
 tasks.compileKotlin {
     dependsOn("openApiGenerate")
+}
+
+afterEvaluate {
+    tasks.findByName("kaptGenerateStubsKotlin")?.dependsOn("openApiGenerate")
 }

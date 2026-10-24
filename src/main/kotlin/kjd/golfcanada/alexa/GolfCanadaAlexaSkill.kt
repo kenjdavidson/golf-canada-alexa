@@ -1,6 +1,6 @@
 package kjd.golfcanada.alexa
 
-import io.micronaut.aws.alexa.MicronautSkillStreamHandler
+import io.micronaut.function.aws.alexa.MicronautSkillStreamHandler
 
 /**
  * AWS Lambda entry point for the Golf Canada Alexa Skill.
