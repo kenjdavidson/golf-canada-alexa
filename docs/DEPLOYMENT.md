@@ -32,7 +32,7 @@ fork will not deploy.
 ### Workflow Features
 
 - **Manual trigger** - Initiated on-demand from the GitHub Actions UI
-- **Conditional deployment** - Deploy only selected function(s) based on dropdown selection
+- **Targeted SAM builds** - The dropdown selects which function(s) to build; see [Deployment Targets](#deployment-targets) for stack behavior
 - **Automated builds** - Uses Gradle to build the Java/Kotlin application
 - **SAM deployment** - Leverages AWS SAM CLI for Lambda deployment via CloudFormation
 - **Secure authentication** - Uses AWS OIDC for secure, credential-less authentication

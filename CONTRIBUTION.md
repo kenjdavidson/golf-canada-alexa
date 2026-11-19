@@ -276,7 +276,7 @@ Update the Alexa interaction model with:
 - New slots and slot types
 - Sample utterances
 
-For detailed guidance on adding features, see [.github/AGENT.md](../.github/AGENT.md).
+For detailed guidance on adding features, see [.github/AGENT.md](.github/AGENT.md).
 
 ## Pull Request Process
 
