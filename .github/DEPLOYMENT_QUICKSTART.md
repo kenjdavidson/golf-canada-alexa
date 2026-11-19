@@ -70,6 +70,9 @@ In your GitHub repository, go to **Settings** → **Secrets and variables** → 
 | `GOLF_CANADA_CLIENT_SECRET` | `your-client-secret` | OAuth Client Secret |
 | `ALEXA_SKILL_ID` | `amzn1.ask.skill.xxx...` | Your Alexa Skill ID |
 
+`GOLF_CANADA_USERNAME` and `GOLF_CANADA_PASSWORD` are optional; set both only for a personal,
+single-user static-credentials deployment. Leave them unset for standard Account Linking.
+
 ### 4. Run the Deployment
 
 Trigger the deployment manually:
@@ -79,12 +82,14 @@ Trigger the deployment manually:
 3. Click **Run workflow**
 4. Choose deployment target:
    - **both** - Deploy both functions (default)
-   - **authentication** - Deploy authentication only
-   - **skill** - Deploy skill only
-5. Select branch (e.g., `main`)
+   - **authentication** - Builds the authentication function, but the skill remains in the SAM template
+   - **skill** - Disables and removes the authentication function, Function URL, and certificate layer
+5. Select `main` or a version tag beginning with `v`; other branches and forks are not allowed.
 6. Click **Run workflow**
 
-The workflow will build and deploy only the selected function(s).
+The `skill` target removes the Account Linking backend and is intended for a personal static
+deployment. See the [full deployment guide](../docs/DEPLOYMENT.md#deployment-targets) for details
+and known issues with the current targets.
 
 ### 5. Monitor the Deployment
 
