@@ -253,19 +253,15 @@ class MyHandlerTest : StringSpec({
 
 When adding a new intent or feature, **always** update the following documentation files:
 
-### 1. README.md
-Add to the "Available Interactions" section with:
-- Intent description
-- Example utterances
-- Expected behavior
-- Any limitations or special notes
-
-### 2. docs/AVAILABLE_FEATURES.md
+### 1. docs/AVAILABLE_FEATURES.md
 Update with the new feature details:
 - Voice commands/utterances
 - What the feature does
 - Expected responses
 - Feature status (Available/In Progress/Planned)
+
+### 2. README.md
+Update the project overview if the feature changes the high-level description or status.
 
 ### 3. docs/ARCHITECTURE.md
 Update if your changes affect:
@@ -280,7 +276,7 @@ Update the Alexa interaction model with:
 - New slots and slot types
 - Sample utterances
 
-For detailed guidance on adding features, see [.github/AGENT.md](../.github/AGENT.md).
+For detailed guidance on adding features, see [.github/AGENT.md](.github/AGENT.md).
 
 ## Pull Request Process
 

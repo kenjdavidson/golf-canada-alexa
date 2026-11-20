@@ -1,6 +1,6 @@
 # Deployment Guide
 
-This document provides detailed instructions for deploying the Golf Canada Alexa skill Lambda functions using GitHub Actions.
+This document describes the available deployment paths and their current behavior.
 
 > **Quick Start:** For a condensed setup guide, see [.github/DEPLOYMENT_QUICKSTART.md](../.github/DEPLOYMENT_QUICKSTART.md)
 
@@ -10,24 +10,29 @@ This document provides detailed instructions for deploying the Golf Canada Alexa
 - [GitHub Actions Workflow](#github-actions-workflow)
 - [Required GitHub Secrets](#required-github-secrets)
 - [Deployment Process](#deployment-process)
+- [Deployment Targets](#deployment-targets)
+- [Undeploying](#undeploying)
+- [Follow-up Issues](#follow-up-issues)
 
 ## Overview
 
-The project uses GitHub Actions to deploy Lambda functions to AWS via a manual workflow trigger. 
+The project deploys Lambda functions to AWS using SAM and CloudFormation. GitHub Actions
+deployment is manual; there is no deploy-on-push or deploy-on-release automation.
 
-The workflow supports deploying:
-- **Both functions** - Deploy both authentication and skill Lambda functions
-- **Authentication only** - Deploy only the OAuth authentication wrapper function
-- **Skill only** - Deploy only the Alexa skill handler function
+The workflow offers `both`, `authentication`, and `skill` targets. Their actual behavior and
+limitations are described in [Deployment Targets](#deployment-targets).
 
 ## GitHub Actions Workflow
 
-The deployment workflow is defined in `.github/workflows/deploy.yml` and is triggered manually from the GitHub Actions interface.
+The deployment workflow is defined in `.github/workflows/deploy.yml` and is triggered manually
+from the GitHub Actions interface. It runs only in the original repository and only when the
+selected ref is `main` or a version tag beginning with `v`. Selecting another branch or a
+fork will not deploy.
 
 ### Workflow Features
 
 - **Manual trigger** - Initiated on-demand from the GitHub Actions UI
-- **Conditional deployment** - Deploy only selected function(s) based on dropdown selection
+- **Targeted SAM builds** - The dropdown selects which function(s) to build; see [Deployment Targets](#deployment-targets) for stack behavior
 - **Automated builds** - Uses Gradle to build the Java/Kotlin application
 - **SAM deployment** - Leverages AWS SAM CLI for Lambda deployment via CloudFormation
 - **Secure authentication** - Uses AWS OIDC for secure, credential-less authentication
@@ -130,11 +135,10 @@ The AWS region where the Lambda functions will be deployed.
 ### Deployment Configuration Secrets
 
 #### `STACK_NAME` (Required)
-The name of the CloudFormation stack that will be created or updated.
+The name of the CloudFormation stack that will be created or updated. The GitHub Actions
+workflow uses this secret directly; the `samconfig.toml` default is for local SAM commands.
 
 **Example:** `golf-canada-alexa`
-
-**Note:** This should match the stack name in your `samconfig.toml` if you're also doing manual deployments.
 
 ### Application Configuration Secrets
 
@@ -166,6 +170,17 @@ The Alexa Skill ID from the Amazon Alexa Developer Console.
 2. Select your skill
 3. The Skill ID is displayed at the top of the skill dashboard
 
+### Optional Personal Deployment Secrets
+
+`GOLF_CANADA_USERNAME` and `GOLF_CANADA_PASSWORD` are optional and must be provided together
+to enable static credentials mode for a personal, single-user deployment. Leave both unset
+for standard Alexa Account Linking. Static credentials are passed to the skill Lambda as
+environment variables; do not use this mode to handle other users' credentials. See the
+[single-user deployment notes](PRIVATE_SKILL_SPIKE.md) for security considerations.
+
+The workflow passes both values to SAM even when they are not configured, and the template
+defaults them to empty strings.
+
 ### Testing Secrets (Optional)
 
 These secrets are used by the test workflow (`.github/workflows/test.yml`) and are not required for deployment:
@@ -194,17 +209,20 @@ The deployment workflow is triggered manually from the GitHub Actions interface.
 4. Click the **Run workflow** button (on the right side)
 5. Choose the deployment target from the dropdown:
    - **both** - Deploy both Lambda functions (default)
-   - **authentication** - Deploy only the authentication function
-   - **skill** - Deploy only the skill function
-6. Select the branch to deploy from (typically `main` or `master`)
+   - **authentication** - Builds the authentication function; see [Deployment Targets](#deployment-targets)
+   - **skill** - Builds the skill function and removes the authentication backend from the stack
+6. Select `main` or a version tag beginning with `v`. The workflow will not run from `master`,
+   another branch, or a fork.
 7. Click **Run workflow** to start the deployment
 
-The workflow will conditionally build and deploy only the selected function(s).
+The workflow builds with Java 21 and Gradle, builds the selected SAM function(s), assumes the
+configured AWS role through GitHub OIDC, and deploys a CloudFormation stack using the
+`STACK_NAME` and `AWS_REGION` secrets.
 
 ### Step 3: Monitor Deployment
 
 1. Go to the **Actions** tab in your GitHub repository
-2. Click on the workflow run that was triggered by your tag
+2. Click on the workflow run that you triggered
 3. Monitor the deployment progress in real-time
 4. Check for any errors in the workflow logs
 
@@ -212,12 +230,17 @@ The workflow will conditionally build and deploy only the selected function(s).
 
 After successful deployment, verify that your functions are working:
 
-1. **Check AWS Console:**
-   - Navigate to AWS Lambda in your configured region
-   - Verify that your functions are updated with the latest code
+1. **Check CloudFormation outputs** in the AWS Console, or run:
+   ```shell
+   aws cloudformation describe-stacks \
+       --stack-name "$STACK_NAME" \
+       --region "$AWS_REGION" \
+       --query 'Stacks[0].Outputs'
+   ```
+   The workflow log does not print the Lambda Function URL or skill ARN.
 
 2. **Test Authentication Function:**
-   - The deployment outputs will show the Function URL
+   - If the authentication function is included in the stack, use its Function URL output
    - Test the `/login` endpoint to ensure the authentication flow works
 
 3. **Test Alexa Skill:**
@@ -254,6 +277,69 @@ After successful deployment, verify that your functions are working:
 2. Check that Gradle build completed successfully
 3. Ensure all dependencies are properly packaged
 
+## Deployment Targets
+
+The SAM template always includes `GolfCanadaAlexaSkillFunction`. The authentication Lambda,
+its Function URL, and the certificate layer are controlled by the `DeployAuthentication`
+parameter.
+
+- **`both`** builds the full SAM application and deploys with authentication enabled.
+- **`authentication`** builds only the authentication function but still deploys the SAM
+  template with authentication enabled. Because the skill function remains in the template,
+  this does not guarantee an authentication-only stack update; see the follow-up issue below.
+- **`skill`** builds the skill function and deploys with authentication disabled. CloudFormation
+  removes the authentication function, its Function URL, and the certificate layer if they
+  already exist in the stack. This target is destructive to the account-linking backend and is
+  intended for a static, personal deployment.
+
+`ClientId`, `ClientSecret`, and `SkillId` remain SAM parameters and are passed by the workflow
+for every target. With `skill`, set both optional static credential secrets to enable personal
+static mode; without them, the skill still expects Account Linking, whose authentication
+backend this target removes.
+
+## Alexa Skill Configuration
+
+After deployment, retrieve the stack outputs from CloudFormation. The GitHub Actions workflow
+does not print them.
+
+1. In the Alexa Developer Console, set the skill endpoint to the
+   `GolfCanadaAlexaSkillFunctionArn` output.
+2. When deploying with the authentication function, configure Account Linking:
+   - **Authorization URI**: `{GolfCanadaAuthenticationFunctionUrl}/login`
+   - **Access Token URI**: `{GolfCanadaAuthenticationFunctionUrl}/authToken`
+   - **Client ID / Client Secret**: the values used for `ClientId` and `ClientSecret`
+   - **Client Authentication Scheme**: HTTP Basic
+   - **Scope**: `address email offline_access openid phone profile roles`
+3. Upload the interaction model from `model/model.json`.
+
+For static personal deployments, configure no Account Linking; the skill uses the configured
+Golf Canada credentials directly. Do not use static mode for a shared skill.
+
+## Undeploying
+
+The separate `.github/workflows/undeploy.yml` workflow is also manually triggered and restricted
+to the original repository's `main` branch or a `v*` tag. It offers:
+
+- **`authentication`** — removes the authentication Lambda, Function URL, and certificate layer
+  while leaving the skill Lambda in the stack.
+- **`stack`** — deletes the entire CloudFormation stack and all its resources.
+
+Both actions use the AWS OIDC role and the `AWS_REGION` and `STACK_NAME` secrets.
+
+## Follow-up Issues
+
+The following discrepancies are present in the current workflow or template and need follow-up:
+
+- [ ] Fix or clarify the `authentication` deployment target: its SAM build targets one function,
+  but deployment still includes the skill function in the template.
+- [ ] Make the destructive behavior of the `skill` target explicit in the workflow and confirm
+  that disabling Account Linking's backend is the intended deployment behavior.
+- [ ] Fix the authentication certificate layer's `ContentUri` in `template.yaml`: it points to
+  `./GolfCanadaAuthenticationCertLayer`, which is not present in the repository checkout (the
+  certificate assets are under `layers/`). Verify a full SAM build and deployment after fixing.
+- [ ] Include the deployed Function URL and skill Lambda ARN in the GitHub Actions output, or
+  otherwise make the workflow's deployment outputs discoverable without a separate AWS query.
+
 ## Manual Deployment (Alternative)
 
 If you prefer to deploy manually or need to deploy from your local machine:
@@ -272,7 +358,7 @@ If you prefer to deploy manually or need to deploy from your local machine:
 
 3. **Follow the prompts** to configure deployment parameters
 
-For more details, see the [AWS Deployment](../README.md#aws-deployment) section in the main README.
+For architecture and component details, see the [architecture guide](ARCHITECTURE.md).
 
 ## Security Best Practices
 
