@@ -209,8 +209,8 @@ The deployment workflow is triggered manually from the GitHub Actions interface.
 4. Click the **Run workflow** button (on the right side)
 5. Choose the deployment target from the dropdown:
    - **both** - Deploy both Lambda functions (default)
-   - **authentication** - Builds the authentication function; see [Deployment Targets](#deployment-targets)
-   - **skill** - Builds the skill function and removes the authentication backend from the stack
+   - **authentication** - Build and deploy the authentication function while leaving the skill in place
+   - **skill** - Deploy the skill function while keeping the authentication backend enabled
 6. Select `main` or a version tag beginning with `v`. The workflow will not run from `master`,
    another branch, or a fork.
 7. Click **Run workflow** to start the deployment
@@ -287,15 +287,12 @@ parameter.
 - **`authentication`** builds only the authentication function but still deploys the SAM
   template with authentication enabled. Because the skill function remains in the template,
   this does not guarantee an authentication-only stack update; see the follow-up issue below.
-- **`skill`** builds the skill function and deploys with authentication disabled. CloudFormation
-  removes the authentication function, its Function URL, and the certificate layer if they
-  already exist in the stack. This target is destructive to the account-linking backend and is
-  intended for a static, personal deployment.
+- **`skill`** builds the skill function and deploys with authentication kept enabled. This is the
+  safe default for updating the skill without removing the account-linking backend.
 
 `ClientId`, `ClientSecret`, and `SkillId` remain SAM parameters and are passed by the workflow
-for every target. With `skill`, set both optional static credential secrets to enable personal
-static mode; without them, the skill still expects Account Linking, whose authentication
-backend this target removes.
+for every target. The separate undeploy workflow is the explicit opt-in path for removing the
+backend for static personal mode; it should not be used as part of a normal skill deployment.
 
 ## Alexa Skill Configuration
 

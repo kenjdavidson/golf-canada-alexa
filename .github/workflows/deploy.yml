@@ -70,7 +70,7 @@ jobs:
         run: |
           TARGET="${{ inputs.deployment_target }}"
           echo "Deployment target: $TARGET"
-          
+
           if [[ "$TARGET" == "authentication" ]]; then
             echo "Deploying: Authentication function only"
             echo "type=authentication" >> $GITHUB_OUTPUT
@@ -97,13 +97,10 @@ jobs:
       - name: Deploy to AWS
         run: |
           # Set DeployAuthentication based on target:
-          # - 'skill' target: false (static mode, auth Lambda not needed)
+          # - 'skill' target: true (preserve the auth Lambda during normal skill updates)
           # - 'authentication' or 'both' targets: true
           DEPLOY_AUTH="true"
-          if [[ "${{ inputs.deployment_target }}" == "skill" ]]; then
-            DEPLOY_AUTH="false"
-          fi
-          
+
           sam deploy \
             --template-file .aws-sam/build/template.yaml \
             --no-confirm-changeset \

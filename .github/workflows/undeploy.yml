@@ -8,13 +8,15 @@ on:
           Select what to undeploy.
           'authentication' removes only the GolfCanadaAuthenticationFunction and its SSL cert layer
           from the existing stack (the Skill Lambda keeps running).
-          'stack' tears down the entire CloudFormation stack including all Lambda functions.
+          'both' tears down the entire CloudFormation stack including all Lambda functions.
+          'stack' is kept as an alias for the full teardown path.
         required: true
         type: choice
         options:
           - 'authentication'
+          - 'both'
           - 'stack'
-        default: 'authentication'
+        default: 'both'
 
 permissions:
   contents: read
@@ -96,12 +98,12 @@ jobs:
       # IAM roles, Lambda URLs, and the SSL certificate layer.
       # Use this only when you want to fully tear down the deployment.
       - name: Delete entire CloudFormation stack
-        if: inputs.undeploy_target == 'stack'
+        if: inputs.undeploy_target == 'both' || inputs.undeploy_target == 'stack'
         run: |
           aws cloudformation delete-stack \
             --stack-name ${{ secrets.STACK_NAME }} \
             --region ${{ secrets.AWS_REGION }}
-          
+
           echo "⏳ Waiting for stack deletion to complete..."
           aws cloudformation wait stack-delete-complete \
             --stack-name ${{ secrets.STACK_NAME }} \
