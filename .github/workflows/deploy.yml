@@ -4,13 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       deployment_target:
-        description: 'Select which Lambda function(s) to deploy'
+        description: 'Select which Lambda function(s) to deploy or remove'
         required: true
         type: choice
         options:
           - 'both'
           - 'authentication'
           - 'skill'
+          - 'undeploy'
         default: 'both'
 
 permissions:
@@ -70,17 +71,25 @@ jobs:
         run: |
           TARGET="${{ inputs.deployment_target }}"
           echo "Deployment target: $TARGET"
-          
-          if [[ "$TARGET" == "authentication" ]]; then
-            echo "Deploying: Authentication function only"
-            echo "type=authentication" >> $GITHUB_OUTPUT
-          elif [[ "$TARGET" == "skill" ]]; then
-            echo "Deploying: Skill function only"
-            echo "type=skill" >> $GITHUB_OUTPUT
-          else
-            echo "Deploying: Both functions"
-            echo "type=both" >> $GITHUB_OUTPUT
-          fi
+
+          case "$TARGET" in
+            authentication)
+              echo "Deploying: Authentication function only"
+              echo "type=authentication" >> $GITHUB_OUTPUT
+              ;;
+            skill)
+              echo "Deploying: Skill function only"
+              echo "type=skill" >> $GITHUB_OUTPUT
+              ;;
+            undeploy)
+              echo "Deploying: Remove authentication function from stack"
+              echo "type=undeploy" >> $GITHUB_OUTPUT
+              ;;
+            *)
+              echo "Deploying: Both functions"
+              echo "type=both" >> $GITHUB_OUTPUT
+              ;;
+          esac
 
       - name: SAM Build - Both Functions
         if: inputs.deployment_target == 'both'
@@ -94,16 +103,23 @@ jobs:
         if: inputs.deployment_target == 'skill'
         run: sam build GolfCanadaAlexaSkillFunction
 
+      - name: SAM Build - Remove Authentication Function
+        if: inputs.deployment_target == 'undeploy'
+        run: sam build GolfCanadaAlexaSkillFunction
+
       - name: Deploy to AWS
         run: |
-          # Set DeployAuthentication based on target:
-          # - 'skill' target: false (static mode, auth Lambda not needed)
-          # - 'authentication' or 'both' targets: true
+          # Deployment targets:
+          # - 'both' / 'authentication': keep the authentication backend enabled
+          # - 'skill': deploy the skill while preserving the auth backend
+          # - 'undeploy': re-deploy with DeployAuthentication=false to remove the auth backend
           DEPLOY_AUTH="true"
-          if [[ "${{ inputs.deployment_target }}" == "skill" ]]; then
-            DEPLOY_AUTH="false"
-          fi
-          
+          case "${{ inputs.deployment_target }}" in
+            undeploy)
+              DEPLOY_AUTH="false"
+              ;;
+          esac
+
           sam deploy \
             --template-file .aws-sam/build/template.yaml \
             --no-confirm-changeset \

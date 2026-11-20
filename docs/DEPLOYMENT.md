@@ -19,8 +19,8 @@ This document describes the available deployment paths and their current behavio
 The project deploys Lambda functions to AWS using SAM and CloudFormation. GitHub Actions
 deployment is manual; there is no deploy-on-push or deploy-on-release automation.
 
-The workflow offers `both`, `authentication`, and `skill` targets. Their actual behavior and
-limitations are described in [Deployment Targets](#deployment-targets).
+The workflow offers `both`, `authentication`, `skill`, and `undeploy` targets. Their actual
+behavior and limitations are described in [Deployment Targets](#deployment-targets).
 
 ## GitHub Actions Workflow
 
@@ -209,8 +209,9 @@ The deployment workflow is triggered manually from the GitHub Actions interface.
 4. Click the **Run workflow** button (on the right side)
 5. Choose the deployment target from the dropdown:
    - **both** - Deploy both Lambda functions (default)
-   - **authentication** - Builds the authentication function; see [Deployment Targets](#deployment-targets)
-   - **skill** - Builds the skill function and removes the authentication backend from the stack
+   - **authentication** - Build and deploy the authentication function while leaving the skill in place
+   - **skill** - Deploy the skill function while keeping the authentication backend enabled
+   - **undeploy** - Remove the authentication backend by re-deploying the stack with `DeployAuthentication=false`
 6. Select `main` or a version tag beginning with `v`. The workflow will not run from `master`,
    another branch, or a fork.
 7. Click **Run workflow** to start the deployment
@@ -287,13 +288,14 @@ parameter.
 - **`authentication`** builds only the authentication function but still deploys the SAM
   template with authentication enabled. Because the skill function remains in the template,
   this does not guarantee an authentication-only stack update; see the follow-up issue below.
-- **`skill`** builds the skill function and deploys with authentication disabled. CloudFormation
-  removes the authentication function, its Function URL, and the certificate layer if they
-  already exist in the stack. This target is destructive to the account-linking backend and is
-  intended for a static, personal deployment.
+- **`skill`** builds the skill function and deploys with authentication kept enabled. This is the
+  safe default for updating the skill without removing the account-linking backend.
+- **`undeploy`** re-deploys the stack with `DeployAuthentication=false`, which removes the
+  authentication function, Function URL, and certificate layer. This path is explicitly for
+  disabling the backend and is intended for static, personal deployments.
 
 `ClientId`, `ClientSecret`, and `SkillId` remain SAM parameters and are passed by the workflow
-for every target. With `skill`, set both optional static credential secrets to enable personal
+for every target. With `undeploy`, set both optional static credential secrets to enable personal
 static mode; without them, the skill still expects Account Linking, whose authentication
 backend this target removes.
 
@@ -320,8 +322,9 @@ Golf Canada credentials directly. Do not use static mode for a shared skill.
 The separate `.github/workflows/undeploy.yml` workflow is also manually triggered and restricted
 to the original repository's `main` branch or a `v*` tag. It offers:
 
-- **`authentication`** — removes the authentication Lambda, Function URL, and certificate layer
-  while leaving the skill Lambda in the stack.
+- **`authentication`** — re-deploys the stack with `DeployAuthentication=false` to remove the
+  authentication Lambda, Function URL, and certificate layer while leaving the skill Lambda in
+  the stack.
 - **`stack`** — deletes the entire CloudFormation stack and all its resources.
 
 Both actions use the AWS OIDC role and the `AWS_REGION` and `STACK_NAME` secrets.
