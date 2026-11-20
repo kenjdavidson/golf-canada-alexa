@@ -82,15 +82,14 @@ Trigger the deployment manually:
 3. Click **Run workflow**
 4. Choose deployment target:
    - **both** - Deploy both functions (default)
-   - **authentication** - Builds the authentication function while keeping the skill in the SAM template
+   - **authentication** - Builds the authentication function, but the skill remains in the SAM template
    - **skill** - Deploys the skill while preserving the authentication backend
-   - **undeploy** - Removes the authentication backend by re-deploying the stack with `DeployAuthentication=false`
 5. Select `main` or a version tag beginning with `v`; other branches and forks are not allowed.
 6. Click **Run workflow**
 
-The `skill` target does not remove the Account Linking backend. Use `undeploy` only when you
-intentionally want to disable the authentication Lambda for static personal mode. See the
-[full deployment guide](../docs/DEPLOYMENT.md#deployment-targets) for details.
+The `skill` target does not remove the Account Linking backend. Use the separate undeploy workflow
+only when you intentionally want to disable the authentication Lambda for static personal mode.
+See the [full deployment guide](../docs/DEPLOYMENT.md#deployment-targets) for details.
 
 ### 5. Monitor the Deployment
 
