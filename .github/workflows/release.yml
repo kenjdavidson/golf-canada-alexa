@@ -2,52 +2,67 @@ name: Create Release
 
 on:
   workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Tag to create release for (e.g., v1.0.0)'
-        required: true
-        type: string
 
 permissions:
   contents: write  # Required to create releases
 
 jobs:
   release:
+    if: github.ref_type == 'branch'
     runs-on: ubuntu-latest
     
     steps:
-      - name: Validate tag format
-        run: |
-          TAG="${{ inputs.tag }}"
-          # Validate tag format matches expected version patterns (e.g., v1.0.0, v2.1.3-beta.1)
-          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$ ]]; then
-            echo "Error: Tag must match semantic version format (e.g., v1.0.0, v1.2.3-beta.1)"
-            echo "Provided tag: $TAG"
-            exit 1
-          fi
-          echo "Tag format is valid: $TAG"
-      
-      - name: Checkout code
+      - name: Checkout selected branch
         uses: actions/checkout@v4
         with:
-          ref: refs/tags/${{ inputs.tag }}
-          fetch-depth: 0  # Fetch all history for changelog generation
-      
-      - name: Validate tag exists
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+
+      - name: Determine release version
+        id: version
         run: |
-          TAG="${{ inputs.tag }}"
-          if ! git rev-parse "refs/tags/$TAG" >/dev/null 2>&1; then
-            echo "Error: Tag '$TAG' does not exist"
+          VERSION_COUNT=$(grep -c '^version=' gradle.properties || true)
+          if [[ "$VERSION_COUNT" != "1" ]]; then
+            echo "Error: gradle.properties must contain exactly one version property"
             exit 1
           fi
-          echo "Tag '$TAG' exists and is valid"
-      
+
+          GRADLE_VERSION=$(sed -n 's/^version=//p' gradle.properties)
+          VERSION_PATTERN='^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?-SNAPSHOT$'
+          if [[ ! "$GRADLE_VERSION" =~ $VERSION_PATTERN ]]; then
+            echo "Error: Gradle version must be MAJOR.MINOR.PATCH[-PRERELEASE]-SNAPSHOT"
+            echo "Provided version: $GRADLE_VERSION"
+            exit 1
+          fi
+
+          RELEASE_VERSION="${GRADLE_VERSION%-SNAPSHOT}"
+          TAG="v$RELEASE_VERSION"
+          IFS=. read -r MAJOR MINOR PATCH <<< "${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.${BASH_REMATCH[3]}"
+          NEXT_PATCH=$((10#$PATCH + 1))
+          NEXT_VERSION="$MAJOR.$MINOR.$NEXT_PATCH-SNAPSHOT"
+
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "next_version=$NEXT_VERSION" >> "$GITHUB_OUTPUT"
+          echo "Creating release $TAG from branch $GITHUB_REF_NAME"
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ inputs.tag }}
+          tag_name: ${{ steps.version.outputs.tag }}
+          target_commitish: ${{ github.sha }}
           generate_release_notes: true
           draft: false
-          prerelease: ${{ contains(inputs.tag, 'alpha') || contains(inputs.tag, 'beta') || contains(inputs.tag, 'rc') }}
+          prerelease: ${{ contains(steps.version.outputs.tag, 'alpha') || contains(steps.version.outputs.tag, 'beta') || contains(steps.version.outputs.tag, 'rc') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Bump Gradle version
+        env:
+          NEXT_VERSION: ${{ steps.version.outputs.next_version }}
+        run: |
+          sed -i "s/^version=.*/version=$NEXT_VERSION/" gradle.properties
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add gradle.properties
+          git commit -m "Bump version to $NEXT_VERSION"
+          git push origin "HEAD:$GITHUB_REF_NAME"

@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "kjd.golfcanada"
-version = "1.1-SNAPSHOT"
+version = providers.gradleProperty("version").get()
 
 repositories {
     mavenCentral()
