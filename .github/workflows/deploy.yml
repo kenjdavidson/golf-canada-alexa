@@ -39,6 +39,29 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Check Alexa model deployment prerequisites
+        if: inputs.deployment_target != 'authentication'
+        env:
+          ASK_REFRESH_TOKEN: ${{ secrets.ASK_REFRESH_TOKEN }}
+          ASK_VENDOR_ID: ${{ secrets.ASK_VENDOR_ID }}
+          ALEXA_SKILL_ID: ${{ secrets.ALEXA_SKILL_ID }}
+        run: |
+          if [[ -z "$ASK_REFRESH_TOKEN" || -z "$ASK_VENDOR_ID" || -z "$ALEXA_SKILL_ID" ]]; then
+            echo "::error::ASK_REFRESH_TOKEN, ASK_VENDOR_ID and ALEXA_SKILL_ID must be configured for skill deployments."
+            exit 1
+          fi
+          python3 -m json.tool model/model.json > /dev/null
+
+      - name: Set up Node.js
+        if: inputs.deployment_target != 'authentication'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install ASK CLI
+        if: inputs.deployment_target != 'authentication'
+        run: npm install --global ask-cli@2.30.7
+
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
@@ -117,9 +140,24 @@ jobs:
               GolfCanadaPassword="${{ secrets.GOLF_CANADA_PASSWORD }}" \
               DeployAuthentication="$DEPLOY_AUTH"
 
+      - name: Update Alexa interaction model
+        if: inputs.deployment_target != 'authentication'
+        env:
+          ASK_REFRESH_TOKEN: ${{ secrets.ASK_REFRESH_TOKEN }}
+          ASK_VENDOR_ID: ${{ secrets.ASK_VENDOR_ID }}
+          ALEXA_SKILL_ID: ${{ secrets.ALEXA_SKILL_ID }}
+        run: |
+          ask smapi set-interaction-model \
+            --profile __ENVIRONMENT_ASK_PROFILE__ \
+            --skill-id "$ALEXA_SKILL_ID" \
+            --stage development \
+            --locale en-CA \
+            --interaction-model file:./model/model.json
+          echo "Alexa model update submitted; check the build status in the Alexa Developer Console."
+
       - name: Output deployment information
         run: |
-          echo "✅ Deployment completed successfully!"
+          echo "✅ Deployment steps completed successfully!"
           echo "📦 Deployment target: ${{ inputs.deployment_target }}"
           echo "🌿 Branch: ${{ github.ref_name }}"
           echo "📚 Stack: ${{ secrets.STACK_NAME }}"
