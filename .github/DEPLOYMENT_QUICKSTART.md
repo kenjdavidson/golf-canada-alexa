@@ -8,6 +8,7 @@ This guide provides a quick reference for setting up automated deployments with 
 - GitHub repository with Actions enabled
 - Golf Canada OAuth credentials
 - Alexa Skill ID
+- ASK CLI refresh token and vendor ID for skill model updates
 
 ## Quick Setup (5 Steps)
 
@@ -69,9 +70,16 @@ In your GitHub repository, go to **Settings** → **Secrets and variables** → 
 | `GOLF_CANADA_CLIENT_ID` | `your-client-id` | OAuth Client ID |
 | `GOLF_CANADA_CLIENT_SECRET` | `your-client-secret` | OAuth Client Secret |
 | `ALEXA_SKILL_ID` | `amzn1.ask.skill.xxx...` | Your Alexa Skill ID |
+| `ASK_VENDOR_ID` | `your-vendor-id` | Alexa developer vendor ID (skill and both targets) |
+| `ASK_REFRESH_TOKEN` | `your-refresh-token` | ASK CLI refresh token (skill and both targets) |
 
 `GOLF_CANADA_USERNAME` and `GOLF_CANADA_PASSWORD` are optional; set both only for a personal,
 single-user static-credentials deployment. Leave them unset for standard Account Linking.
+For obtaining the ASK credentials and preparing the model, see the
+[Alexa model deployment setup](../docs/DEPLOYMENT.md#alexa-model-deployment-secrets).
+Before the first skill deployment, compare `model/model.json` with the current console
+model and commit any changes you want to keep; deployment replaces the development `en-CA`
+model.
 
 ### 4. Run the Deployment
 
@@ -81,9 +89,9 @@ Trigger the deployment manually:
 2. Select **Deploy to AWS Lambda** workflow
 3. Click **Run workflow**
 4. Choose deployment target:
-   - **both** - Deploy both functions (default)
+   - **both** - Deploy both functions and submit the Alexa model update (default)
    - **authentication** - Builds the authentication function, but the skill remains in the SAM template
-   - **skill** - Deploys the skill while preserving the authentication backend
+   - **skill** - Deploys the skill and submits the Alexa model update while preserving the authentication backend
 5. Select `main` or a version tag beginning with `v`; other branches and forks are not allowed.
 6. Click **Run workflow**
 
@@ -95,6 +103,8 @@ See the [full deployment guide](../docs/DEPLOYMENT.md#deployment-targets) for de
 
 1. Watch the workflow run in the Actions tab
 2. Check AWS Lambda console to verify deployment
+3. For `skill` or `both`, check the Alexa Developer Console for the `en-CA` model build
+   status; the model build is asynchronous and is not awaited by the workflow.
 
 ## Troubleshooting
 

@@ -35,6 +35,7 @@ fork will not deploy.
 - **Targeted SAM builds** - The dropdown selects which function(s) to build; see [Deployment Targets](#deployment-targets) for stack behavior
 - **Automated builds** - Uses Gradle to build the Java/Kotlin application
 - **SAM deployment** - Leverages AWS SAM CLI for Lambda deployment via CloudFormation
+- **Alexa model update** - Submits the checked-in `en-CA` interaction model for skill and both targets
 - **Secure authentication** - Uses AWS OIDC for secure, credential-less authentication
 - **Parameter management** - All sensitive configuration is stored in GitHub Secrets
 
@@ -163,12 +164,53 @@ The Alexa Skill ID from the Amazon Alexa Developer Console.
 
 **Example:** `amzn1.ask.skill.12345678-1234-1234-1234-123456789012`
 
-**Description:** This identifies your specific Alexa skill in the Amazon ecosystem and is used to validate requests to the skill Lambda function.
+**Description:** This identifies your specific Alexa skill and is used both to validate requests to
+the skill Lambda and to update its development interaction model.
 
 **How to find it:**
 1. Go to [Alexa Developer Console](https://developer.amazon.com/alexa/console/ask)
 2. Select your skill
 3. The Skill ID is displayed at the top of the skill dashboard
+
+### Alexa Model Deployment Secrets
+
+The `skill` and `both` targets also require `ASK_REFRESH_TOKEN` and `ASK_VENDOR_ID`.
+These are Alexa developer credentials, separate from the Golf Canada OAuth credentials
+and AWS OIDC role. The `authentication` target does not need them.
+
+1. Install the [ASK CLI](https://github.com/alexa/ask-cli) locally and run `ask configure`.
+   Sign in with an Alexa developer account authorized to manage the skill identified by
+   `ALEXA_SKILL_ID`.
+2. From the resulting `~/.ask/cli_config` profile, copy `vendor_id` to the GitHub secret
+   `ASK_VENDOR_ID` and `token.refresh_token` to `ASK_REFRESH_TOKEN`. Treat the refresh token
+   as a password; never commit the configuration file or paste tokens into logs.
+3. Confirm that the skill has an **English (CA)** (`en-CA`) locale. The workflow updates
+   only that locale in the **development** stage.
+
+The workflow uses ASK CLI's [environment profile](https://github.com/alexa/ask-cli/blob/develop/docs/concepts/CI-CD.md)
+and the temporary AWS credentials already provided by OIDC. It uses `ask smapi
+set-interaction-model` instead of `ask deploy`, which would require an ASK skill package
+and manifest as well as an `ask-resources.json`.
+
+### Keeping the Interaction Model in Sync
+
+`model/model.json` is the complete model sent to Alexa, not a patch. **Before the first
+automated deployment**, compare it with the current English (CA) development model in the
+Alexa Developer Console. If the console has newer changes that should be kept, export/copy
+its JSON into `model/model.json`, review and commit it first. We cannot determine from this
+repository whether the console model is newer. You can also download the current model
+locally with a configured ASK CLI profile:
+
+```shell
+ask smapi get-interaction-model --skill-id "$ALEXA_SKILL_ID" \
+  --stage development --locale en-CA > /tmp/golf-canada-model.json
+```
+
+Compare the downloaded file with `model/model.json` before replacing it. Thereafter, make
+model changes in the repository alongside the Lambda changes. Each skill or both deployment
+replaces the development `en-CA` model, including any uncommitted console changes. Other
+locales and the live skill are not updated; publishing still requires the normal Alexa
+certification/release process.
 
 ### Optional Personal Deployment Secrets
 
@@ -208,16 +250,17 @@ The deployment workflow is triggered manually from the GitHub Actions interface.
 3. Select the **Deploy to AWS Lambda** workflow from the left sidebar
 4. Click the **Run workflow** button (on the right side)
 5. Choose the deployment target from the dropdown:
-   - **both** - Deploy both Lambda functions (default)
+   - **both** - Deploy both Lambda functions and submit the Alexa model update (default)
    - **authentication** - Build and deploy the authentication function while leaving the skill in place
-   - **skill** - Deploy the skill function while keeping the authentication backend enabled
+   - **skill** - Deploy the skill function and submit the Alexa model update while keeping the authentication backend enabled
 6. Select `main` or a version tag beginning with `v`. The workflow will not run from `master`,
    another branch, or a fork.
 7. Click **Run workflow** to start the deployment
 
 The workflow builds with Java 21 and Gradle, builds the selected SAM function(s), assumes the
 configured AWS role through GitHub OIDC, and deploys a CloudFormation stack using the
-`STACK_NAME` and `AWS_REGION` secrets.
+`STACK_NAME` and `AWS_REGION` secrets. For `skill` and `both`, it then submits the
+interaction model to Alexa.
 
 ### Step 3: Monitor Deployment
 
@@ -244,8 +287,13 @@ After successful deployment, verify that your functions are working:
    - Test the `/login` endpoint to ensure the authentication flow works
 
 3. **Test Alexa Skill:**
+   - Check the `en-CA` model build status in the Alexa Developer Console; submission is
+     asynchronous and workflow success does not guarantee a successful model build
    - Use the Alexa Developer Console test simulator
    - Or test with an Alexa-enabled device linked to your developer account
+
+If the Alexa update or build fails after SAM succeeds, the Lambda has already been updated;
+there is no automatic rollback. Fix the model or credentials and rerun the deployment.
 
 ## Troubleshooting
 
@@ -290,6 +338,9 @@ parameter.
 - **`skill`** builds the skill function and deploys with authentication kept enabled. This is the
   safe default for updating the skill without removing the account-linking backend.
 
+The `skill` and `both` targets also submit `model/model.json` for the development `en-CA`
+interaction model. `authentication` does not update the model.
+
 `ClientId`, `ClientSecret`, and `SkillId` remain SAM parameters and are passed by the workflow
 for every target. The separate undeploy workflow is the explicit opt-in path for removing the
 backend for static personal mode; it should not be used as part of a normal skill deployment.
@@ -307,7 +358,8 @@ does not print them.
    - **Client ID / Client Secret**: the values used for `ClientId` and `ClientSecret`
    - **Client Authentication Scheme**: HTTP Basic
    - **Scope**: `address email offline_access openid phone profile roles`
-3. Upload the interaction model from `model/model.json`.
+3. For manual SAM deployments, upload and build the interaction model from `model/model.json`.
+   GitHub Actions submits it automatically for the `skill` and `both` targets.
 
 For static personal deployments, configure no Account Linking; the skill uses the configured
 Golf Canada credentials directly. Do not use static mode for a shared skill.
