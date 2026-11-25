@@ -208,9 +208,37 @@ ask smapi get-interaction-model --skill-id "$ALEXA_SKILL_ID" \
 
 Compare the downloaded file with `model/model.json` before replacing it. Thereafter, make
 model changes in the repository alongside the Lambda changes. Each skill or both deployment
-replaces the development `en-CA` model, including any uncommitted console changes. Other
-locales and the live skill are not updated; publishing still requires the normal Alexa
-certification/release process.
+replaces the development `en-CA` model, including any uncommitted console changes. The workflow
+does not submit other locales or update the live skill; publishing still requires the normal
+Alexa certification/release process. Check the skill's locale sync settings before deploying,
+as synced target locales may also be affected.
+
+### Interaction Models and Locales
+
+The supplied English (US) console model is preserved in `model/en-US.json`. It is a snapshot,
+not the model used by the deployment workflow. Its custom intent names do not match the
+current Lambda handlers in `IntentName`, its handicap slot is named `playerName` rather than
+the handler's `FriendFirstName`/`FriendFullName`, and `FavoritePlayerListIntent` has no handler.
+It also lacks the current course intents. Do not deploy it without reconciling those differences
+and testing the resulting model with the Lambda. Similarly, do not overwrite the current en-CA
+model with it without first preserving the en-CA features and checking the console model.
+
+Alexa models are addressed by locale. Alexa also supports optional
+[Sync Locales](https://github.com/alexa/alexa-apis-for-python/blob/751e6dbbb829ceb34dd7405eb77235c06b19c612/ask-smapi-model/ask_smapi_model/v1/skill/manifest/automatic_cloned_locale.py):
+the skill manifest maps a source to target locales of the **same language**, copying its model
+and metadata. Sync is disabled when the setting is absent. The
+[source/target mapping](https://github.com/alexa/alexa-apis-for-python/blob/751e6dbbb829ceb34dd7405eb77235c06b19c612/ask-smapi-model/ask_smapi_model/v1/skill/manifest/locales_by_automatic_cloned_locale.py)
+defaults to all locales of that language if targets are omitted. The repository has no skill
+manifest, so it cannot establish whether sync is enabled for this skill or which locale is the
+source. Inspect the skill manifest or console settings and compare the development models before
+changing them. Do not assume changes to en-US or en-CA propagate in either direction.
+
+If sync is not configured, maintain and submit a model for each enabled locale; a separate
+French model needs localized utterances and supported slot types. Even with sync enabled, verify
+that copied utterances, slot types, and metadata are appropriate for each target. ASK CLI also
+supports a separate, explicit [one-time locale clone](https://github.com/alexa/ask-cli/blob/d93715cc6d1247e36e4bb7c3bb7af1cbc52bcc95/docs/concepts/Smapi-Command.md#clone-locale);
+review the target and overwrite settings before using it. Build and test each intended locale in
+the Alexa Developer Console before publishing.
 
 ### Optional Personal Deployment Secrets
 

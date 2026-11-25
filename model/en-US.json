@@ -1,0 +1,203 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "golf canada",
+      "intents": [
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": [
+            "ignore that",
+            "cancel"
+          ]
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": [
+            "what does golf canada do",
+            "what does the skill do",
+            "give me information about the skill",
+            "help me",
+            "what options are there",
+            "what can you do"
+          ]
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": [
+            "close",
+            "stop"
+          ]
+        },
+        {
+          "name": "AMAZON.NavigateHomeIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.FallbackIntent",
+          "samples": []
+        },
+        {
+          "name": "PlayerProfileHandicapIntent",
+          "slots": [
+            {
+              "name": "playerName",
+              "type": "AMAZON.FirstName"
+            }
+          ],
+          "samples": [
+            "how is {playerName} handicap looking",
+            "what is my current handicap",
+            "tell me about my current handicap",
+            "tell me about {playerName} handicap",
+            "what is {playerName} current handicap",
+            "what is {playerName} handicap",
+            "what is {playerName} 's current handicap",
+            "what is {playerName} 's handicap",
+            "what is my handicap high index",
+            "what is my handicap low index",
+            "how is my handicap looking",
+            "how does my handicap look",
+            "give me information about my handicap",
+            "tell me about my handicap",
+            "what is my handicap"
+          ]
+        },
+        {
+          "name": "FavoritePlayerHistoryIntent",
+          "slots": [
+            {
+              "name": "playerName",
+              "type": "AMAZON.FirstName"
+            },
+            {
+              "name": "numberOfRounds",
+              "type": "AMAZON.NUMBER"
+            }
+          ],
+          "samples": [
+            "how did {playerName} score in his last {numberOfRounds} games",
+            "how did {playerName} score in his last {numberOfRounds} rounds",
+            "how did {playerName} play in his last {numberOfRounds} games",
+            "tell me about {playerName} recent {numberOfRounds} games",
+            "tell me about {playerName} recent games",
+            "tell me about {playerName} recent rounds",
+            "how is {playerName} playing recently",
+            "tell me about {playerName} last {numberOfRounds} rounds",
+            "what was {playerName} last score",
+            "how did {playerName} shoot last",
+            "what are {playerName} last {numberOfRounds} scores",
+            "how had {playerName} shot the last {numberOfRounds} rounds",
+            "what are {playerName} 's last {numberOfRounds} scores",
+            "what did {playerName} shoot recently",
+            "how has {playerName} been playing"
+          ]
+        },
+        {
+          "name": "PlayerProfileMembershipIntent",
+          "slots": [],
+          "samples": [
+            "is my membership close to expiry",
+            "when does my membership expire",
+            "is my membership active",
+            "how active is my membership",
+            "what level is my membership",
+            "what's my membership",
+            "tell me about my membership status",
+            "tell me about my status",
+            "tell me about my membership"
+          ]
+        },
+        {
+          "name": "PlayerProfileHistoryIntent",
+          "slots": [
+            {
+              "name": "numberOfRounds",
+              "type": "AMAZON.NUMBER"
+            },
+            {
+              "name": "year",
+              "type": "AMAZON.FOUR_DIGIT_NUMBER"
+            }
+          ],
+          "samples": [
+            "what were my last {numberOfRounds} scores",
+            "what was my last score",
+            "how did I play last game",
+            "how did I play in my last {numberOfRounds} games",
+            "how did I play in my last {numberOfRounds} rounds",
+            "how have I been playing recently",
+            "how have my last {numberOfRounds} gone",
+            "tell me about {year}",
+            "tell me about my last {numberOfRounds} rounds",
+            "tell me about my last round",
+            "what are my stats for {year}",
+            "how did I play in {year}",
+            "how did I play last",
+            "how did I play last round",
+            "how did I score my last {numberOfRounds} rounds",
+            "how did I play my last {numberOfRounds} rounds"
+          ]
+        },
+        {
+          "name": "AddScorecardIntent",
+          "slots": [],
+          "samples": []
+        },
+        {
+          "name": "FavoritePlayerListIntent",
+          "slots": [],
+          "samples": [
+            "list my favorite players",
+            "what are my favorite player names",
+            "tell me about my favorites",
+            "who are my favorites",
+            "who are my favorite players",
+            "tell me about my favorite players"
+          ]
+        }
+      ],
+      "types": [
+        {
+          "name": "TEE",
+          "values": [
+            {
+              "name": {
+                "value": "Black"
+              }
+            },
+            {
+              "name": {
+                "value": "Gold"
+              }
+            },
+            {
+              "name": {
+                "value": "Blue"
+              }
+            },
+            {
+              "name": {
+                "value": "Silver"
+              }
+            },
+            {
+              "name": {
+                "value": "White"
+              }
+            },
+            {
+              "name": {
+                "value": "Green"
+              }
+            },
+            {
+              "name": {
+                "value": "Red"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
