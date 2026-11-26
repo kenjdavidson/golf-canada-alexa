@@ -215,14 +215,6 @@ as synced target locales may also be affected.
 
 ### Interaction Models and Locales
 
-The supplied English (US) console model is preserved in `model/en-US.json`. It is a snapshot,
-not the model used by the deployment workflow. Its custom intent names do not match the
-current Lambda handlers in `IntentName`, its handicap slot is named `playerName` rather than
-the handler's `FriendFirstName`/`FriendFullName`, and `FavoritePlayerListIntent` has no handler.
-It also lacks the current course intents. Do not deploy it without reconciling those differences
-and testing the resulting model with the Lambda. Similarly, do not overwrite the current en-CA
-model with it without first preserving the en-CA features and checking the console model.
-
 Alexa models are addressed by locale. Alexa also supports optional
 [Sync Locales](https://github.com/alexa/alexa-apis-for-python/blob/751e6dbbb829ceb34dd7405eb77235c06b19c612/ask-smapi-model/ask_smapi_model/v1/skill/manifest/automatic_cloned_locale.py):
 the skill manifest maps a source to target locales of the **same language**, copying its model
